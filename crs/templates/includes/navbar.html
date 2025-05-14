@@ -1,0 +1,155 @@
+{% load static %}  
+<div class="wrapper">
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+      <!-- Left navbar links -->
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a>
+        </li>
+        <li class="nav-item d-none d-sm-inline-block">
+          <a href="{% url 'dashboard' %}" class="nav-link">Centralized Online Permitting System</a>
+        </li>
+      </ul>
+  
+      <ul class="navbar-nav ml-auto">
+      
+        <li class="dropdown user user-menu">
+            <b> <i class="fas fa-user-tie nav-icon"></i> 
+              {{ request.session.fullname }}</b>
+        </li>
+      </ul>
+    </nav>
+    <!-- /.navbar -->
+  
+    <!-- Main Sidebar Container -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+      <!-- Brand Logo -->
+      
+      <link rel="icon" href="{% static 'images/denr-logo.png' %}">
+      <a href="{% url 'dashboard' %}" class="brand-link">
+        <img src="{% static 'images/denr-logo.png' %}" alt="Logo" class="brand-image "
+             style="opacity: .8">
+        <span class="brand-text font-weight-light" style="font-size:14px">DENR NCR - COPS</span>
+      </a>
+  
+      <!-- Sidebar -->
+      <div class="sidebar">
+       
+        <!-- Sidebar Menu -->
+        <nav class="mt-2">
+          <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">  
+  
+              <li class="nav-item">
+              <a href="{% url 'index' %}" class="nav-link">
+                  <i class="nav-icon fas fa-arrow-left"></i>
+                  <p>
+                    Logout
+                  </p>
+                </a>
+              </li>
+  
+              <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link">
+                <i class="nav-icon fa fa-dashboard"></i>
+                  <p>Dashboard</p>
+                </a>
+              </li>
+  
+              <li class="nav-item">
+                <a href="{% url 'permittee_enrollment' %}" class="nav-link">
+                <i class="nav-icon fa fa-address-card"></i>
+                  <p>Permittee Enrollment</p>
+                </a>
+              </li>
+  
+              <li class="nav-header">Permitting</li>
+                <li class="nav-item has-treeview">
+                  <a href="#" class="nav-link">
+                    <i class="nav-icon fa fa-tree"></i>
+                    <p>
+                      Forest Utilization
+                      <i class="fas fa-angle-right right"></i>
+                    </p>
+                  </a>
+  
+                  <ul class="nav nav-treeview">
+                    <li class="nav-item">
+                      <a href="#" id="tcpBtn" class="nav-link">
+                      <i class="nav-icon fa fa-scissors"></i>
+                        <p>Tree Cutting Permit</p>
+                      </a>
+                    </li>
+                  </ul>
+  
+                  {% comment %} <ul class="nav nav-treeview">
+                    <li class="nav-item has-treeview">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fa fa-gear"></i>
+                        <p>
+                          Chainsaw Permit
+                          <i class="fas fa-angle-right right"></i>
+                        </p>
+                      </a>
+  
+                      <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                          <a href="" class="nav-link">
+                          <i class="nav-icon fa fa-file-import"></i>
+                            <p>Permit to Import</p>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a href="" class="nav-link">
+                          <i class="nav-icon fa fa-file-export"></i>
+                            <p>Permit to Sell</p>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a href="" class="nav-link">
+                          <i class="nav-icon fa fa-cart-shopping"></i>
+                            <p>Permit to Purchase</p>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a href="" class="nav-link">
+                          <i class="nav-icon fa fa-file"></i>
+                            <p>Registration</p>
+                          </a>
+                        </li>
+                    </li>
+                  </ul> {% endcomment %}
+                  
+                </li>
+  
+  
+                
+              </li>
+            
+              
+          </ul>
+        </nav>
+        <!-- /.sidebar-menu -->
+      </div>
+      <!-- /.sidebar -->
+    </aside>
+
+    <script>
+      $(document).on('click', '#tcpBtn', function() {
+        $.ajax({
+            type: "POST",
+            url: '/get_session/', // URL to the controller
+            dataType: 'json',  // Expect a JSON response
+            success: function(response) {
+                if (response.status === 'success') {
+                    window.location.href = "https://denrncrsys.online:8003/?session_id=" + response.session_id;
+                } else {
+                    alert('Please Login again.');
+                    window.location.href = "{% url 'index' %}";
+
+                }
+            }
+          });
+
+    });
+    </script>

@@ -1,0 +1,161 @@
+table {
+    table-layout:fixed;
+  }
+  table td {
+    word-wrap: break-word;
+    max-width: 210px;
+    font-weight: normal;
+  }
+  label {
+      color: gray;
+  }
+  input {
+    width: -webkit-fill-available;
+  }
+  body.swal2-shown > [aria-hidden='true'] {
+    transition: 0.1s filter;
+    filter: blur(3px);
+  }
+  
+   /* dropzone */
+   div.dropzone_table {
+      display: table;
+      white-space: nowrap;
+    }
+    div.dropzone_table .file-row {
+      display: table-row;
+    }
+    div.dropzone_table .file-row > div {
+      display: table-cell;
+      vertical-align: top;
+    }
+    div.dropzone_table .file-row:nth-child(odd) {
+      background: #f9f9f9;
+    }
+  .modal-header{
+    background-color: #7E3608 !important;
+    color: #FFF !important;
+  }
+  
+  /* Custom CSS for active tab styling */
+  .nav-tabs .nav-link {
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        color: #495057;
+        border-radius: 5px 5px 0 0;
+      }
+  
+      .nav-tabs .nav-link.active {
+        background-color: #be9a83;
+        color: white;
+        border-color: black;
+      }
+  
+      .tab-content {
+        border: 1px solid #ddd;
+        border-top: none;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 0 0 5px 5px;
+      }
+  
+      /* Hover effect for tabs */
+      .nav-tabs .nav-link:hover {
+        background-color: #e2e6ea;
+      }
+  
+      .card-header{
+        color: #f8f9fa !important;
+        background-color: #7E3608;
+      }
+  
+      .main-sidebar{
+        background-color: #3d1903 !important;
+      }
+  
+      /* dashboard */
+      .carousel-control-prev{
+          background-color: gray; 
+          height: 2vw; 
+          align-self: flex-end;
+      }
+  
+      .carousel-control-next{
+          background-color: gray; 
+          height: 2vw; 
+          align-self: flex-end;
+      }
+  
+     iframe{
+         height: 720px;
+         width: 920px;
+     }
+     .hr-sect {
+      display: flex;
+      flex-basis: 100%;
+      align-items: center;
+      color: green;
+      font-weight: bold;
+      margin: 8px 0px;
+      }
+      .hr-sect:before,
+      .hr-sect:after {
+          content: "";
+          flex-grow: 1;
+          background: rgba(0, 0, 0, 0.35);
+          height: 1.5px;
+          font-size: 0px;
+          line-height: 0px;
+          margin: 8px 0px;
+      }
+   
+      .ann-footer{
+          height: 50px;
+      }
+      /* dashboard end */
+  
+      /* mobile responsive */
+      @media only screen and (max-width: 992px) {
+          body{
+              font-size: 10px;
+          }
+  
+          input[type="text"]{ 
+            font-size: 10px;
+           }
+  
+          textarea { 
+            font-size: 10px !important; 
+          }
+  
+          h4, h6 { 
+            font-size: 10px !important;
+            font-weight: bold !important;
+          }
+  
+          .btn{
+            font-size: 10px !important;
+          }
+  
+  
+          .carousel-control-prev{
+              background-color: gray; 
+              height: 8vw; 
+              width: 100px;
+              align-self: flex-end;
+          }
+  
+          .carousel-control-next{
+              background-color: gray; 
+              height: 8vw; 
+              width: 100px;
+              align-self: flex-end;
+          }
+  
+          .ann-footer{
+              height: 40px;
+          }
+  
+  
+          
+      }

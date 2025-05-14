@@ -1,0 +1,529 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<title>DENR NCR COPS</title>
+{% load static %}  
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+<style>
+   #bg {
+      background-image: url("{% static 'images/background.jpg' %}");
+   }
+</style>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<link rel = "stylesheet" type = "text/css" href = "https://cdn.datatables.net/1.12.0/css/jquery.dataTables.min.css"/>
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
+</head> 
+<body>
+<div class="container">
+   <div class="row">
+      <div id="bg"></div>
+      <div class="container">
+         <!-- Video Section -->
+         <div class="video-container">
+               <h3 style="font-family: Bebas Neue; color: green;">Watch Me First</h3>
+               <video autoplay muted loop controls>
+                  <source src="{% static 'videos/crs_reels.mp4' %}" type="video/mp4">
+                  Your browser does not support the video tag.
+               </video>
+         </div>
+      
+      
+         <!-- Login Form Section -->
+         <div class="form-container">
+               <div style='text-align:center'>
+                  <img src="{% static 'images/denr-logo.png' %}" width='150px' height='150px' alt="Logo" class="brand-image" />
+               </div>
+               <p style="text-align: center; color: green">Department of Environment and Natural Resources<br><span style="color: black">National Capital Region</span></p>
+               <h4 style="align-self:center; text-align:center">Centralized Online Permitting System<br>(COPS)</h4>
+         
+               <input type="text" name="loginUsername" id="loginUsername" class="login-field" placeholder="Username" required>
+               <input type="password" name="loginPassword" id="loginPassword" class="login-field" placeholder="Password" required>
+      
+               <!-- Show/Hide Password Toggle -->
+               <div class="show-password">
+                  <input type="checkbox" id="showPassword" onclick="togglePasswordVisibility()">
+                  <label for="showPassword">Show Password</label>
+               </div>
+               
+               <button type="submit" class="button" id="loginBtn">Login</button>
+      
+               <span>Don't have an account yet? <a href="javascript:void(0)" data-toggle="modal" data-target="#createAccountModal">Create Account</a></span>
+         
+         </div>
+      </div>
+
+      <!-- Modal for Create Account -->
+      <div id="createAccountModal" class="modal fade" tabindex="-1" role="dialog" >
+         <div class="modal-dialog modal-lg">
+               <form id="createAccountForm" enctype="multipart/form-data">
+                  {% csrf_token %}
+                  <div class="modal-content">
+                     <!-- Modal Header -->
+                     <div class="modal-header">
+                           <h5 class="modal-title" id="createAccountModalLabel"><i class="fa fa-user-plus"></i> Create Account</h5>
+                           <button type="button" class="close" data-dismiss="modal" >
+                              <!-- <span aria-hidden="true">&times;</span> -->
+                           </button>
+                     </div>
+
+                     <!-- Modal Body -->
+                     <div class="modal-body">
+                           <!-- Name Fields -->
+                           <div class="form-row">
+                              <div class="form-group">
+                                 <label for="applicantType">Applicant Type</label><span style="color:red">*</span>
+                                 <select class="form-control" id="applicantType" name="applicantType" required>
+                                       <option value="" selected disabled>-- SELECT --</option>
+                                       <option value="1">Individual</option>
+                                       <option value="2">Government</option>
+                                       <option value="3">Institution</option>
+                                 </select>
+                              </div>
+                           </div>
+                           <div class="form-row">
+                              <div class="form-group col-md-4">
+                                 <label for="firstName">First Name</label><span style="color:red">*</span>
+                                 <input type="text" class="form-control" id="firstName" placeholder="Enter First Name" required>
+                              </div>
+                              <div class="form-group col-md-4">
+                                 <label for="middleName">Middle Name</label><span style="color:red">*</span>
+                                 <input type="text" class="form-control" id="middleName" placeholder="Enter Middle Name" required>
+                              </div>
+                              <div class="form-group col-md-4">
+                                 <label for="lastName">Last Name</label><span style="color:red">*</span>
+                                 <input type="text" class="form-control" id="lastName" placeholder="Enter Last Name" required>
+                              </div>
+                           </div>
+
+                           <!-- Birthdate and Gender -->
+                           <div class="form-row">
+                              <div class="form-group col-md-6">
+                                 <label for="birthdate">Birthdate</label><span style="color:red">*</span>
+                                 <input type="date" class="form-control" id="birthdate" required>
+                              </div>
+                              <div class="form-group col-md-6">
+                                 <label for="gender">Gender</label><span style="color:red">*</span>
+                                 <select class="form-control" id="gender" required>
+                                       <option value="" selected disabled>-- SELECT --</option>
+                                       <option value="1">Male</option>
+                                       <option value="2">Female</option>
+                                       <option value="0">Other</option>
+                                 </select>
+                              </div>
+                           </div>
+
+                           <!-- Nationality, Email, Contact No -->
+                           <div class="form-row">
+                              <div class="form-group col-md-4">
+                                 <label for="nationality">Nationality</label><span style="color:red">*</span>
+                                 <select name="nationality" id="nationality" class="form-control" required>
+                                       <option value="" selected disabled>-- SELECT --</option>
+                                       {% for row_nationality in rows_nationality %}
+                                          <option value="{{ row_nationality.0 }}" {% if row_nationality.0 == 175 %}selected{% endif %}>{{ row_nationality.2 }}</option>
+                                       {% endfor %}
+                                 </select>
+                              </div>
+                              <div class="form-group col-md-4">
+                                 <label for="email">Email</label><span style="color:red">*</span>
+                                 <input type="email" class="form-control" id="email" name="email" placeholder="Enter Email" required>
+                              </div>
+                              <div class="form-group col-md-4">
+                                 <label for="contactNo">Contact No</label><span style="color:red">*</span>
+                                 <input type="text" class="form-control" id="contactNo" placeholder="Enter Contact No" required>
+                              </div>
+                           </div>
+
+                           <!-- Address -->
+                           <div class="form-group">
+                              <label for="address">Address</label><span style="color:red">*</span>
+                              <textarea class="form-control" id="address" placeholder="Enter Address" rows="3" required></textarea>
+                           </div>
+
+                           <!-- Username and Password -->
+                           <div class="form-row">
+                              <div class="form-group col-md-6">
+                                 <label for="usernameCreate">Username</label><span style="color:red">*</span>
+                                 <input type="text" class="form-control" id="usernameCreate" placeholder="Enter Username" required>
+                              </div>
+                              <div class="form-group col-md-6">
+                                 <label for="passwordCreate">Password</label><span style="color:red">* <span style="font-size: 10px"><i>(Password must be at least 8 characters long.)</i></span></span> 
+                                 <input type="password" class="form-control" id="passwordCreate" placeholder="Enter Password" required>
+                                 <!-- Show/Hide Password Toggle -->
+                                 <div class="show-password">
+                                       <input type="checkbox" id="showPasswordCreate" onclick="togglePasswordVisibilityCreate()">
+                                       <label for="showPasswordCreate">Show Password</label>
+                                 </div>
+                              </div>
+                              
+                           </div>
+
+                           <!-- ID Information -->
+                           <div class="form-row">
+                              <div class="form-group col-md-6">
+                                 <label for="idType">ID Type</label><span style="color:red">*</span>
+                                 <select name="idType" id="idType" class="form-control" required>
+                                       <option value="" selected disabled>-- SELECT --</option>
+                                       {% for row_id_type in rows_id_type %}
+                                          <option value="{{ row_id_type.0 }}">{{ row_id_type.1 }}</option>
+                                       {% endfor %}
+                                 </select>
+                              </div>
+                              <div class="form-group col-md-6">
+                                 <label for="idNumber">ID Number</label><span style="color:red">*</span>
+                                 <input type="text" class="form-control" id="idNumber" placeholder="Enter ID Number" required>
+                              </div>
+                           </div>
+
+                           <!-- ID Attachments -->
+                           <div class="form-row">
+                              <div class="form-group col-md-6">
+                                 <label for="idFront">ID Front Attachment</label><span style="color:red">*</span>
+                                 <input type="file" class="form-control-file" id="idFront" name="idFront" accept="image/png, image/jpeg" onchange="previewImage(this, 'idFrontPreview')" required>
+                                 <div class="preview-container" id="idFrontPreview"></div>
+                              </div>
+                              <div class="form-group col-md-6">
+                                 <label for="idBack">ID Back Attachment</label><span style="color:red">*</span>
+                                 <input type="file" class="form-control-file" id="idBack" name="idBack" accept="image/png, image/jpeg" onchange="previewImage(this, 'idBackPreview')" required>
+                                 <div class="preview-container" id="idBackPreview"></div>
+                              </div>
+                           </div>
+                     </div>
+
+                     <!-- Modal Footer -->
+                     <div class="modal-footer">
+                           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                           <button type="button" class="btn btn-primary" id="createAccountBtn">Create Account</button>
+                     </div>
+                  </div>
+               </form>
+         </div>
+      </div>
+   </div>
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src = "https://cdn.datatables.net/1.12.0/js/jquery.dataTables.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<script>
+   function togglePasswordVisibility() {
+         var passwordField = document.getElementById('loginPassword'); // Get the password input field
+         var showPasswordCheckbox = document.getElementById('showPassword'); // Get the checkbox
+         // Check if the checkbox is checked
+         if (showPasswordCheckbox.checked) {
+            passwordField.type = 'text'; // Change input type to 'text' to show the password
+         } else {
+            passwordField.type = 'password'; // Change input type back to 'password' to hide the password
+         }
+   }
+
+   function togglePasswordVisibilityCreate() {
+         var passwordField = document.getElementById('passwordCreate'); // Get the password input field
+         var showPasswordCheckbox = document.getElementById('showPasswordCreate'); // Get the checkbox
+
+         // Check if the checkbox is checked
+         if (showPasswordCheckbox.checked) {
+            passwordField.type = 'text'; // Change input type to 'text' to show the password
+         } else {
+            passwordField.type = 'password'; // Change input type back to 'password' to hide the password
+         }
+   }
+
+   // Function to preview image and add remove button
+   function previewImage(input, previewId) {
+         var file = input.files[0];
+         var reader = new FileReader();
+
+         reader.onload = function (e) {
+            var imgElement = document.createElement('img');
+            imgElement.src = e.target.result;
+            imgElement.classList.add('img-fluid');
+            var previewContainer = document.getElementById(previewId);
+            previewContainer.innerHTML = ''; // Clear previous preview
+            previewContainer.appendChild(imgElement);
+
+            // Create Remove button
+            var removeBtn = document.createElement('button');
+            removeBtn.textContent = '×';
+            removeBtn.classList.add('remove-btn');
+            removeBtn.onclick = function() {
+               input.value = ''; // Clear the input file
+               previewContainer.innerHTML = ''; // Clear the preview
+            };
+
+            previewContainer.appendChild(removeBtn);
+         };
+
+         if (file) {
+            reader.readAsDataURL(file);
+         }
+   }
+
+   function validateForm() {
+         // Gather input values
+         var applicantType = $('#applicantType').val();
+         var firstName = $('#firstName').val();
+         var middleName = $('#middleName').val();
+         var lastName = $('#lastName').val();
+         var birthdate = $('#birthdate').val();
+         var gender = $('#gender').val();
+         var nationality = $('#nationality').val();
+         var email = $('#email').val();
+         var contactNo = $('#contactNo').val();
+         var address = $('#address').val();
+         var usernameCreate = $('#usernameCreate').val();
+         var passwordCreate = $('#passwordCreate').val();
+         var idType = $('#idType').val();
+         var idNumber = $('#idNumber').val();
+         var idFront = $('#idFront').val();
+         var idBack = $('#idBack').val();
+
+         // Check if any field is empty
+         if (!applicantType || !firstName || !middleName || !lastName || !birthdate || !gender || !nationality || !email || !contactNo || !address || !usernameCreate || !passwordCreate || !idType || !idNumber || !idFront || !idBack) {
+            if (!applicantType) { $("#applicantType").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!firstName) { $("#firstName").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!middleName) { $("#middleName").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!lastName) { $("#lastName").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!birthdate) { $("#birthdate").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!gender) { $("#gender").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!nationality) { $("#nationality").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!email) { $("#email").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!contactNo) { $("#contactNo").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!address) { $("#address").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!usernameCreate) { $("#usernameCreate").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!passwordCreate) { $("#passwordCreate").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!idType) { $("#idType").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!idNumber) { $("#idNumber").css({'border-color': 'red', 'border-width': '2px'}) }
+            if (!idFront) { $("#idFront").css({'border-color': 'red', 'border-width': '2px',  'border-style': 'solid'}) }
+            if (!idBack) { $("#idBack").css({'border-color': 'red', 'border-width': '2px',  'border-style': 'solid'}) }
+
+            return { success: false, message: "Please fill in all required fields." };
+         }
+
+         // Check password length and username length
+         if ((passwordCreate.length < 8) || (usernameCreate.length < 8)) {
+            return { success: false, message: "Username and Password must be at least 8 characters." };
+         }
+
+         // Validate email format
+         var emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+         if (!emailPattern.test(email)) {
+            return { success: false, message: "Please enter a valid email address." };
+         }
+
+         // If all validations pass
+         return { success: true, message: "Validation successful." };
+   }
+
+   function checkExists() {
+         return new Promise((resolve, reject) => {
+            var usernameCreate = $('#usernameCreate').val();
+            var contactNo = $('#contactNo').val();
+            var email = $('#email').val();
+
+            // Create AJAX call to check if username, email, or contact number exists
+            $.ajax({
+               type: "POST",
+               url: '/check_existing/', // Endpoint to check if the data exists
+               data: {
+                     usernameCreate: usernameCreate,
+                     contactNo: contactNo,
+                     email: email,
+                     csrfmiddlewaretoken: '{{ csrf_token }}'
+               },
+               dataType: 'json',
+               success: function(response) {
+                     if (response.usernameExists) {
+                        reject({ success: false, message: 'Username already exists!', field: 'usernameCreate' });
+                     } else if (response.contactNoExists) {
+                        reject({ success: false, message: 'Contact number already exists!', field: 'contactNo' });
+                     } else if (response.emailExists) {
+                        reject({ success: false, message: 'Email already exists!', field: 'email' });
+                     } else {
+                        resolve({ success: true, message: 'No existing user details found.' });
+                     }
+               },
+               error: function() {
+                     reject({ success: false, message: 'Error checking existing details.' });
+               }
+            });
+         });
+   }
+
+   $(document).on('click', '#loginBtn', function() {
+
+         var username = $('#loginUsername').val();
+         var password = $('#loginPassword').val();
+
+         if (username === "" || password === "") {
+            Swal.fire({
+               title: "Error",
+               text: "Please fill in all fields.",
+               icon: "error",
+               confirmButtonColor: "#d33",
+            });
+            return;
+         }
+
+         $.ajax({
+            type: "POST",
+            url: "{% url 'login' %}",
+            data: {
+               username: username,
+               password: password,
+               csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+               if (response.success) {
+                  Swal.fire({
+                     icon: "success",
+                     title: "Success",
+                     text: response.message,
+                   }).then(function() {
+                     window.location.href = response.redirect_url;
+                  });
+               } else {
+                     Swal.fire({
+                        title: "Error",
+                        text: response.message,
+                        icon: "error",
+                        confirmButtonColor: "#d33",
+                     });
+               }
+            },
+            error: function(xhr, status, error) {
+               Swal.fire({
+                     title: "Error",
+                     text: "There was an error while processing your request. Please try again later.",
+                     icon: "error",
+                     confirmButtonColor: "#d33",
+               });
+            }
+         });
+   });
+
+   $(document).on('click', '#createAccountBtn', function() {
+         // Reset the border color
+         $("#applicantType, #firstName, #middleName, #lastName, #birthdate, #gender, #nationality, #email, #contactNo, #address, #usernameCreate, #passwordCreate, #idType, #idNumber, #idFront, #idBack").css({'border-color': '', 'border-width': ''});
+
+         var validation = validateForm();
+
+         if (!validation.success) {
+            Swal.fire({
+               title: "Error",
+               text: validation.message,
+               icon: "error",
+               confirmButtonColor: "#d33",
+            });
+            return;
+         }
+
+         // Proceed with the existence check
+         checkExists().then((exists) => {
+            Swal.fire({
+               title: "Confirm.",
+               text: "Are you sure you want to create a new Account?",
+               icon: "question",
+               showCancelButton: true,
+               confirmButtonColor: "#008000",
+               cancelButtonColor: "#d33",
+               confirmButtonText: "Confirm",
+            }).then((result) => {
+               if (result.isConfirmed) {
+                     var formElement = document.getElementById("createAccountForm");
+                     var formData = new FormData(formElement);
+                     formData.append('applicantType', $('#applicantType').val());
+                     formData.append('firstName', $('#firstName').val());
+                     formData.append('middleName', $('#middleName').val());
+                     formData.append('lastName', $('#lastName').val());
+                     formData.append('birthdate', $('#birthdate').val());
+                     formData.append('gender', $('#gender').val());
+                     formData.append('nationality', $('#nationality').val());
+                     formData.append('email', $('#email').val());
+                     formData.append('contactNo', $('#contactNo').val());
+                     formData.append('address', $('#address').val());
+                     formData.append('usernameCreate', $('#usernameCreate').val());
+                     formData.append('passwordCreate', $('#passwordCreate').val());
+                     formData.append('idType', $('#idType').val());
+                     formData.append('idNumber', $('#idNumber').val());
+                     formData.append('idFront', $('#idFront').val());
+                     formData.append('idBack', $('#idBack').val());
+
+                     $.ajax({
+                        data: formData,
+                        type: "POST",
+                        url: "{% url 'create_account' %}",
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        crossOrigin: false,
+                        headers: {
+                           'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        success: function(response) {
+                           if (response.success) {
+                                 Swal.fire({
+                                    icon: "success",
+                                    title: "Success",
+                                    html: "Your account has been successfully created. Please allow up to 3 working days for the evaluation process.",
+                                 }).then(function() {
+                                    location.reload();
+                                 });
+                           } else {
+                                 Swal.fire({
+                                    icon: "error",
+                                    title: "Error",
+                                    text: response.message,
+                                 });
+                           }
+                        },
+                        error: function(xhr, status, error) {
+                           Swal.fire({
+                                 icon: "error",
+                                 title: "Error",
+                                 text: "There was an error while processing your request. Please try again later.",
+                           });
+                        }
+                     });
+               }
+            });
+         }).catch((exists) => {
+            Swal.fire({
+               title: "Error",
+               text: exists.message,
+               icon: "error",
+               confirmButtonColor: "#d33",
+            });
+
+            $("#" + exists.field).css({'border-color': 'red', 'border-width': '2px'});
+         });
+   });
+
+   $(document).on('keydown', '#loginUsername, #loginPassword', function(event) {
+      if (event.keyCode === 13) {  // Enter key code is 13
+          event.preventDefault();  // Prevent the default action (form submission)
+          $('#loginBtn').click();  // Trigger the click event for the login button
+      }
+  });
+
+   {% if error %}
+         Swal.fire({
+            title: "Authentication Required",
+            text: "{{ error }}",
+            icon: "warning",
+            confirmButtonColor: "#3085d6"
+         });
+         window.history.replaceState(null, "", "/");
+   {% endif %}
+</script>
+
+</body> 
+</html>
