@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from crs import views
+from cps import views as cps_views
 from crs import views_permittee
 from django.conf import settings
 from django.conf.urls.static import static
@@ -45,6 +46,12 @@ urlpatterns = [
     path('permittee_list_json', views_permittee.permittee_list_json, name='permittee_list_json'), 
     path('add_permittee', views_permittee.add_permittee, name='add_permittee'),
     
+    
+    
+    #chainsaw_permit_system
+    #import
+    path('cps/apply', cps_views.index, name='import_apply'),
+    path('submit-import/', cps_views.submit_import, name='submit_import'),
     
 ]
 

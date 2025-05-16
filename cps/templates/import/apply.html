@@ -1,0 +1,207 @@
+{% extends 'includes/base.html' %}
+{% load static %}
+
+{% block title %}DENR NCR Client Portal{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+
+    <!-- Header with Logo and Title -->
+    <div class="text-center mb-4">
+        <img src="{% static 'images/denr-logo.png' %}" alt="DENR Logo" style="height: 90px;">
+        <h4 class="mt-2 fw-bold text-uppercase text-success">Department of Environment and Natural Resources</h4>
+        <h5 class="text-muted">National Capital Region</h5>
+        <hr class="mt-4">
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body px-4 py-5">
+
+            <!-- Title -->
+            <h4 class="text-center text-primary mb-4 fw-semibold">
+                Permit to Import Chainsaw Application
+            </h4>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-4" id="formTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="form-tab" data-bs-toggle="tab" data-bs-target="#form-section" type="button" role="tab">
+                        Application Form
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="attachments-tab" data-bs-toggle="tab" data-bs-target="#attachments-section" type="button" role="tab">
+                        Attachments
+                    </button>
+                </li>
+            </ul>
+
+            <form id="chainsawImportForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="tab-content" id="formTabsContent">
+                    <!-- Application Form Tab -->
+                    <div class="tab-pane fade show active" id="form-section" role="tabpanel">
+                        <!-- Brand -->
+                        <div class="mb-4">
+                            <label for="brand" class="form-label">Brand <span class="text-danger">*</span></label>
+                            <select id="brand" name="brand" class="form-select" required>
+                                <option value="" disabled selected>-- Select Brand --</option>
+                                {% for brand in brands %}
+                                    <option value="{{ brand.name }}">{{ brand.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Model & Quantity -->
+                        <div class="mb-4">
+                            <label class="form-label">Model & Quantity <span class="text-danger">*</span></label>
+                            <small class="text-muted d-block mb-2">Click "Add More" to list multiple models.</small>
+                            <div id="model-quantity-list">
+                                <div class="row g-2 mb-2 model-quantity-item">
+                                    <div class="col-md-6">
+                                        <input type="text" name="model[]" class="form-control" placeholder="Model" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" id="add-row" class="btn btn-outline-secondary btn-sm mt-2">+ Add More</button>
+                        </div>
+
+                        <!-- Origin/Supplier -->
+                        <div class="mb-4">
+                            <label for="origin" class="form-label">Country of Origin / Supplier <span class="text-danger">*</span></label>
+                            <input type="text" id="origin" name="origin" class="form-control" placeholder="e.g., Japan / ABC Tools Ltd." required>
+                        </div>
+
+                        <!-- Purpose -->
+                        <div class="mb-4">
+                            <label for="purpose" class="form-label">Purpose <span class="text-danger">*</span></label>
+                            <select id="purpose" name="purpose" class="form-select" required>
+                                <option value="" disabled selected>-- Select Purpose --</option>
+                                <option value="Distribution/Sale">Distribution / Sale</option>
+                                <option value="Personal/Legal Use">Personal / Legal Use</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Attachments Tab -->
+                    <div class="tab-pane fade" id="attachments-section" role="tabpanel">
+                        <div class="mb-4">
+                            <label class="form-label">Business Name Registration (DTI/SEC with GIS) <span class="text-danger">*</span></label>
+                            <input type="file" name="dti_sec" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Purchase Order <span class="text-danger">*</span></label>
+                            <input type="file" name="purchase_order" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Affidavit for Legal Purpose <span class="text-danger">*</span></label>
+                            <input type="file" name="affidavit" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Geotag Photos (with visible serial number) <span class="text-danger">*</span></label>
+                            <input type="file" name="geotag_photos" class="form-control" accept=".jpg,.jpeg,.png" multiple >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-success px-4">Submit Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for dynamic Model/Quantity rows -->
+<script>
+document.getElementById('add-row').addEventListener('click', function () {
+    const container = document.getElementById('model-quantity-list');
+    const newRow = document.createElement('div');
+    newRow.className = 'row g-2 mb-2 model-quantity-item';
+    newRow.innerHTML = `
+        <div class="col-md-6">
+            <input type="text" name="model[]" class="form-control" placeholder="Model" required>
+        </div>
+        <div class="col-md-4">
+            <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1" required>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
+        </div>
+    `;
+    container.appendChild(newRow);
+});
+
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('remove-row')) {
+        e.target.closest('.model-quantity-item').remove();
+    }
+});
+
+$(document).on('submit', '#chainsawImportForm', function (e) {
+    e.preventDefault(); // prevent default form submission
+
+    Swal.fire({
+        title: "Confirm Submission",
+        text: "Are you sure you want to submit this application?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#198754",  // Bootstrap success green
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, submit it"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let form = $('#chainsawImportForm')[0];
+            let formData = new FormData(form);
+
+            $.ajax({
+                url: "{% url 'submit_import' %}",  // 🔁 Replace with actual Django URL name
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Application Submitted",
+                            text: response.message,
+                        }).then(() => {
+                            window.location.reload(); // or redirect
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Submission Failed",
+                            text: response.message || "Something went wrong.",
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Server Error",
+                        text: "An error occurred. Please try again later.",
+                    });
+                }
+            });
+        }
+    });
+});
+
+</script>
+{% endblock %}

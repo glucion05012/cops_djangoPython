@@ -82,7 +82,7 @@
                     </li>
                   </ul>
   
-                  {% comment %} <ul class="nav nav-treeview">
+                  <ul class="nav nav-treeview">
                     <li class="nav-item has-treeview">
                       <a href="#" class="nav-link">
                         <i class="nav-icon fa fa-gear"></i>
@@ -94,12 +94,12 @@
   
                       <ul class="nav nav-treeview">
                         <li class="nav-item">
-                          <a href="" class="nav-link">
+                          <a href="{% url 'import_apply' %}" class="nav-link">
                           <i class="nav-icon fa fa-file-import"></i>
                             <p>Permit to Import</p>
                           </a>
                         </li>
-                        <li class="nav-item">
+                        {% comment %} <li class="nav-item">
                           <a href="" class="nav-link">
                           <i class="nav-icon fa fa-file-export"></i>
                             <p>Permit to Sell</p>
@@ -116,9 +116,9 @@
                           <i class="nav-icon fa fa-file"></i>
                             <p>Registration</p>
                           </a>
-                        </li>
+                        </li> {% endcomment %}
                     </li>
-                  </ul> {% endcomment %}
+                  </ul>
                   
                 </li>
   
