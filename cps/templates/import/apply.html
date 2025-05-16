@@ -45,12 +45,13 @@
                         <!-- Brand -->
                         <div class="mb-4">
                             <label for="brand" class="form-label">Brand <span class="text-danger">*</span></label>
-                            <select id="brand" name="brand" class="form-select" required>
+                            <select id="brand" name="brand" class="form-select">
                                 <option value="" disabled selected>-- Select Brand --</option>
                                 {% for brand in brands %}
                                     <option value="{{ brand.name }}">{{ brand.name }}</option>
                                 {% endfor %}
                             </select>
+                            <div class="invalid-feedback">Please select a brand.</div>
                         </div>
 
                         <!-- Model & Quantity -->
@@ -60,10 +61,10 @@
                             <div id="model-quantity-list">
                                 <div class="row g-2 mb-2 model-quantity-item">
                                     <div class="col-md-6">
-                                        <input type="text" name="model[]" class="form-control" placeholder="Model" required>
+                                        <input type="text" name="model[]" class="form-control" placeholder="Model">
                                     </div>
                                     <div class="col-md-4">
-                                        <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1" required>
+                                        <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1">
                                     </div>
                                     <div class="col-md-2">
                                         <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
@@ -76,17 +77,18 @@
                         <!-- Origin/Supplier -->
                         <div class="mb-4">
                             <label for="origin" class="form-label">Country of Origin / Supplier <span class="text-danger">*</span></label>
-                            <input type="text" id="origin" name="origin" class="form-control" placeholder="e.g., Japan / ABC Tools Ltd." required>
+                            <input type="text" id="origin" name="origin" class="form-control" placeholder="e.g., Japan / ABC Tools Ltd.">
                         </div>
 
                         <!-- Purpose -->
                         <div class="mb-4">
                             <label for="purpose" class="form-label">Purpose <span class="text-danger">*</span></label>
-                            <select id="purpose" name="purpose" class="form-select" required>
+                            <select id="purpose" name="purpose" class="form-select">
                                 <option value="" disabled selected>-- Select Purpose --</option>
                                 <option value="Distribution/Sale">Distribution / Sale</option>
                                 <option value="Personal/Legal Use">Personal / Legal Use</option>
                             </select>
+                            <div class="invalid-feedback">Please select a purpose.</div>
                         </div>
                     </div>
 
@@ -131,10 +133,10 @@ document.getElementById('add-row').addEventListener('click', function () {
     newRow.className = 'row g-2 mb-2 model-quantity-item';
     newRow.innerHTML = `
         <div class="col-md-6">
-            <input type="text" name="model[]" class="form-control" placeholder="Model" required>
+            <input type="text" name="model[]" class="form-control" placeholder="Model">
         </div>
         <div class="col-md-4">
-            <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1" required>
+            <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1">
         </div>
         <div class="col-md-2">
             <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
@@ -150,23 +152,85 @@ document.addEventListener('click', function (e) {
 });
 
 $(document).on('submit', '#chainsawImportForm', function (e) {
-    e.preventDefault(); // prevent default form submission
+    e.preventDefault();
 
+    // Clear previous error styles
+    $('#chainsawImportForm input, #chainsawImportForm select').removeClass('is-invalid');
+
+    let hasError = false;
+    let firstErrorTab = null;
+
+    // Validate Brand dropdown
+    if (!$('#brand').val()) {
+        $('#brand').addClass('is-invalid');
+        hasError = true;
+        firstErrorTab = 'form-section';
+    }
+
+    // Validate Purpose dropdown
+    if (!$('#purpose').val()) {
+        $('#purpose').addClass('is-invalid');
+        hasError = true;
+        firstErrorTab = 'form-section';
+    }
+
+    // Validate Origin
+    const origin = $('#origin');
+    if (!origin.val().trim()) {
+        origin.addClass('is-invalid');
+        hasError = true;
+        firstErrorTab = 'form-section';
+    }
+
+    // Validate Model and Quantity rows
+    $('#model-quantity-list .model-quantity-item').each(function () {
+        const model = $(this).find('input[name="model[]"]');
+        const qty = $(this).find('input[name="quantity[]"]');
+
+        if (!model.val().trim()) {
+            model.addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        if (!qty.val() || parseInt(qty.val()) < 1) {
+            qty.addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+    });
+
+    // Validate file inputs
+    $('#attachments-section input[type="file"]').each(function () {
+        if (!$(this).val()) {
+            $(this).addClass('is-invalid');
+            hasError = true;
+            if (!firstErrorTab) firstErrorTab = 'attachments-section';
+        }
+    });
+
+    // If there's an error, switch to the tab
+    if (hasError) {
+        $(`#formTabs button[data-bs-target="#${firstErrorTab}"]`).tab('show');
+        return;
+    }
+
+    // Confirm submission
     Swal.fire({
         title: "Confirm Submission",
         text: "Are you sure you want to submit this application?",
         icon: "question",
         showCancelButton: true,
-        confirmButtonColor: "#198754",  // Bootstrap success green
+        confirmButtonColor: "#198754",
         cancelButtonColor: "#d33",
         confirmButtonText: "Yes, submit it"
     }).then((result) => {
         if (result.isConfirmed) {
-            let form = $('#chainsawImportForm')[0];
-            let formData = new FormData(form);
+            const form = $('#chainsawImportForm')[0];
+            const formData = new FormData(form);
 
             $.ajax({
-                url: "{% url 'submit_import' %}",  // 🔁 Replace with actual Django URL name
+                url: "{% url 'submit_import' %}",
                 type: "POST",
                 data: formData,
                 processData: false,
@@ -181,7 +245,7 @@ $(document).on('submit', '#chainsawImportForm', function (e) {
                             title: "Application Submitted",
                             text: response.message,
                         }).then(() => {
-                            window.location.reload(); // or redirect
+                            window.location.reload();
                         });
                     } else {
                         Swal.fire({
@@ -191,7 +255,7 @@ $(document).on('submit', '#chainsawImportForm', function (e) {
                         });
                     }
                 },
-                error: function (xhr, status, error) {
+                error: function () {
                     Swal.fire({
                         icon: "error",
                         title: "Server Error",
