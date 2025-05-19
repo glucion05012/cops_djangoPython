@@ -70,7 +70,9 @@ def submit_import(request):
                     estab_name = request.POST.get('estab_name'),
                     remarks = 'New Application',
                     arrival_date=request.POST.get('arrival_date'),
-                    is_existing_permittee=request.POST.get('is_existing_permittee') == '1'
+                    is_existing_permittee=request.POST.get('is_existing_permittee') == '1',
+                    warehouse_city = request.POST.get('warehouse_city'),
+                    warehouse_address = request.POST.get('warehouse_address')
                 )
                 
                 # ✅ Generate and save reference number

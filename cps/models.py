@@ -40,6 +40,8 @@ class CHImport(models.Model):
     survey = models.TextField(blank=True, null=True)
     arrival_date = models.DateField(blank=True, null=True)
     is_existing_permittee = models.BooleanField(default=False)
+    warehouse_city = models.TextField(blank=True, null=True)
+    warehouse_address = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Import #{self.id} - {self.brand.name}"
