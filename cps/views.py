@@ -124,7 +124,6 @@ def submit_import(request):
                 save_files(request.FILES.getlist('dti_sec'), 'dti_sec', 'dti')
                 save_files(request.FILES.getlist('purchase_order'), 'purchase_order', 'purchase_orders')
                 save_files(request.FILES.getlist('affidavit'), 'affidavit', 'affidavits')
-                save_files(request.FILES.getlist('geotag_photos'), 'geotag_photo', 'geotag_photos')
 
                 return JsonResponse({'success': True, 'message': 'Application submitted successfully.'})
 

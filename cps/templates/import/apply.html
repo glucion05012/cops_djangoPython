@@ -187,25 +187,24 @@
 
                     <!-- Attachments Tab -->
                     <div class="tab-pane fade" id="attachments-section" role="tabpanel">
+                        {% if request.session.app_type == "3" %}
                         <div class="mb-4">
                             <label class="form-label">Business Name Registration (DTI/SEC with GIS) <span class="text-danger">*</span></label>
                             <input type="file" name="dti_sec" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
                         </div>
+                        {% endif %}
 
                         <div class="mb-4">
-                            <label class="form-label">Purchase Order <span class="text-danger">*</span></label>
+                            <label class="form-label">Purchase Order<span class="text-danger">*</span></label>
                             <input type="file" name="purchase_order" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
                         </div>
 
+                        {% if request.session.app_type == "1" or request.session.app_type == "2" %}
                         <div class="mb-4">
                             <label class="form-label">Affidavit for Legal Purpose <span class="text-danger">*</span></label>
                             <input type="file" name="affidavit" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
                         </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">Geotag Photos (with visible serial number) <span class="text-danger">*</span></label>
-                            <input type="file" name="geotag_photos" class="form-control" accept=".jpg,.jpeg,.png" multiple >
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
 
