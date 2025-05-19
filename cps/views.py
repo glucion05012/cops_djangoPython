@@ -68,7 +68,9 @@ def submit_import(request):
                     estab_email = request.POST.get('estab_email'),
                     estab_id_dniis = request.POST.get('estab_id_dniis'),
                     estab_name = request.POST.get('estab_name'),
-                    remarks = 'New Application'
+                    remarks = 'New Application',
+                    arrival_date=request.POST.get('arrival_date'),
+                    is_existing_permittee=request.POST.get('is_existing_permittee') == '1'
                 )
                 
                 # ✅ Generate and save reference number

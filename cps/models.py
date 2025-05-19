@@ -38,6 +38,8 @@ class CHImport(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     evaluator_id = models.CharField(max_length=100)  # Required
     survey = models.TextField(blank=True, null=True)
+    arrival_date = models.DateField(blank=True, null=True)
+    is_existing_permittee = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Import #{self.id} - {self.brand.name}"

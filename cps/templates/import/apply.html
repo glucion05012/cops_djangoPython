@@ -43,6 +43,14 @@
                     <!-- Application Form Tab -->
                     <div class="tab-pane fade show active" id="form-section" role="tabpanel">
 
+                        <label for="is_existing_permittee" class="form-label">Application Type <span class="text-danger">*</span></label>
+                        <select name="is_existing_permittee" id="is_existing_permittee" class="form-select">
+                            <option value="" disabled selected>-- Select --</option>
+                            <option value="0">New Permittee</option>
+                            <option value="1" >Existing Permittee</option>
+                        </select>
+                        <div class="invalid-feedback">Please select Application Type.</div>
+                        
                         <!-- Permittee Name -->
                         <div class="mb-4">
                             <div class="hr-sect">General Information</div>
@@ -127,6 +135,11 @@
                             <input type="text" id="origin" name="origin" class="form-control" placeholder="e.g., Japan / ABC Tools Ltd.">
                         </div>
 
+                        <div class="mb-4">
+                            <label for="arrival_date" class="form-label">Expected Time of Arrival <span class="text-danger">*</span></label>
+                            <input type="date" id="arrival_date" name="arrival_date" class="form-control">
+                        </div>
+
                         <!-- Purpose -->
                         <div class="mb-4">
                             <label for="purpose" class="form-label">Purpose <span class="text-danger">*</span></label>
@@ -207,6 +220,18 @@ $(document).on('submit', '#chainsawImportForm', function (e) {
     let hasError = false;
     let firstErrorTab = null;
 
+    if (!$('#is_existing_permittee').val()) {
+        $('#is_existing_permittee').addClass('is-invalid');
+        hasError = true;
+        firstErrorTab = 'form-section';
+    }
+
+    if (!$('#establishment').val()) {
+        $('#establishment').addClass('is-invalid');
+        hasError = true;
+        firstErrorTab = 'form-section';
+    }
+
     // Validate Brand dropdown
     if (!$('#brand').val()) {
         $('#brand').addClass('is-invalid');
@@ -228,6 +253,14 @@ $(document).on('submit', '#chainsawImportForm', function (e) {
         hasError = true;
         firstErrorTab = 'form-section';
     }
+
+    const arrival_date = $('#arrival_date');
+    if (!arrival_date.val().trim()) {
+        arrival_date.addClass('is-invalid');
+        hasError = true;
+        firstErrorTab = 'form-section';
+    }
+    
 
     // Validate Model and Quantity rows
     $('#model-quantity-list .model-quantity-item').each(function () {
