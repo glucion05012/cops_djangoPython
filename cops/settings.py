@@ -96,6 +96,14 @@ DATABASES = {
         'PASSWORD': '$2y$10$K1hW8Cz/7q6P7T1LJZlUIOV5m3PjJThHyZJndcGziUURCgBzUpU2e',
         'HOST': 'localhost',  # Or the host of the other MariaDB server
         'PORT': '3306',  # Default port for MariaDB
+    },
+    'tcp_db': {
+        'ENGINE': 'django.db.backends.mysql',  # For MariaDB, use MySQL engine
+        'NAME': 'denrncr_tcp',
+        'USER': 'root',
+        'PASSWORD': '$2y$10$K1hW8Cz/7q6P7T1LJZlUIOV5m3PjJThHyZJndcGziUURCgBzUpU2e',
+        'HOST': 'localhost',  # Or the host of the other MariaDB server
+        'PORT': '3306',  # Default port for MariaDB
     }
 }
 

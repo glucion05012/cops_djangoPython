@@ -39,6 +39,7 @@ urlpatterns = [
     # dashbaord
     path('dashboard/', views.dashboard, name='dashboard'),
     path('myapplications/', views.myApplications, name='myApplications'),
+    path('list', views.application_list_json, name='application_list_json'), 
     
     
     # permittee enrollment

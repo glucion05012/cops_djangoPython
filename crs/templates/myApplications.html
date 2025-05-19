@@ -30,15 +30,17 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "{% url 'permittee_list_json' %}",
+                    "url": "{% url 'application_list_json' %}",
                     "type": "POST",
                     "headers": { "X-CSRFToken": "{{ csrf_token }}" }
                 },
                 "columns": [
-                    { "data": "permittee_name" },
-                    { "data": "address" },
-                    { "data": "email" },
-                    { "data": "contact_no" }
+                    { "data": "permit_type" },
+                    { "data": "estab_name" },
+                    { "data": "reference_no" },
+                    { "data": "date_applied" },
+                    { "data": "status" },
+                    { "data": "client_remarks" },
                 ]
             });
         });

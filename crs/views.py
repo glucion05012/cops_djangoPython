@@ -327,3 +327,139 @@ def get_session(request):
                 })
 
     return JsonResponse({'status': 'fail', 'message': 'Please login again.'})
+
+@csrf_exempt
+def application_list_json(request):
+    user_id = request.session.get('user_id')
+
+    draw = int(request.POST.get('draw', 1))
+    start = int(request.POST.get('start', 0))
+    length = int(request.POST.get('length', 10))
+    search_value = request.POST.get('search[value]', '').strip()
+    order_column = int(request.POST.get('order[0][column]', 0))
+    order_dir = request.POST.get('order[0][dir]', 'asc')
+
+    # You can change the column ordering if needed
+    column_names = [
+        'permit_type',
+        'estab_name',
+        'reference_no',
+        'date_applied',
+        'status',
+        'client_remarks',
+    ]
+    sort_column = column_names[order_column] if order_column < len(column_names) else 'a.id'
+
+    with connections['tcp_db'].cursor() as cursor:
+        # Total records
+        cursor.execute("SELECT COUNT(*) FROM app_tcp")
+        total_records = cursor.fetchone()[0]
+
+        # Main query with filtering
+        filter_sql = ""
+        filter_params = []
+
+        if search_value:
+            filter_sql = """
+                AND (
+                    b.address LIKE %s OR
+                    c.client_remarks LIKE %s OR
+                    c.client_notes LIKE %s
+                )
+            """
+            like_search = f"%{search_value}%"
+            filter_params.extend([like_search] * 3)
+
+        base_query = f"""
+            SELECT 
+                a.*,
+                b.address AS tree_address, 
+                b.longitude, 
+                b.latitude,
+                c.client_remarks,
+                c.client_notes,
+                c.client_id,
+                c.forwarded_to_id,
+                d.action_officer_id,
+                y.date_paid
+            FROM app_tcp a 
+            LEFT JOIN tree_location b ON a.tree_location_id = b.id
+            LEFT JOIN (
+                SELECT 
+                    id AS client_id, 
+                    app_id, 
+                    forwarded_to_id, 
+                    remarks AS client_remarks, 
+                    notes AS client_notes
+                FROM app_application 
+                WHERE id IN (
+                    SELECT MAX(id) FROM app_application GROUP BY app_id
+                )
+            ) AS c ON c.app_id = a.id
+            LEFT JOIN (
+                SELECT 
+                    id AS nr_id, 
+                    app_id, 
+                    action_officer_id
+                FROM tcp_narrative_report 
+                WHERE id IN (
+                    SELECT MAX(id) FROM tcp_narrative_report GROUP BY app_id
+                )
+            ) AS d ON d.app_id = a.id
+            LEFT JOIN (
+                SELECT 
+                    app_id, 
+                    date_paid
+                FROM payment 
+                WHERE id IN (
+                    SELECT MAX(id) FROM payment GROUP BY app_id
+                )
+            ) AS y ON y.app_id = a.id
+            WHERE c.forwarded_to_id = %s {filter_sql}
+            ORDER BY {sort_column} {order_dir}
+            LIMIT %s OFFSET %s
+        """
+
+        params = [user_id] + filter_params + [length, start]
+        cursor.execute(base_query, params)
+
+        rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
+        
+        data = []
+        for row in rows:
+            row_dict = dict(zip(columns, row))
+            
+            # Ensure permit_type is uppercase
+            if 'permit_type' in row_dict and row_dict['permit_type']:
+                row_dict['permit_type'] = row_dict['permit_type'].upper()
+
+            # Show reference_no_new if available, otherwise reference_no
+            if 'reference_no_new' in row_dict and row_dict['reference_no_new']:
+                row_dict['reference_no'] = row_dict['reference_no_new']
+                
+            data.append(row_dict)
+
+        # Total filtered count
+        if search_value:
+            cursor.execute(f"""
+                SELECT COUNT(*) FROM app_tcp a 
+                LEFT JOIN tree_location b ON a.tree_location_id = b.id
+                LEFT JOIN (
+                    SELECT id AS client_id, app_id, forwarded_to_id, remarks AS client_remarks, notes AS client_notes
+                    FROM app_application WHERE id IN (
+                        SELECT MAX(id) FROM app_application GROUP BY app_id
+                    )
+                ) AS c ON c.app_id = a.id
+                WHERE c.forwarded_to_id = %s {filter_sql}
+            """, [user_id] + filter_params)
+            total_filtered = cursor.fetchone()[0]
+        else:
+            total_filtered = total_records
+
+    return JsonResponse({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_filtered,
+        'data': data
+    })
