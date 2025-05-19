@@ -292,7 +292,7 @@ $(document).on('submit', '#chainsawImportForm', function (e) {
                             title: "Application Submitted",
                             text: response.message,
                         }).then(() => {
-                            window.location.reload();
+                            window.location.href = "/myapplications/";
                         });
                     } else {
                         Swal.fire({
