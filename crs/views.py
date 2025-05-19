@@ -352,7 +352,17 @@ def application_list_json(request):
 
     with connections['tcp_db'].cursor() as cursor:
         # Total records
-        cursor.execute("SELECT COUNT(*) FROM app_tcp")
+        cursor.execute("""
+            SELECT COUNT(*) FROM app_tcp a
+            LEFT JOIN (
+                SELECT id AS client_id, app_id, forwarded_to_id, remarks AS client_remarks, notes AS client_notes
+                FROM app_application 
+                WHERE id IN (
+                    SELECT MAX(id) FROM app_application GROUP BY app_id
+                )
+            ) AS c ON c.app_id = a.id
+            WHERE c.forwarded_to_id = %s
+        """, [user_id])
         total_records = cursor.fetchone()[0]
 
         # Main query with filtering
