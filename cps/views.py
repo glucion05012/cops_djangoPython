@@ -93,7 +93,8 @@ def submit_import(request):
                     fs = FileSystemStorage(location=folder_path)
 
                     for file in files:
-                        filename = fs.save(file.name, file)
+                        formatted_filename = f"{application.id}-{file.name}"
+                        filename = fs.save(formatted_filename, file)
                         file_path = os.path.join('attachments', subfolder, filename)
                         CHImportAttachment.objects.create(
                             application=application,
