@@ -1,0 +1,47 @@
+{% extends "includes/base.html" %}
+
+{% block title %}DENR NCR Client Portal{% endblock title %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-sm-12">
+            <table id="myApplicationList" class="table table-responsive table-striped table-bordered table-sm" cellspacing="0" width="100%" >
+                <thead>
+                    <tr>
+                        <th>Permit</th>
+                        <th>Permittee Name</th>
+                        <th>Reference Number</th>
+                        <th>Date Applied</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#myApplicationList').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{% url 'permittee_list_json' %}",
+                    "type": "POST",
+                    "headers": { "X-CSRFToken": "{{ csrf_token }}" }
+                },
+                "columns": [
+                    { "data": "permittee_name" },
+                    { "data": "address" },
+                    { "data": "email" },
+                    { "data": "contact_no" }
+                ]
+            });
+        });
+
+    </script>
+{% endblock %}

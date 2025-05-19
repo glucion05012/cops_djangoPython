@@ -42,6 +42,53 @@
                 <div class="tab-content" id="formTabsContent">
                     <!-- Application Form Tab -->
                     <div class="tab-pane fade show active" id="form-section" role="tabpanel">
+
+                        <!-- Permittee Name -->
+                        <div class="mb-4">
+                            <div class="hr-sect">General Information</div>
+
+                            <div class="col-sm-12">
+                                <p style='color:red'><i>*** Information below will be shown in the permit applied.</i></p>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="establishment" class="form-label">Permittee Name <span class="text-danger">*</span></label>
+                            <select id="establishment" name="estab_id_dniis" class="form-select">
+                                <option value="" disabled selected>-- Select Permittee Name --</option>
+                                {% for bl in business_list %}
+                                    <option 
+                                        value="{{ bl.id }}"
+                                        data-address="{% if bl.biz_lgu %}{{ bl.biz_address }}, {{ bl.barangay }} {% if bl.sub_lgu == bl.lgu %}{{ bl.sub_lgu }}{% else %}{{ bl.sub_lgu }} {{ bl.lgu }}{% endif %}{% else %}{{ bl.biz_address }}{% endif %}"
+                                        data-email="{{ bl.email_biz }}"
+                                        data-contact="{{ bl.cel_no_biz }} / {{ bl.tel_no_biz }}"
+                                        data-name="{{ bl.business_name }}"
+                                    >
+                                        {{ bl.business_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a Permittee Name.</div>
+                        </div>
+                        <input type="hidden" id="estab_name" name="estab_name">
+
+                        <div class="mb-3 mt-3">
+                            <label class="form-label">Address</label>
+                            <input type="text" id="estab_address" name="estab_address" class="form-control" readonly>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="text" id="estab_email" name="estab_email" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact No.</label>
+                                <input type="text" id="estab_contact" name="estab_contact" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        
+                        <div class="hr-sect">Chainsaw Details</div>
                         <!-- Brand -->
                         <div class="mb-4">
                             <label for="brand" class="form-label">Brand <span class="text-danger">*</span></label>
@@ -267,5 +314,20 @@ $(document).on('submit', '#chainsawImportForm', function (e) {
     });
 });
 
+$('#establishment').on('change', function () {
+    const selected = $(this).find(':selected');
+
+    // Get data from selected option
+    const address = selected.data('address') || '';
+    const email = selected.data('email') || '';
+    const contact = selected.data('contact') || '';
+    const name = selected.data('name') || '';
+
+    // Set the values
+    $('#estab_address').val(address);
+    $('#estab_email').val(email);
+    $('#estab_contact').val(contact);
+    $('#estab_name').val(name);
+});
 </script>
 {% endblock %}

@@ -301,6 +301,14 @@ def dashboard(request):
     else:
         return render(request, 'login.html', {'error': 'You need to log in first.'})
     
+def myApplications(request):
+    # Check if the user is authenticated (you can implement your own authentication logic here)
+    if request.session.get('authenticated'):
+        return render(request, 'myApplications.html')
+    else:
+        return render(request, 'login.html', {'error': 'You need to log in first.'})
+    
+    
 def get_session(request):
     if request.session.get('authenticated') and request.session.get('user_id'):
         with connections['dniis_db'].cursor() as cursor:

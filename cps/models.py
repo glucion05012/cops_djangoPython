@@ -14,13 +14,34 @@ class CHImport(models.Model):
         ('Personal/Legal Use', 'Personal / Legal Use'),
     ]
 
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Returned', 'Returned'),
+        ('Rejected', 'Rejected'),
+    ]
+
     brand = models.ForeignKey(ChainsawBrand, on_delete=models.CASCADE, related_name='imports')
     origin = models.CharField(max_length=255)
     purpose = models.CharField(max_length=50, choices=PURPOSE_CHOICES)
     submitted_at = models.DateTimeField(auto_now_add=True)
+    date_applied = models.DateField(auto_now_add=True)
+    crs_id = models.CharField(max_length=100)  # Required
+    reference_no = models.CharField(max_length=100, blank=True, null=True)
+    estab_id_dniis = models.CharField(max_length=100)  # Required
+    estab_name = models.CharField(max_length=255, blank=True, null=True)
+    estab_address = models.TextField(blank=True, null=True)
+    estab_email = models.EmailField(blank=True, null=True)
+    estab_contact = models.CharField(max_length=50, blank=True, null=True)
+    date_approved = models.DateField(blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    evaluator_id = models.CharField(max_length=100)  # Required
+    survey = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Import #{self.id} - {self.brand.name}"
+
 
 
 class CHImportModelDetail(models.Model):
