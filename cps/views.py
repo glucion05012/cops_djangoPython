@@ -10,6 +10,7 @@ from .models import (
     CHImport,
     CHImportModelDetail,
     CHImportAttachment,
+    CHApplication
 )
 import traceback
 from django.utils import timezone
@@ -75,7 +76,18 @@ def submit_import(request):
                 application.reference_no  = ref_no
                 application.save()
 
-                # Create model/quantity details
+                # ✅ Create CHApplication record
+                CHApplication.objects.create(
+                    date_created=timezone.now(),
+                    app_id=application.id,
+                    reference_no=ref_no,
+                    forwarded_by_id=request.session.get('user_id'),
+                    action='New Application',
+                    status='Pending',
+                    days_pending=0
+                )
+                
+                # Save model/quantity details
                 for model, quantity in zip(model_list, quantity_list):
                     if model.strip() and quantity.isdigit():
                         CHImportModelDetail.objects.create(

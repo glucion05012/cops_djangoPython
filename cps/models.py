@@ -69,3 +69,22 @@ class CHImportAttachment(models.Model):
 
     def __str__(self):
         return f"{self.get_type_display()} - {self.name}"
+
+
+class CHApplication(models.Model):
+    date_created = models.DateTimeField(default=timezone.now)
+    app_id = models.IntegerField()  # Required (not null)
+    reference_no = models.CharField(max_length=100)
+    forwarded_by_id = models.IntegerField()  # Required (not null)
+    forwarded_to_id = models.IntegerField(null=True, blank=True)  # Optional
+    action = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    remarks = models.TextField(blank=True)
+    status = models.CharField(max_length=50, default='pending')
+    days_pending = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'ch_application'
+
+    def __str__(self):
+        return f"{self.reference_no} - {self.status}"
