@@ -364,6 +364,7 @@ def application_list_json(request):
     with connections['tcp_db'].cursor() as cursor:
         cursor.execute(f"""
             SELECT 
+                'TCP' AS permit_type_short,
                 a.*,
                 a.estab_name,
                 COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
@@ -403,6 +404,7 @@ def application_list_json(request):
     with connections['default'].cursor() as cursor:
         cursor.execute(f"""
             SELECT 
+                'PIC' AS permit_type_short,
                 'PIC' AS permit_type,
                 estab_name,
                 reference_no,
@@ -449,3 +451,70 @@ def application_list_json(request):
         'recordsFiltered': total_filtered,
         'data': paginated_data,
     })
+    
+    
+def get_application_details(request):
+    reference_no = request.GET.get('reference_no')
+    permit_type_short = request.GET.get('permit_type_short', '').lower()  # Normalize
+
+    data = None
+
+    if permit_type_short == 'pic':
+        # Query CHIMPORT table (default DB)
+        with connections['default'].cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    'PIC' AS permit_type_short,
+                    'PIC' AS permit_type,
+                    estab_name,
+                    reference_no,
+                    date_applied,
+                    status,
+                    remarks AS client_remarks
+                FROM cps_chimport
+                WHERE reference_no = %s
+            """, [reference_no])
+            row = cursor.fetchone()
+            if row:
+                columns = [col[0] for col in cursor.description]
+                data = dict(zip(columns, row))
+                data['permit_type'] = 'Permit to Import Chainsaw'
+    elif permit_type_short == 'tcp':
+        # Default to TCP
+        with connections['tcp_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    'TCP' AS permit_type_short,
+                    a.permit_type,
+                    a.estab_name,
+                    COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
+                    a.date_applied,
+                    a.status,
+                    c.remarks AS client_remarks
+                FROM app_tcp a
+                LEFT JOIN (
+                    SELECT app_id, remarks
+                    FROM app_application
+                    WHERE id IN (
+                        SELECT MAX(id) FROM app_application GROUP BY app_id
+                    )
+                ) c ON a.id = c.app_id
+                WHERE COALESCE(a.reference_no_new, a.reference_no) = %s
+            """, [reference_no])
+            row = cursor.fetchone()
+            if row:
+                columns = [col[0] for col in cursor.description]
+                data = dict(zip(columns, row))
+                permit_map = {
+                    'tcp': 'Tree Cutting Permit',
+                    'stcp': 'Special Tree Cutting Permit',
+                    'tebp': 'Tree-Earth-Balling Permit',
+                    'stebp': 'Special Tree-Earth-Balling Permit',
+                    'tpp': 'Tree-Pruning Permit',
+                }
+                data['permit_type'] = permit_map.get(data.get('permit_type'), data.get('permit_type', '').upper())
+
+    if data:
+        return JsonResponse(data)
+    else:
+        return JsonResponse({'error': 'Application not found'}, status=404)

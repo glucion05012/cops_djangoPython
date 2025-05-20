@@ -33,7 +33,148 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="applicationModalBody">
-                <!-- Application details will be loaded here -->
+                <h1>Application for <div id="application_for"></div></h1>
+
+                <label for="is_existing_permittee" class="form-label">Application Type <span class="text-danger">*</span></label>
+                <select name="is_existing_permittee" id="is_existing_permittee" class="form-select">
+                    <option value="" disabled selected>-- Select --</option>
+                    <option value="0">New Permittee</option>
+                    <option value="1" >Existing Permittee</option>
+                </select>
+                <div class="invalid-feedback">Please select Application Type.</div>
+                
+                <!-- Permittee Name -->
+                <div class="mb-4">
+                    <div class="hr-sect">General Information</div>
+
+                    <div class="col-sm-12">
+                        <p style='color:red'><i>*** Information below will be shown in the permit applied.</i></p>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="establishment" class="form-label">Permittee Name <span class="text-danger">*</span></label>
+                    <select id="establishment" name="estab_id_dniis" class="form-select">
+                        <option value="" disabled selected>-- Select Permittee Name --</option>
+                        {% for bl in business_list %}
+                            <option 
+                                value="{{ bl.id }}"
+                                data-address="{% if bl.biz_lgu %}{{ bl.biz_address }}, {{ bl.barangay }} {% if bl.sub_lgu == bl.lgu %}{{ bl.sub_lgu }}{% else %}{{ bl.sub_lgu }} {{ bl.lgu }}{% endif %}{% else %}{{ bl.biz_address }}{% endif %}"
+                                data-email="{{ bl.email_biz }}"
+                                data-contact="{{ bl.cel_no_biz }} / {{ bl.tel_no_biz }}"
+                                data-name="{{ bl.business_name }}"
+                            >
+                                {{ bl.business_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback">Please select a Permittee Name.</div>
+                </div>
+                <input type="hidden" id="estab_name" name="estab_name">
+
+                <div class="mb-3 mt-3">
+                    <label class="form-label">Address</label>
+                    <input type="text" id="estab_address" name="estab_address" class="form-control" readonly>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="text" id="estab_email" name="estab_email" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Contact No.</label>
+                        <input type="text" id="estab_contact" name="estab_contact" class="form-control" readonly>
+                    </div>
+                </div>
+
+                <div class="hr-sect">Warehouse Address Information</div>
+
+                <span class="text-danger"><i>* address must be within NCR</i></span>
+                <div class="row mb-3">
+                    <div class="col-md-2">
+                        <select id="warehouse_city" name="warehouse_city" class="form-control">
+                            <option value="" disabled selected>-- Select City --</option>
+                            <option value="Caloocan">Caloocan</option>
+                            <option value="Las Piñas">Las Piñas</option>
+                            <option value="Makati">Makati</option>
+                            <option value="Malabon">Malabon</option>
+                            <option value="Mandaluyong">Mandaluyong</option>
+                            <option value="Manila">Manila</option>
+                            <option value="Marikina">Marikina</option>
+                            <option value="Muntinlupa">Muntinlupa</option>
+                            <option value="Navotas">Navotas</option>
+                            <option value="Parañaque">Parañaque</option>
+                            <option value="Pasay">Pasay</option>
+                            <option value="Pasig">Pasig</option>
+                            <option value="Pateros">Pateros</option>
+                            <option value="Quezon City">Quezon City</option>
+                            <option value="San Juan">San Juan</option>
+                            <option value="Taguig">Taguig</option>
+                            <option value="Valenzuela">Valenzuela</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a City or Municipality.</div> 
+                    </div>
+                    <div class="col-md-10">
+                        <input type="text" id="warehouse_address" name="warehouse_address" class="form-control" placeholder="Warehouse Address">
+                    </div>
+                </div>
+
+                
+                <div class="hr-sect">Chainsaw Details</div>
+                <!-- Brand -->
+                <div class="mb-4">
+                    <label for="brand" class="form-label">Brand <span class="text-danger">*</span></label>
+                    <select id="brand" name="brand" class="form-select">
+                        <option value="" disabled selected>-- Select Brand --</option>
+                        {% for brand in brands %}
+                            <option value="{{ brand.name }}">{{ brand.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback">Please select a brand.</div>
+                </div>
+
+                <!-- Model & Quantity -->
+                <div class="mb-4">
+                    <label class="form-label">Model & Quantity <span class="text-danger">*</span></label>
+                    <small class="text-muted d-block mb-2">Click "Add More" to list multiple models.</small>
+                    <div id="model-quantity-list">
+                        <div class="row g-2 mb-2 model-quantity-item">
+                            <div class="col-md-6">
+                                <input type="text" name="model[]" class="form-control" placeholder="Model">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="add-row" class="btn btn-outline-secondary btn-sm mt-2">+ Add More</button>
+                </div>
+
+                <!-- Origin/Supplier -->
+                <div class="mb-4">
+                    <label for="origin" class="form-label">Country of Origin / Supplier <span class="text-danger">*</span></label>
+                    <input type="text" id="origin" name="origin" class="form-control" placeholder="e.g., Japan / ABC Tools Ltd.">
+                </div>
+
+                <div class="mb-4">
+                    <label for="arrival_date" class="form-label">Expected Time of Arrival <span class="text-danger">*</span></label>
+                    <small class="text-muted d-block mb-2">Expected time of arrival at port of entry and/or release from the Bureau of Customs.</small>
+                    <input type="date" id="arrival_date" name="arrival_date" class="form-control">
+                </div>
+
+                <!-- Purpose -->
+                <div class="mb-4">
+                    <label for="purpose" class="form-label">Purpose <span class="text-danger">*</span></label>
+                    <select id="purpose" name="purpose" class="form-select">
+                        <option value="" disabled selected>-- Select Purpose --</option>
+                        <option value="Distribution/Sale">Distribution / Sale</option>
+                        <option value="Personal/Legal Use">Personal / Legal Use</option>
+                    </select>
+                    <div class="invalid-feedback">Please select a purpose.</div>
+                </div>
             </div>
             </div>
         </div>
@@ -60,7 +201,7 @@
                         "data": null,
                         "render": function(data, type, row) {
                             return `
-                                <button class="btn btn-sm btn-primary view-btn" data-reference="${row.reference_no}">
+                                <button class="btn btn-sm btn-primary view-btn" data-reference="${row.reference_no}"  data-permit_type_short="${row.permit_type_short}">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             `;
@@ -75,12 +216,25 @@
 
         $(document).on('click', '.view-btn', function () {
             const referenceNo = $(this).data('reference');
-            
-            // Optional: fetch more details via AJAX using reference_no
-            $('#applicationModalBody').html(`<p><strong>Reference No:</strong> ${referenceNo}</p>`);
-            
-            // Show the modal
-            $('#applicationModal').modal('show');
+            const permit_type_short = $(this).data('permit_type_short');
+            // Fetch data from the server using AJAX
+            $.ajax({
+                url: '/get-application-details/', // Your Django view URL
+                method: 'GET',
+                data: { reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+                    // Populate the textboxes with data
+                    $('#application_for').html(response.permit_type);
+                    // Populate other fields as needed
+
+                    // Show the modal after data is loaded
+                    $('#applicationModal').modal('show');
+                },
+                error: function () {
+                    alert('Failed to fetch application details.');
+                }
+            });
         });
     </script>
 {% endblock %}
