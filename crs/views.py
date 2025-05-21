@@ -467,6 +467,7 @@ def get_application_details(request):
                     'PIC' AS permit_type_short,
                     'PIC' AS permit_type,
                     estab_name,
+                    is_existing_permittee,
                     reference_no,
                     date_applied,
                     status,
@@ -487,6 +488,7 @@ def get_application_details(request):
                     'TCP' AS permit_type_short,
                     a.permit_type,
                     a.estab_name,
+                    a.owner,
                     COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
                     a.date_applied,
                     a.status,
@@ -514,7 +516,9 @@ def get_application_details(request):
                 }
                 data['permit_type'] = permit_map.get(data.get('permit_type'), data.get('permit_type', '').upper())
 
-    if data:
+    # ✅ Add session data if found
+    if data is not None:
+        data['app_type'] = request.session.get('app_type', 'N/A')
         return JsonResponse(data)
     else:
         return JsonResponse({'error': 'Application not found'}, status=404)

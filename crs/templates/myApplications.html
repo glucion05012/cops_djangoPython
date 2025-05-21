@@ -33,15 +33,45 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="applicationModalBody">
-                <h1>Application for <div id="application_for"></div></h1>
 
-                <label for="is_existing_permittee" class="form-label">Application Type <span class="text-danger">*</span></label>
-                <select name="is_existing_permittee" id="is_existing_permittee" class="form-select">
-                    <option value="" disabled selected>-- Select --</option>
-                    <option value="0">New Permittee</option>
-                    <option value="1" >Existing Permittee</option>
-                </select>
-                <div class="invalid-feedback">Please select Application Type.</div>
+                <div style="text-align: center;">
+                    <b>APPLICATION FOR <span id="application_for" style="text-transform: uppercase;"></span></b>
+                    <br>
+                    Permit No. <span class="text-muted" id="reference_no"></span>
+                </div>
+
+                <div class="hr-sect">Application Information</div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="applicant_type" class="form-label">Applicant Type</label>
+                    </div>
+                    <div class="col-md-1">
+                        :
+                    </div>
+                    <div class="col-md-8">
+                        <div id="applicant_type"></div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="application_type" class="form-label">Application Type</label>
+                    </div>
+                    <div class="col-md-1">
+                        :
+                    </div>
+                    <div class="col-md-8">
+                        <div id="application_type"></div>
+                    </div>
+
+                    <div id="applicant_type"></div>
+                    
+                </div>
+
+                <!-- Placeholder for the additional label -->
+            
+
+
+
+
                 
                 <!-- Permittee Name -->
                 <div class="mb-4">
@@ -226,6 +256,46 @@
                 success: function (response) {
                     // Populate the textboxes with data
                     $('#application_for').html(response.permit_type);
+                    $('#reference_no').html(response.reference_no);
+                    if (response.app_type === '1') {
+                        $('#applicant_type').html('Individual');
+                    }else if (response.app_type === '2') {
+                        $('#applicant_type').html('Government');
+                    } else if (response.app_type === '3') {
+                        $('#applicant_type').html('Corporation');
+                    }
+                    
+                    if (response.permit_type_short === 'TCP') {
+                        $('#application_type').html('New Permittee');
+                    } else if (response.permit_type_short === 'PIC') {
+                        if (response.is_existing_permittee == '0') {
+                            $('#application_type').html('New Permittee');
+                        } else if (response.is_existing_permittee == '1') {
+                            $('#application_type').html('Existing Permittee');
+                        } else {
+                            $('#application_type').html('Unknown');
+                        }
+                    }
+
+                    if (response.permit_type_short === 'TCP') {
+                        if ($('#applicant_type_row').length === 0) {
+                            $('#application_type').closest('.row').after(`
+                                <div class="row" id="applicant_type_row">
+                                    <div class="col-md-3">
+                                        <label for="applicant_type" class="form-label">Ownership</label> 
+                                    </div>
+                                    <div class="col-md-1">
+                                        :
+                                    </div>
+                                    <div class="col-md-8">
+                                         ${response.owner}
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    } else {
+                        $('#applicant_type_row').remove(); // Remove it if not TCP
+                    }
                     // Populate other fields as needed
 
                     // Show the modal after data is loaded
