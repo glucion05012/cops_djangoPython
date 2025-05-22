@@ -407,6 +407,9 @@ def application_list_json(request):
                 'PIC' AS permit_type_short,
                 'PIC' AS permit_type,
                 estab_name,
+                estab_address,
+                estab_contact,
+                estab_email,
                 reference_no,
                 date_applied,
                 status,
@@ -467,6 +470,9 @@ def get_application_details(request):
                     'PIC' AS permit_type_short,
                     'PIC' AS permit_type,
                     estab_name,
+                    estab_address,
+                    estab_contact,
+                    estab_email,
                     is_existing_permittee,
                     reference_no,
                     date_applied,
@@ -488,6 +494,9 @@ def get_application_details(request):
                     'TCP' AS permit_type_short,
                     a.permit_type,
                     a.estab_name,
+                    a.estab_address,
+                    a.estab_contact,
+                    a.estab_email,
                     a.owner,
                     COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
                     a.date_applied,
@@ -519,6 +528,23 @@ def get_application_details(request):
     # ✅ Add session data if found
     if data is not None:
         data['app_type'] = request.session.get('app_type', 'N/A')
+            
+        user_id = request.session['user_id']
+        with connections['dniis_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT cel_no, email
+                FROM systems_clients
+                WHERE user_id = %s
+                LIMIT 1
+            """, [user_id])
+            client_row = cursor.fetchone()
+            if client_row:
+                data['client_cel_no'] = client_row[0]
+                data['client_email'] = client_row[1]
+            else:
+                data['client_cel_no'] = ''
+                data['client_email'] = ''
+                    
         return JsonResponse(data)
     else:
         return JsonResponse({'error': 'Application not found'}, status=404)
