@@ -369,18 +369,24 @@ def application_list_json(request):
                 a.estab_name,
                 COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
                 a.date_applied,
-                a.status,
-                c.remarks AS client_remarks
+                CASE 
+                    WHEN c.forwarded_to_id = %s THEN 'Returned to Client'
+                    ELSE a.status
+                END AS status,
+                CASE 
+                    WHEN c.forwarded_to_id = %s THEN c.remarks
+                    ELSE 'Pending'
+                END AS client_remarks
             FROM app_tcp a
             LEFT JOIN (
-                SELECT app_id, remarks
+                SELECT app_id, remarks, forwarded_to_id
                 FROM app_application
                 WHERE id IN (
                     SELECT MAX(id) FROM app_application GROUP BY app_id
                 )
             ) c ON a.id = c.app_id
             WHERE a.crs_id = %s
-        """, [user_id])
+        """, [user_id, user_id, user_id])
         tcp_results = cursor.fetchall()
         tcp_columns = [col[0] for col in cursor.description]
         
@@ -406,17 +412,30 @@ def application_list_json(request):
             SELECT 
                 'PIC' AS permit_type_short,
                 'PIC' AS permit_type,
-                estab_name,
-                estab_address,
-                estab_contact,
-                estab_email,
-                reference_no,
-                date_applied,
-                status,
-                remarks AS client_remarks
-            FROM cps_chimport
-            WHERE crs_id = %s
-        """, [user_id])
+                a.estab_name,
+                a.estab_address,
+                a.estab_contact,
+                a.estab_email,
+                a.reference_no,
+                a.date_applied,
+                CASE 
+                    WHEN c.forwarded_to_id = %s THEN 'Returned to Client'
+                    ELSE a.status
+                END AS status,
+                CASE 
+                    WHEN c.forwarded_to_id = %s THEN c.remarks
+                    ELSE 'Pending'
+                END AS client_remarks
+            FROM cps_chimport a
+            LEFT JOIN (
+                SELECT app_id, remarks, forwarded_to_id
+                FROM ch_application
+                WHERE id IN (
+                    SELECT MAX(id) FROM ch_application GROUP BY app_id
+                )
+            ) c ON a.id = c.app_id
+            WHERE a.crs_id = %s
+        """, [user_id, user_id, user_id])
         chimport_results = cursor.fetchall()
         chimport_columns = [col[0] for col in cursor.description]
         
