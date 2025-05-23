@@ -469,39 +469,38 @@ def get_application_details(request):
                 SELECT 
                     'PIC' AS permit_type_short,
                     'PIC' AS permit_type,
-                    estab_name,
-                    estab_address,
-                    estab_contact,
-                    estab_email,
-                    is_existing_permittee,
-                    reference_no,
-                    date_applied,
-                    status,
-                    remarks AS client_remarks
-                FROM cps_chimport
-                WHERE reference_no = %s
+                    a.*,
+                    b.name as brand_name,
+                    a.remarks AS client_remarks
+                FROM cps_chimport a
+                LEFT JOIN cps_chainsawbrand b ON a.brand_id = b.id
+                WHERE a.reference_no = %s
             """, [reference_no])
             row = cursor.fetchone()
             if row:
                 columns = [col[0] for col in cursor.description]
                 data = dict(zip(columns, row))
                 data['permit_type'] = 'Permit to Import Chainsaw'
+                
+                # 🔽 ADD: fetch model details
+                cursor.execute("""
+                    SELECT model, quantity 
+                    FROM cps_chimportmodeldetail 
+                    WHERE application_id = %s
+                """, [data['id']])
+                model_rows = cursor.fetchall()
+                data['models'] = [{'model': r[0], 'quantity': r[1]} for r in model_rows]
+                
     elif permit_type_short == 'tcp':
         # Default to TCP
         with connections['tcp_db'].cursor() as cursor:
             cursor.execute("""
                 SELECT 
                     'TCP' AS permit_type_short,
-                    a.permit_type,
-                    a.estab_name,
-                    a.estab_address,
-                    a.estab_contact,
-                    a.estab_email,
-                    a.owner,
+                    a.*,
                     COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
-                    a.date_applied,
-                    a.status,
-                    c.remarks AS client_remarks
+                    c.remarks AS client_remarks,
+                    t.address AS tree_location
                 FROM app_tcp a
                 LEFT JOIN (
                     SELECT app_id, remarks
@@ -510,8 +509,10 @@ def get_application_details(request):
                         SELECT MAX(id) FROM app_application GROUP BY app_id
                     )
                 ) c ON a.id = c.app_id
+                LEFT JOIN tree_location t ON a.tree_location_id = t.id
                 WHERE COALESCE(a.reference_no_new, a.reference_no) = %s
             """, [reference_no])
+
             row = cursor.fetchone()
             if row:
                 columns = [col[0] for col in cursor.description]
