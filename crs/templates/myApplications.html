@@ -114,7 +114,10 @@
                     {% comment %} ------------- other information ------------- {% endcomment %}
                     <div id="other_information"></div>
 
+                    
+                    <div class="hr-sect">Attachments</div>
 
+                    <div id="attachments"></div>
 
                 </div>
             </div>
@@ -329,6 +332,37 @@
 
                             </div>
                         `);
+
+                        //attachments
+                        $('#attachments_table').remove();
+                        $('#attachments').after(`
+                            <table id="attachments_table" class="table table-bordered table-striped table-hover align-middle mb-0 mt-3">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>File Type</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${
+                                        response.attachments && response.attachments.length > 0 ?
+                                        response.attachments.map(att => `
+                                            <tr>
+                                                <td>${att.file_type}</td>
+                                                <td>${att.file_name}</td>
+                                                <td class="text-center">
+                                                    <a href="${att.file_url}" target="_blank" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        `).join('') :
+                                        `<tr><td colspan="3" class="text-center text-muted fst-italic">No attachments found</td></tr>`
+                                    }
+                                </tbody>
+                            </table>
+                        `);
                     } else if (response.permit_type_short === 'TCP') {
                         // Always remove the previous section before adding
                         $('#other_info_row').remove();
@@ -439,6 +473,37 @@
                             </div> 
                         `);
                     
+                        //attachments
+                        $('#attachments_table').remove();
+                        $('#attachments').after(`
+                            <table id="attachments_table" class="table table-bordered table-striped table-hover align-middle mb-0 mt-3">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>File Type</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${
+                                        response.attachments && response.attachments.length > 0 ?
+                                        response.attachments.map(att => `
+                                            <tr>
+                                                <td>${att.file_type}</td>
+                                                <td>${att.file_name}</td>
+                                                <td class="text-center">
+                                                    <a href="${att.file_url}" target="_blank" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        `).join('') :
+                                        `<tr><td colspan="3" class="text-center text-muted fst-italic">No attachments found</td></tr>`
+                                    }
+                                </tbody>
+                            </table>
+                        `);
+
                     }else {
                         $('#other_info_row').remove();
                     }

@@ -510,6 +510,32 @@ def get_application_details(request):
                 model_rows = cursor.fetchall()
                 data['models'] = [{'model': r[0], 'quantity': r[1]} for r in model_rows]
                 
+        # Attachments
+        with connections['default'].cursor() as cursor:
+            cursor.execute("""
+                SELECT a.*
+                FROM cps_chimportattachment a
+                LEFT JOIN cps_chimport b ON a.application_id = b.id
+                WHERE reference_no = %s
+            """, [reference_no])
+            attachments = cursor.fetchall()
+
+        file_type_map = {
+            'dti_sec': 'Business Name Registration (DTI/SEC with GIS)',
+            'purchase_order': 'Purchase Order',
+            'affidavit': 'Affidavit for Legal Purpose',
+            'geotag_photo': 'Geotagged Photo',
+            # Add other mappings as needed
+        }
+        
+        data['attachments'] = [
+            {
+                'file_type': file_type_map.get(att[4], att[4]),
+                'file_name': att[1],
+                'file_url': settings.MEDIA_URL + att[2] + att[1],
+            } for att in attachments
+        ]
+        
     elif permit_type_short == 'tcp':
         # Default to TCP
         with connections['tcp_db'].cursor() as cursor:
@@ -545,6 +571,42 @@ def get_application_details(request):
                 }
                 data['permit_type'] = permit_map.get(data.get('permit_type'), data.get('permit_type', '').upper())
 
+        # Attachments
+        with connections['tcp_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT a.*
+                FROM app_attachment a
+                LEFT JOIN app_tcp b ON a.app_id = b.id
+                WHERE reference_no = %s
+            """, [reference_no])
+            attachments = cursor.fetchall()
+
+        file_type_map = {
+            'SPA': 'SPA / Authorization Letter',
+            'LT': 'Land title (OCT/TCT)',
+            'LA': 'If property is leased (Lease Agreement)',
+            'DS': 'If property is sold (Deed of Sale)',
+            'GI': 'If property is owned by Corporation (General Information Sheet)',
+            'BC': 'Barangay Certificate of No Objection',
+            'SM': 'Sketch map or site development plan',
+            'PT': 'Photograph of trees',
+            'EC': 'ECC/CNC',
+            'CO': 'If within private property (Certificate of No Objection)',
+            'HB': 'If within public space (HOA Board Resolution)',
+            'PR': 'PTA Resolution (if within school)',
+            'UP': 'Utilization Plan (if area covers 10 ha or larger)',
+            'EA': 'Endorsement by local Agrarian reform (If covered by CLOA)',
+            # Add other mappings as needed
+        }
+
+        data['attachments'] = [
+            {
+                'file_type': file_type_map.get(att[5], att[5]),
+                'file_name': att[2],
+                'file_url': settings.MEDIA_URL + att[3] + att[2],
+            } for att in attachments
+        ]
+        
     # ✅ Add session data if found
     if data is not None:
         data['app_type'] = request.session.get('app_type', 'N/A')
