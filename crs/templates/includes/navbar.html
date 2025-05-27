@@ -8,7 +8,7 @@
           <a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a>
         </li>
         <li class="nav-item d-none d-sm-inline-block">
-          <a href="{% url 'dashboard' %}" class="nav-link">Centralized Online Permitting System</a>
+          <a href="{% url 'dashboard' %}" class="nav-link">Centralized Online Permitting System <b>({{ request.session.user_type }})</b></a>
         </li>
       </ul>
   

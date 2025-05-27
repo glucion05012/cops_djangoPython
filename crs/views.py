@@ -257,22 +257,35 @@ def login(request):
                     cursor.execute("SELECT * FROM core_users WHERE username = %s AND employee_type = %s", [username, 10])
                     user = cursor.fetchone()
                     
-                    cursor.execute("SELECT * FROM systems_clients WHERE username = %s", [username])
-                    client = cursor.fetchone()
-                    
-                    #Check if user is blocked
-                    print("User verification status:", user[5])
-                    if user[5] == "1":
-                        return JsonResponse({'success': False, 'message': 'User is not yet verified.'})
-             
-                    # Store the user_id and fullname in the session
-                    request.session['user_id'] = user[0] #id
-                    request.session['fullname'] = user[1] #name
-                    request.session['app_type'] = client[51] #business_type
-                    
-                    # <option value="1">Individual</option>
-                    # <option value="2">Government</option>
-                    # <option value="3">Corporation</option>
+                   
+                    if not user:
+                        # DENR NCR Employee Account
+                        cursor.execute("SELECT * FROM core_users WHERE username = %s", [username])
+                        user = cursor.fetchone()
+                        request.session['user_id'] = user[0] #id
+                        request.session['user_type'] = 'DENR Employee' #user_type
+                        request.session['fullname'] = user[1] #name 
+                        
+
+                    else:
+                        # Client Account
+                        cursor.execute("SELECT * FROM systems_clients WHERE username = %s", [username])
+                        client = cursor.fetchone()
+                        
+                        #Check if user is blocked
+                        print("User verification status:", user[5])
+                        if user[5] == "1":
+                            return JsonResponse({'success': False, 'message': 'User is not yet verified.'})
+                
+                        # Store the user_id and fullname in the session
+                        request.session['user_id'] = user[0] #id
+                        request.session['user_type'] = 'Client' #user_type
+                        request.session['fullname'] = user[1] #name
+                        request.session['app_type'] = client[51] #business_type
+                        
+                        # <option value="1">Individual</option>
+                        # <option value="2">Government</option>
+                        # <option value="3">Corporation</option>
                     
                     
                     user_id = request.session['user_id']
