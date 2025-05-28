@@ -60,7 +60,7 @@ urlpatterns = [
     
     # DENR EMPLOYEE
     path('dashboard', views.process_application, name='processApplications'),
-    path('list', views.application_list_json_emp, name='application_list_json_emp'), 
+    path('list_emp', views.application_list_json_emp, name='application_list_json_emp'), 
     
 ]
 

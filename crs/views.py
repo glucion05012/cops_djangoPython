@@ -561,6 +561,7 @@ def application_list_json(request):
         'data': data,
     })
     
+    
 def get_application_details(request):
     reference_no = request.GET.get('reference_no')
     permit_type_short = request.GET.get('permit_type_short', '').lower()  # Normalize
@@ -750,8 +751,8 @@ def application_list_json_emp(request):
                 'error': 'Access denied: user not found.'
             })
         user_type = result[0]
-        
-        
+
+
     draw = int(request.POST.get('draw', 1))
     start = int(request.POST.get('start', 0))
     length = int(request.POST.get('length', 10))
@@ -768,75 +769,135 @@ def application_list_json_emp(request):
         'client_remarks',
     ]
     sort_column = column_names[order_column] if order_column < len(column_names) else 'date_applied'
+    reverse = order_dir == 'desc'
 
     data = []
 
-    # TCP APP DATA
+    # --- TCP COUNT ---
     with connections['tcp_db'].cursor() as cursor:
+        if search_value:
+            like_term = f'%{search_value}%'
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM app_tcp a
+                LEFT JOIN (
+                    SELECT app_id, remarks, forwarded_to_id
+                    FROM app_application
+                    WHERE id IN (SELECT MAX(id) FROM app_application GROUP BY app_id)
+                ) c ON a.id = c.app_id
+                WHERE
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(COALESCE(a.reference_no_new, a.reference_no)) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+            """, [like_term, like_term, like_term])
+        else:
+            cursor.execute("SELECT COUNT(*) FROM app_tcp")
+        tcp_filtered = cursor.fetchone()[0]
+        tcp_total = tcp_filtered
+
+    # --- CHIMPORT COUNT ---
+    with connections['default'].cursor() as cursor:
+        if search_value:
+            like_term = f'%{search_value}%'
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM cps_chimport a
+                LEFT JOIN (
+                    SELECT app_id, remarks, forwarded_to_id
+                    FROM ch_application
+                    WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
+                ) c ON a.id = c.app_id
+                WHERE
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(a.reference_no) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+            """, [like_term, like_term, like_term])
+        else:
+            cursor.execute("SELECT COUNT(*) FROM cps_chimport")
+        ch_filtered = cursor.fetchone()[0]
+        ch_total = ch_filtered
+
+    # --- TCP DATA ---
+    with connections['tcp_db'].cursor() as cursor:
+        tcp_filter = ""
+        tcp_params = []
+
+        if search_value:
+            tcp_filter = """
+                WHERE
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(COALESCE(a.reference_no_new, a.reference_no)) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+            """
+            like_term = f"%{search_value}%"
+            tcp_params = [like_term, like_term, like_term]
+
         cursor.execute(f"""
             SELECT 
                 'TCP' AS permit_type_short,
-                a.*,
                 a.estab_name,
                 COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
                 a.date_applied,
-                CASE 
-                    WHEN c.forwarded_to_id = %s THEN 'Returned to Client'
-                    ELSE a.status
-                END AS status,
-                CASE 
-                    WHEN c.forwarded_to_id = %s THEN c.remarks
-                    ELSE 'Pending'
-                END AS client_remarks
+                CONCAT(
+                    UPPER(SUBSTRING(a.status FROM 1 FOR 1)),
+                    LOWER(SUBSTRING(a.status FROM 2)),
+                    ' - ',
+                    c.notes
+                ) AS status,
+                c.remarks AS client_remarks,
+                a.permit_type
             FROM app_tcp a
             LEFT JOIN (
-                SELECT app_id, remarks, forwarded_to_id
+                SELECT app_id, remarks, forwarded_to_id, notes
                 FROM app_application
                 WHERE id IN (
                     SELECT MAX(id) FROM app_application GROUP BY app_id
                 )
             ) c ON a.id = c.app_id
-            WHERE a.crs_id = %s
-        """, [user_id, user_id, user_id])
-        tcp_results = cursor.fetchall()
-        tcp_columns = [col[0] for col in cursor.description]
-        
-        for row in tcp_results:
-            item = dict(zip(tcp_columns, row))
-            if item.get('permit_type') == 'tcp':
-                item['permit_type'] = 'Tree Cutting Permit'
-            elif item.get('permit_type') == 'stcp':
-                item['permit_type'] = 'Special Tree Cutting Permit'
-            elif item.get('permit_type') == 'tebp':
-                item['permit_type'] = 'Tree-Earth-Balling Permit'
-            elif item.get('permit_type') == 'stebp':
-                item['permit_type'] = 'Special Tree-Earth-Balling Permit'
-            elif item.get('permit_type') == 'tpp':
-                item['permit_type'] = 'Tree-Pruning Permit'
-            else:
-                item['permit_type'] = item.get('permit_type', '').upper()
-            data.append(item)
+            {tcp_filter}
+        """, tcp_params)
 
-    # CHIMPORT DATA (DEFAULT DB)
+        for row in cursor.fetchall():
+            estab_name, reference_no, date_applied, status, client_remarks, permit_type = row[1:]
+            data.append({
+                'permit_type_short': 'TCP',
+                'permit_type': {
+                    'tcp': 'Tree Cutting Permit',
+                    'stcp': 'Special Tree Cutting Permit',
+                    'tebp': 'Tree-Earth-Balling Permit',
+                    'stebp': 'Special Tree-Earth-Balling Permit',
+                    'tpp': 'Tree-Pruning Permit',
+                }.get(permit_type, (permit_type or 'UNKNOWN').upper()),
+                'estab_name': estab_name,
+                'reference_no': reference_no,
+                'date_applied': date_applied,
+                'status': status,
+                'client_remarks': client_remarks,
+            })
+
+    # --- CHIMPORT DATA ---
     with connections['default'].cursor() as cursor:
+        ch_filter = ""
+        ch_params = []
+
+        if search_value:
+            ch_filter = """
+                WHERE
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(a.reference_no) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+            """
+            like_term = f"%{search_value}%"
+            ch_params = [like_term, like_term, like_term]
+
         cursor.execute(f"""
             SELECT 
                 'PIC' AS permit_type_short,
-                'PIC' AS permit_type,
                 a.estab_name,
-                a.estab_address,
-                a.estab_contact,
-                a.estab_email,
                 a.reference_no,
                 a.date_applied,
-                CASE 
-                    WHEN c.forwarded_to_id = %s THEN 'Returned to Client'
-                    ELSE a.status
-                END AS status,
-                CASE 
-                    WHEN c.forwarded_to_id = %s THEN c.remarks
-                    ELSE 'Pending'
-                END AS client_remarks
+                a.status,
+                c.remarks AS client_remarks
             FROM cps_chimport a
             LEFT JOIN (
                 SELECT app_id, remarks, forwarded_to_id
@@ -845,42 +906,35 @@ def application_list_json_emp(request):
                     SELECT MAX(id) FROM ch_application GROUP BY app_id
                 )
             ) c ON a.id = c.app_id
-            WHERE a.crs_id = %s
-        """, [user_id, user_id, user_id])
-        chimport_results = cursor.fetchall()
-        chimport_columns = [col[0] for col in cursor.description]
-        
-        for row in chimport_results:
-            item = dict(zip(chimport_columns, row))
-            if item.get('permit_type') == 'PIC':
-                item['permit_type'] = 'Permit to Import Chainsaw'
-            else:
-                item['permit_type'] = item.get('permit_type', '').upper()
-            data.append(item)
+            {ch_filter}
+        """, ch_params)
 
-    # Filter
-    if search_value:
-        data = [
-            row for row in data if any(
-                search_value in str(row.get(col, '')).lower()
-                for col in column_names
-            )
-        ]
+        for row in cursor.fetchall():
+            estab_name, reference_no, date_applied, status, client_remarks = row[1:]
+            data.append({
+                'permit_type_short': 'PIC',
+                'permit_type': 'Permit to Import Chainsaw',
+                'estab_name': estab_name,
+                'reference_no': reference_no,
+                'date_applied': date_applied,
+                'status': status,
+                'client_remarks': client_remarks,
+            })
 
-    # Total counts
-    total_filtered = len(data)
-    total_records = total_filtered  # Since we merged both sources
+    # --- SORT + PAGINATE ---
+    def safe_key(item):
+        value = item.get(sort_column)
+        if hasattr(value, 'isoformat'):
+            return value.isoformat()
+        return str(value or '').lower()
 
-    # Sort
-    reverse = order_dir == 'desc'
-    data.sort(key=itemgetter(sort_column), reverse=reverse)
-
-    # Paginate
+    data.sort(key=safe_key, reverse=reverse)
     paginated_data = data[start:start + length]
+    
 
     return JsonResponse({
         'draw': draw,
-        'recordsTotal': total_records,
-        'recordsFiltered': total_filtered,
+        'recordsTotal': tcp_total + ch_total,
+        'recordsFiltered': tcp_filtered + ch_filtered,
         'data': paginated_data,
     })
