@@ -368,15 +368,82 @@ def application_list_json(request):
         'client_remarks',
     ]
     sort_column = column_names[order_column] if order_column < len(column_names) else 'date_applied'
+    reverse = order_dir == 'desc'
 
     data = []
 
-    # TCP APP DATA
+    # TCP Count Queries
     with connections['tcp_db'].cursor() as cursor:
+        # Total
+        cursor.execute("SELECT COUNT(*) FROM app_tcp WHERE crs_id = %s", [user_id])
+        tcp_total = cursor.fetchone()[0]
+
+        # Filtered
+        if search_value:
+            like_term = f'%{search_value}%'
+            cursor.execute(f"""
+                SELECT COUNT(*)
+                FROM app_tcp a
+                LEFT JOIN (
+                    SELECT app_id, remarks, forwarded_to_id
+                    FROM app_application
+                    WHERE id IN (SELECT MAX(id) FROM app_application GROUP BY app_id)
+                ) c ON a.id = c.app_id
+                WHERE a.crs_id = %s AND (
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(COALESCE(a.reference_no_new, a.reference_no)) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+                )
+            """, [user_id, like_term, like_term, like_term])
+        else:
+            cursor.execute("SELECT COUNT(*) FROM app_tcp WHERE crs_id = %s", [user_id])
+        tcp_filtered = cursor.fetchone()[0]
+
+    # CHIMPORT Count Queries
+    with connections['default'].cursor() as cursor:
+        # Total
+        cursor.execute("SELECT COUNT(*) FROM cps_chimport WHERE crs_id = %s", [user_id])
+        ch_total = cursor.fetchone()[0]
+
+        # Filtered
+        if search_value:
+            like_term = f'%{search_value}%'
+            cursor.execute(f"""
+                SELECT COUNT(*)
+                FROM cps_chimport a
+                LEFT JOIN (
+                    SELECT app_id, remarks, forwarded_to_id
+                    FROM ch_application
+                    WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
+                ) c ON a.id = c.app_id
+                WHERE a.crs_id = %s AND (
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(a.reference_no) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+                )
+            """, [user_id, like_term, like_term, like_term])
+        else:
+            cursor.execute("SELECT COUNT(*) FROM cps_chimport WHERE crs_id = %s", [user_id])
+        ch_filtered = cursor.fetchone()[0]
+
+    # TCP Data
+    with connections['tcp_db'].cursor() as cursor:
+        sql_filter = ""
+        params = [user_id, user_id, user_id]
+        if search_value:
+            sql_filter = """
+                AND (
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(COALESCE(a.reference_no_new, a.reference_no)) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+                )
+            """
+            like_term = f"%{search_value}%"
+            params.extend([like_term, like_term, like_term])
+
         cursor.execute(f"""
             SELECT 
                 'TCP' AS permit_type_short,
-                a.*,
                 a.estab_name,
                 COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
                 a.date_applied,
@@ -387,7 +454,8 @@ def application_list_json(request):
                 CASE 
                     WHEN c.forwarded_to_id = %s THEN c.remarks
                     ELSE 'Pending'
-                END AS client_remarks
+                END AS client_remarks,
+                a.permit_type
             FROM app_tcp a
             LEFT JOIN (
                 SELECT app_id, remarks, forwarded_to_id
@@ -397,36 +465,47 @@ def application_list_json(request):
                 )
             ) c ON a.id = c.app_id
             WHERE a.crs_id = %s
-        """, [user_id, user_id, user_id])
-        tcp_results = cursor.fetchall()
-        tcp_columns = [col[0] for col in cursor.description]
-        
-        for row in tcp_results:
-            item = dict(zip(tcp_columns, row))
-            if item.get('permit_type') == 'tcp':
-                item['permit_type'] = 'Tree Cutting Permit'
-            elif item.get('permit_type') == 'stcp':
-                item['permit_type'] = 'Special Tree Cutting Permit'
-            elif item.get('permit_type') == 'tebp':
-                item['permit_type'] = 'Tree-Earth-Balling Permit'
-            elif item.get('permit_type') == 'stebp':
-                item['permit_type'] = 'Special Tree-Earth-Balling Permit'
-            elif item.get('permit_type') == 'tpp':
-                item['permit_type'] = 'Tree-Pruning Permit'
-            else:
-                item['permit_type'] = item.get('permit_type', '').upper()
-            data.append(item)
+            {sql_filter}
+            LIMIT %s OFFSET %s
+        """, params + [length, start])
 
-    # CHIMPORT DATA (DEFAULT DB)
+        for row in cursor.fetchall():
+            estab_name, reference_no, date_applied, status, client_remarks, permit_type = row[1:]
+            data.append({
+                'permit_type_short': 'TCP',
+                'permit_type': {
+                    'tcp': 'Tree Cutting Permit',
+                    'stcp': 'Special Tree Cutting Permit',
+                    'tebp': 'Tree-Earth-Balling Permit',
+                    'stebp': 'Special Tree-Earth-Balling Permit',
+                    'tpp': 'Tree-Pruning Permit',
+                }.get(permit_type, permit_type.upper()),
+                'estab_name': estab_name,
+                'reference_no': reference_no,
+                'date_applied': date_applied,
+                'status': status,
+                'client_remarks': client_remarks,
+            })
+
+    # CHIMPORT Data
     with connections['default'].cursor() as cursor:
+        sql_filter = ""
+        params = [user_id, user_id, user_id]
+        if search_value:
+            sql_filter = """
+                AND (
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(a.reference_no) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+                )
+            """
+            like_term = f"%{search_value}%"
+            params.extend([like_term, like_term, like_term])
+
         cursor.execute(f"""
             SELECT 
                 'PIC' AS permit_type_short,
-                'PIC' AS permit_type,
                 a.estab_name,
-                a.estab_address,
-                a.estab_contact,
-                a.estab_email,
                 a.reference_no,
                 a.date_applied,
                 CASE 
@@ -446,45 +525,41 @@ def application_list_json(request):
                 )
             ) c ON a.id = c.app_id
             WHERE a.crs_id = %s
-        """, [user_id, user_id, user_id])
-        chimport_results = cursor.fetchall()
-        chimport_columns = [col[0] for col in cursor.description]
-        
-        for row in chimport_results:
-            item = dict(zip(chimport_columns, row))
-            if item.get('permit_type') == 'PIC':
-                item['permit_type'] = 'Permit to Import Chainsaw'
-            else:
-                item['permit_type'] = item.get('permit_type', '').upper()
-            data.append(item)
+            {sql_filter}
+            LIMIT %s OFFSET %s
+        """, params + [length, start])
 
-    # Filter
-    if search_value:
-        data = [
-            row for row in data if any(
-                search_value in str(row.get(col, '')).lower()
-                for col in column_names
-            )
-        ]
+        for row in cursor.fetchall():
+            estab_name, reference_no, date_applied, status, client_remarks = row[1:]
+            data.append({
+                'permit_type_short': 'PIC',
+                'permit_type': 'Permit to Import Chainsaw',
+                'estab_name': estab_name,
+                'reference_no': reference_no,
+                'date_applied': date_applied,
+                'status': status,
+                'client_remarks': client_remarks,
+            })
 
-    # Total counts
-    total_filtered = len(data)
-    total_records = total_filtered  # Since we merged both sources
+    # Sort in Python
+    def safe_key(item):
+        value = item.get(sort_column)
+        if isinstance(value, (str, int, float)):
+            return value
+        elif hasattr(value, 'isoformat'):  # datetime or date
+            return value.isoformat()
+        elif value is None:
+            return ''
+        return str(value)
 
-    # Sort
-    reverse = order_dir == 'desc'
-    data.sort(key=itemgetter(sort_column), reverse=reverse)
-
-    # Paginate
-    paginated_data = data[start:start + length]
+    data.sort(key=safe_key, reverse=reverse)
 
     return JsonResponse({
         'draw': draw,
-        'recordsTotal': total_records,
-        'recordsFiltered': total_filtered,
-        'data': paginated_data,
+        'recordsTotal': tcp_total + ch_total,
+        'recordsFiltered': tcp_filtered + ch_filtered,
+        'data': data,
     })
-    
     
 def get_application_details(request):
     reference_no = request.GET.get('reference_no')
@@ -645,21 +720,167 @@ def get_application_details(request):
     
     
     
-    # DENR EMPLOYEE
+# DENR EMPLOYEE
 def process_application(request):
-    if request.method == 'POST':
-        # Extract the POST data
-        reference_no = request.POST.get('reference_no')
-        permit_type_short = request.POST.get('permit_type_short', '').lower()  # Normalize
-        
-        # Process the application based on permit type
-        if permit_type_short == 'pic':
-            # Process PIC application
-            return JsonResponse({'message': 'Processing PIC application for reference no: ' + reference_no})
-        elif permit_type_short == 'tcp':
-            # Process TCP application
-            return JsonResponse({'message': 'Processing TCP application for reference no: ' + reference_no})
-        else:
-            return JsonResponse({'error': 'Unknown permit type'}, status=400)
+    # Check if the user is authenticated (you can implement your own authentication logic here)
+    if request.session.get('authenticated'):
+        return render(request, 'processApplications.html')
+    else:
+        return render(request, 'login.html', {'error': 'You need to log in first.'})
     
-    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+@csrf_exempt
+def application_list_json_emp(request):
+    user_id = request.session.get('user_id')
+
+    # Check user access
+    with connections['default'].cursor() as cursor:
+        cursor.execute("""
+            SELECT type
+            FROM ch_access_level
+            WHERE userid = %s
+            LIMIT 1
+        """, [user_id])
+        result = cursor.fetchone()
+        if not result:
+            return JsonResponse({
+                'draw': 1,
+                'recordsTotal': 0,
+                'recordsFiltered': 0,
+                'data': [],
+                'error': 'Access denied: user not found.'
+            })
+        user_type = result[0]
+        
+        
+    draw = int(request.POST.get('draw', 1))
+    start = int(request.POST.get('start', 0))
+    length = int(request.POST.get('length', 10))
+    search_value = request.POST.get('search[value]', '').strip().lower()
+    order_column = int(request.POST.get('order[0][column]', 0))
+    order_dir = request.POST.get('order[0][dir]', 'asc')
+
+    column_names = [
+        'permit_type',
+        'estab_name',
+        'reference_no',
+        'date_applied',
+        'status',
+        'client_remarks',
+    ]
+    sort_column = column_names[order_column] if order_column < len(column_names) else 'date_applied'
+
+    data = []
+
+    # TCP APP DATA
+    with connections['tcp_db'].cursor() as cursor:
+        cursor.execute(f"""
+            SELECT 
+                'TCP' AS permit_type_short,
+                a.*,
+                a.estab_name,
+                COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
+                a.date_applied,
+                CASE 
+                    WHEN c.forwarded_to_id = %s THEN 'Returned to Client'
+                    ELSE a.status
+                END AS status,
+                CASE 
+                    WHEN c.forwarded_to_id = %s THEN c.remarks
+                    ELSE 'Pending'
+                END AS client_remarks
+            FROM app_tcp a
+            LEFT JOIN (
+                SELECT app_id, remarks, forwarded_to_id
+                FROM app_application
+                WHERE id IN (
+                    SELECT MAX(id) FROM app_application GROUP BY app_id
+                )
+            ) c ON a.id = c.app_id
+            WHERE a.crs_id = %s
+        """, [user_id, user_id, user_id])
+        tcp_results = cursor.fetchall()
+        tcp_columns = [col[0] for col in cursor.description]
+        
+        for row in tcp_results:
+            item = dict(zip(tcp_columns, row))
+            if item.get('permit_type') == 'tcp':
+                item['permit_type'] = 'Tree Cutting Permit'
+            elif item.get('permit_type') == 'stcp':
+                item['permit_type'] = 'Special Tree Cutting Permit'
+            elif item.get('permit_type') == 'tebp':
+                item['permit_type'] = 'Tree-Earth-Balling Permit'
+            elif item.get('permit_type') == 'stebp':
+                item['permit_type'] = 'Special Tree-Earth-Balling Permit'
+            elif item.get('permit_type') == 'tpp':
+                item['permit_type'] = 'Tree-Pruning Permit'
+            else:
+                item['permit_type'] = item.get('permit_type', '').upper()
+            data.append(item)
+
+    # CHIMPORT DATA (DEFAULT DB)
+    with connections['default'].cursor() as cursor:
+        cursor.execute(f"""
+            SELECT 
+                'PIC' AS permit_type_short,
+                'PIC' AS permit_type,
+                a.estab_name,
+                a.estab_address,
+                a.estab_contact,
+                a.estab_email,
+                a.reference_no,
+                a.date_applied,
+                CASE 
+                    WHEN c.forwarded_to_id = %s THEN 'Returned to Client'
+                    ELSE a.status
+                END AS status,
+                CASE 
+                    WHEN c.forwarded_to_id = %s THEN c.remarks
+                    ELSE 'Pending'
+                END AS client_remarks
+            FROM cps_chimport a
+            LEFT JOIN (
+                SELECT app_id, remarks, forwarded_to_id
+                FROM ch_application
+                WHERE id IN (
+                    SELECT MAX(id) FROM ch_application GROUP BY app_id
+                )
+            ) c ON a.id = c.app_id
+            WHERE a.crs_id = %s
+        """, [user_id, user_id, user_id])
+        chimport_results = cursor.fetchall()
+        chimport_columns = [col[0] for col in cursor.description]
+        
+        for row in chimport_results:
+            item = dict(zip(chimport_columns, row))
+            if item.get('permit_type') == 'PIC':
+                item['permit_type'] = 'Permit to Import Chainsaw'
+            else:
+                item['permit_type'] = item.get('permit_type', '').upper()
+            data.append(item)
+
+    # Filter
+    if search_value:
+        data = [
+            row for row in data if any(
+                search_value in str(row.get(col, '')).lower()
+                for col in column_names
+            )
+        ]
+
+    # Total counts
+    total_filtered = len(data)
+    total_records = total_filtered  # Since we merged both sources
+
+    # Sort
+    reverse = order_dir == 'desc'
+    data.sort(key=itemgetter(sort_column), reverse=reverse)
+
+    # Paginate
+    paginated_data = data[start:start + length]
+
+    return JsonResponse({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_filtered,
+        'data': paginated_data,
+    })

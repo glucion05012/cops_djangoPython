@@ -1,0 +1,522 @@
+{% extends "includes/base.html" %}
+
+{% block title %}DENR NCR Client Portal{% endblock title %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-sm-12">
+            <table id="myApplicationListEmp" class="table table-responsive table-striped table-bordered table-sm" cellspacing="0" width="100%" >
+                <thead>
+                    <tr>
+                        <th>Permit</th>
+                        <th>Permittee Name</th>
+                        <th>Reference Number</th>
+                        <th>Date Applied</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+    <div class="modal fade" id="applicationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Application Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>APPLICATION FOR <span id="application_for" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no"></span>
+                    </div>
+
+                    <div class="hr-sect">Application Information</div>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label for="applicant_type" class="form-label">Applicant Type</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="applicant_type"></div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="date_applied" class="form-label">Date Applied</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="date_applied"></div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="application_type" class="form-label">Application Type</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-9">
+                            <div id="application_type"></div>
+                        </div>
+
+                        <div id="ownershsip_type"></div>
+
+                        <div class="col-md-2">
+                            <label for="client_cel_no" class="form-label">Contact No</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="client_cel_no"></div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="client_email" class="form-label">Email</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="client_email"></div>
+                        </div>
+
+                    </div>
+
+                    <!-- Placeholder for the additional label -->
+                
+                    <!-- Permittee Name -->
+                    <div class="hr-sect">General Information</div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h5 style="text-align: center;">
+                                <b id="permit_name"></b>
+                            </h5>
+                            <p style="text-align: center;" id="permit_address"></p>
+                        </div>
+
+                    </div>
+
+                    {% comment %} ------------- other information ------------- {% endcomment %}
+                    <div id="other_information"></div>
+
+                    
+                    <div class="hr-sect">Attachments</div>
+
+                    <div id="attachments"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#myApplicationListEmp').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{% url 'application_list_json_emp' %}",
+                    "type": "POST",
+                    "headers": { "X-CSRFToken": "{{ csrf_token }}" }
+                },
+                "columns": [
+                    { "data": "permit_type" },
+                    { "data": "estab_name" },
+                    { "data": "reference_no" },
+                    { "data": "date_applied" },
+                    { "data": "status" },
+                    { "data": "client_remarks" },
+                    {
+                        "data": null,
+                        "render": function(data, type, row) {
+                            return `
+                                <button class="btn btn-sm btn-primary view-btn" data-reference="${row.reference_no}"  data-permit_type_short="${row.permit_type_short}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            `;
+                        },
+                        "orderable": false,
+                        "searchable": false
+                    }
+                ]
+            });
+        });
+
+
+        $(document).on('click', '.view-btn', function () {
+            const referenceNo = $(this).data('reference');
+            const permit_type_short = $(this).data('permit_type_short');
+            // Fetch data from the server using AJAX
+            $.ajax({
+                url: '/get-application-details/', // Your Django view URL
+                method: 'GET',
+                data: { reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+                    // Populate the textboxes with data
+                    $('#application_for').html(response.permit_type);
+                    $('#reference_no').html(response.reference_no);
+                    if (response.app_type === '1') {
+                        $('#applicant_type').html('Individual');
+                    }else if (response.app_type === '2') {
+                        $('#applicant_type').html('Government');
+                    } else if (response.app_type === '3') {
+                        $('#applicant_type').html('Corporation');
+                    }
+                    
+                    if (response.permit_type_short === 'TCP') {
+                        $('#application_type').html('New Permittee');
+                    } else if (response.permit_type_short === 'PIC') {
+                        if (response.is_existing_permittee == '0') {
+                            $('#application_type').html('New Permittee');
+                        } else if (response.is_existing_permittee == '1') {
+                            $('#application_type').html('Existing Permittee');
+                        } else {
+                            $('#application_type').html('Unknown');
+                        }
+                    }
+
+                    if (response.permit_type_short === 'TCP') {
+                        if ($('#applicant_type_row').length === 0) {
+                            $('#ownershsip_type').closest('.row').after(`
+                                <div class="row" id="applicant_type_row">
+                                    <div class="col-md-2">
+                                        <label for="applicant_type" class="form-label">Ownership</label> 
+                                    </div>
+                                    <div class="col-md-1">
+                                        :
+                                    </div>
+                                    <div class="col-md-3">
+                                         ${response.owner}
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    } else {
+                        $('#applicant_type_row').remove(); // Remove it if not TCP
+                    }
+
+                    if (response.date_applied) {
+                        const parts = response.date_applied.split('-');
+
+                        const months = [
+                            'January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'
+                        ];
+
+                        const year = parts[0];
+                        const month = months[parseInt(parts[1], 10) - 1];
+                        const day = parseInt(parts[2], 10);
+                        response.date_applied = `${month} ${day}, ${year}`; // Format it in-place
+                    }
+                    $('#date_applied').html(response.date_applied);
+
+                    $('#permit_name').html(response.estab_name);
+                    $('#permit_address').html(response.estab_address);
+                    $('#client_cel_no').html(response.client_cel_no);
+                    $('#client_email').html(response.client_email);
+                    
+
+                    //----------------- chainsaw fields -----------------
+                    if (response.permit_type_short === 'PIC') {
+                        // Always remove the previous section before adding
+                        $('#other_info_row').remove();
+
+                        $('#other_information').after(`
+                            <div id="other_info_row" class="row mt-3">
+                                <div class="col-12">
+                                    <div class="hr-sect">Warehouse Information</div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">City</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.warehouse_city}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Address</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.warehouse_address}
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="hr-sect">Chainsaw Details</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Brand</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.brand_name}
+                                </div>
+
+                                <div class="col-12 mt-4" style="margin-bottom: 2rem;">
+                                    <label class="form-label fw-bold">Models and Quantities</label>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped table-hover align-middle mb-0">
+                                            <thead class="table-secondary">
+                                                <tr class="text-center">
+                                                    <th style="width: 70%;">Model</th>
+                                                    <th style="width: 30%;">Quantity</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${
+                                                    response.models && response.models.length > 0 ?
+                                                    response.models.map(m => `
+                                                        <tr>
+                                                            <td class="ps-3">${m.model}</td>
+                                                            <td class="text-center">${m.quantity} unit/s</td>
+                                                        </tr>
+                                                    `).join('') :
+                                                    `<tr><td colspan="2" class="text-center text-muted fst-italic">No models found</td></tr>`
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Country of Origin/Supplier</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.origin}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Expected Time of Arrival</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.arrival_date}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Purpose</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.purpose}
+                                </div>
+
+                            </div>
+                        `);
+
+                        //attachments
+                        $('#attachments_table').remove();
+                        $('#attachments').after(`
+                            <table id="attachments_table" class="table table-bordered table-striped table-hover align-middle mb-0 mt-3">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>File Type</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${
+                                        response.attachments && response.attachments.length > 0 ?
+                                        response.attachments.map(att => `
+                                            <tr>
+                                                <td>${att.file_type}</td>
+                                                <td>${att.file_name}</td>
+                                                <td class="text-center">
+                                                    <a href="${att.file_url}" target="_blank" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        `).join('') :
+                                        `<tr><td colspan="3" class="text-center text-muted fst-italic">No attachments found</td></tr>`
+                                    }
+                                </tbody>
+                            </table>
+                        `);
+                    } else if (response.permit_type_short === 'TCP') {
+                        // Always remove the previous section before adding
+                        $('#other_info_row').remove();
+
+                        $('#other_information').after(`
+                            <div id="other_info_row" class="row mt-3">
+                                <div class="col-12">
+                                    <div class="hr-sect">Permit Information</div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Purpose</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.purpose.charAt(0).toUpperCase() + response.purpose.slice(1) }
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Purpose Reason</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.purpose_reason}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Tree Address</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-9">
+                                    ${response.tree_location}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Private Property</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-9">
+                                    ${response.within_property === 'within' ? 'Yes' : 'No - '+response.within_property_others}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Subdivision</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.within_subdivision === 'within' ?  'Yes - '+response.within_subdivision_others : 'No'}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">School/Organization</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.within_school === 'within' ?  'Yes' : 'No'}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Area Covered</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.area_covered} sq. m.
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">No. of Trees Affected</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.no_of_trees_affected}
+                                </div>
+
+                                <div class="col-md-9">
+                                    <label class="form-label">Can trees/shrubs/ornamental plants be planted in your are to replace the subject tree/s?</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-2">
+                                    ${response.tree_replace}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">If No, </label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.tree_replace_reason}
+                                </div>
+                            </div> 
+                        `);
+                    
+                        //attachments
+                        $('#attachments_table').remove();
+                        $('#attachments').after(`
+                            <table id="attachments_table" class="table table-bordered table-striped table-hover align-middle mb-0 mt-3">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>File Type</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${
+                                        response.attachments && response.attachments.length > 0 ?
+                                        response.attachments.map(att => `
+                                            <tr>
+                                                <td>${att.file_type}</td>
+                                                <td>${att.file_name}</td>
+                                                <td class="text-center">
+                                                    <a href="${att.file_url}" target="_blank" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        `).join('') :
+                                        `<tr><td colspan="3" class="text-center text-muted fst-italic">No attachments found</td></tr>`
+                                    }
+                                </tbody>
+                            </table>
+                        `);
+
+                    }else {
+                        $('#other_info_row').remove();
+                    }
+
+                    // Populate other fields as needed
+
+                    // Show the modal after data is loaded
+                    $('#applicationModal').modal('show');
+                },
+                error: function () {
+                    alert('Failed to fetch application details.');
+                }
+            });
+        });
+    </script>
+{% endblock %}
