@@ -92,3 +92,16 @@ class CHApplication(models.Model):
 
     def __str__(self):
         return f"{self.reference_no} - {self.status}"
+    
+    
+class CHUserAccess(models.Model):
+
+    userid = models.IntegerField()
+    type = models.CharField(max_length=50)
+    description = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        db_table = 'ch_access_level'
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.get_type_display()}"

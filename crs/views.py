@@ -263,10 +263,8 @@ def login(request):
                         cursor.execute("SELECT * FROM core_users WHERE username = %s", [username])
                         user = cursor.fetchone()
                         request.session['user_id'] = user[0] #id
-                        request.session['user_type'] = 'DENR Employee' #user_type
+                        request.session['user_type'] = 'Employee' #user_type
                         request.session['fullname'] = user[1] #name 
-                        
-
                     else:
                         # Client Account
                         cursor.execute("SELECT * FROM systems_clients WHERE username = %s", [username])
@@ -643,3 +641,25 @@ def get_application_details(request):
         return JsonResponse(data)
     else:
         return JsonResponse({'error': 'Application not found'}, status=404)
+    
+    
+    
+    
+    # DENR EMPLOYEE
+def process_application(request):
+    if request.method == 'POST':
+        # Extract the POST data
+        reference_no = request.POST.get('reference_no')
+        permit_type_short = request.POST.get('permit_type_short', '').lower()  # Normalize
+        
+        # Process the application based on permit type
+        if permit_type_short == 'pic':
+            # Process PIC application
+            return JsonResponse({'message': 'Processing PIC application for reference no: ' + reference_no})
+        elif permit_type_short == 'tcp':
+            # Process TCP application
+            return JsonResponse({'message': 'Processing TCP application for reference no: ' + reference_no})
+        else:
+            return JsonResponse({'error': 'Unknown permit type'}, status=400)
+    
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)

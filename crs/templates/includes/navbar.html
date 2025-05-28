@@ -49,89 +49,102 @@
                 </a>
               </li>
   
-              <li class="nav-item">
-                <a href="{% url 'dashboard' %}" class="nav-link">
-                <i class="nav-icon fa fa-dashboard"></i>
-                  <p>Dashboard</p>
-                </a>
-              </li>
-
-              <li class="nav-item">
-                <a href="{% url 'myApplications' %}" class="nav-link">
-                <i class="nav-icon fa fa-list"></i>
-                  <p>My Applications</p>
-                </a>
-              </li>
-  
-              <li class="nav-item">
-                <a href="{% url 'permittee_enrollment' %}" class="nav-link">
-                <i class="nav-icon fa fa-address-card"></i>
-                  <p>Permittee Enrollment</p>
-                </a>
-              </li>
-  
-              <li class="nav-header">Permitting</li>
-                <li class="nav-item has-treeview">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fa fa-tree"></i>
-                    <p>
-                      Forest Utilization
-                      <i class="fas fa-angle-right right"></i>
-                    </p>
+              {% if request.session.user_type == "Client" %}
+              
+                <li class="nav-item">
+                  <a href="{% url 'dashboard' %}" class="nav-link">
+                  <i class="nav-icon fa fa-dashboard"></i>
+                    <p>Dashboard</p>
                   </a>
-  
-                  <ul class="nav nav-treeview">
-                    <li class="nav-item">
-                      <a href="#" id="tcpBtn" class="nav-link">
-                      <i class="nav-icon fa fa-scissors"></i>
-                        <p>Tree Cutting Permit</p>
-                      </a>
-                    </li>
-                  </ul>
-  
-                  <ul class="nav nav-treeview">
-                    <li class="nav-item has-treeview">
-                      <a href="#" class="nav-link">
-                        <i class="nav-icon fa fa-gear"></i>
-                        <p>
-                          Chainsaw Permit
-                          <i class="fas fa-angle-right right"></i>
-                        </p>
-                      </a>
-  
-                      <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                          <a href="{% url 'import_apply' %}" class="nav-link">
-                          <i class="nav-icon fa fa-file-import"></i>
-                            <p>Permit to Import</p>
-                          </a>
-                        </li>
-                        {% comment %} <li class="nav-item">
-                          <a href="" class="nav-link">
-                          <i class="nav-icon fa fa-file-export"></i>
-                            <p>Permit to Sell</p>
-                          </a>
-                        </li>
-                        <li class="nav-item">
-                          <a href="" class="nav-link">
-                          <i class="nav-icon fa fa-cart-shopping"></i>
-                            <p>Permit to Purchase</p>
-                          </a>
-                        </li>
-                        <li class="nav-item">
-                          <a href="" class="nav-link">
-                          <i class="nav-icon fa fa-file"></i>
-                            <p>Registration</p>
-                          </a>
-                        </li> {% endcomment %}
-                    </li>
-                  </ul>
+                </li>
+
+                <li class="nav-item">
+                  <a href="{% url 'myApplications' %}" class="nav-link">
+                  <i class="nav-icon fa fa-list"></i>
+                    <p>My Applications</p>
+                  </a>
+                </li>
+    
+                <li class="nav-item">
+                  <a href="{% url 'permittee_enrollment' %}" class="nav-link">
+                  <i class="nav-icon fa fa-address-card"></i>
+                    <p>Permittee Enrollment</p>
+                  </a>
+                </li>
+    
+                <li class="nav-header">Permitting</li>
+                  <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fa fa-tree"></i>
+                      <p>
+                        Forest Utilization
+                        <i class="fas fa-angle-right right"></i>
+                      </p>
+                    </a>
+    
+                    <ul class="nav nav-treeview">
+                      <li class="nav-item">
+                        <a href="#" id="tcpBtn" class="nav-link">
+                        <i class="nav-icon fa fa-scissors"></i>
+                          <p>Tree Cutting Permit</p>
+                        </a>
+                      </li>
+                    </ul>
+    
+                    <ul class="nav nav-treeview">
+                      <li class="nav-item has-treeview">
+                        <a href="#" class="nav-link">
+                          <i class="nav-icon fa fa-gear"></i>
+                          <p>
+                            Chainsaw Permit
+                            <i class="fas fa-angle-right right"></i>
+                          </p>
+                        </a>
+    
+                        <ul class="nav nav-treeview">
+                          <li class="nav-item">
+                            <a href="{% url 'import_apply' %}" class="nav-link">
+                            <i class="nav-icon fa fa-file-import"></i>
+                              <p>Permit to Import</p>
+                            </a>
+                          </li>
+                          {% comment %} <li class="nav-item">
+                            <a href="" class="nav-link">
+                            <i class="nav-icon fa fa-file-export"></i>
+                              <p>Permit to Sell</p>
+                            </a>
+                          </li>
+                          <li class="nav-item">
+                            <a href="" class="nav-link">
+                            <i class="nav-icon fa fa-cart-shopping"></i>
+                              <p>Permit to Purchase</p>
+                            </a>
+                          </li>
+                          <li class="nav-item">
+                            <a href="" class="nav-link">
+                            <i class="nav-icon fa fa-file"></i>
+                              <p>Registration</p>
+                            </a>
+                          </li> {% endcomment %}
+                      </li>
+                    </ul>
+                    
+                  </li>
+    
+    
                   
                 </li>
-  
-  
-                
-              </li>
+
+                {% elif request.session.user_type == "Employee" %}
+
+                <li class="nav-item">
+                  <a href="{% url 'processApplications' %}" class="nav-link">
+                  <i class="nav-icon fa fa-list"></i>
+                    <p>My Dashbhoard</p>
+                  </a>
+                </li>
+
+                {% endif %}
             
               
           </ul>

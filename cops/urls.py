@@ -57,6 +57,10 @@ urlpatterns = [
     path('cps/apply', cps_views.index, name='import_apply'),
     path('submit-import/', cps_views.submit_import, name='submit_import'),
     
+    
+    # DENR EMPLOYEE
+    path('dashboard', views.process_application, name='processApplications'),
+    
 ]
 
 if settings.DEBUG:
