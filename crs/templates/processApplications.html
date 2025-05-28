@@ -126,13 +126,44 @@
 
     <script>
         $(document).ready(function() {
+            $.fn.dataTable.ext.errMode = 'none';  // Prevent default DataTables alert
+
             $('#myApplicationListEmp').DataTable({
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
                     "url": "{% url 'application_list_json_emp' %}",
                     "type": "POST",
-                    "headers": { "X-CSRFToken": "{{ csrf_token }}" }
+                    "headers": { "X-CSRFToken": "{{ csrf_token }}" },
+                    "error": function(xhr, error, thrown) {
+                        let errorMessage = "An unexpected error occurred.";
+                        let shouldRedirect = false;
+
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.error) {
+                                errorMessage = response.error;
+                                if (errorMessage.toLowerCase().includes("do not have an access")) {
+                                    shouldRedirect = true;
+                                }
+                            }
+                        } catch (e) {
+                            errorMessage = "Invalid response from server.";
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Access Denied',
+                            text: errorMessage,
+                            confirmButtonText: 'Logout'
+                        }).then(() => {
+                            if (shouldRedirect) {
+                                window.location.href = "{% url 'index' %}";  // Replace 'index' with your home view name
+                            }
+                        });
+
+                        $('#myApplicationListEmp').DataTable().processing(false); // hide spinner
+                    }
                 },
                 "columns": [
                     { "data": "permit_type" },
@@ -145,7 +176,7 @@
                         "data": null,
                         "render": function(data, type, row) {
                             return `
-                                <button class="btn btn-sm btn-primary view-btn" data-reference="${row.reference_no}"  data-permit_type_short="${row.permit_type_short}">
+                                <button class="btn btn-sm btn-primary view-btn" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             `;

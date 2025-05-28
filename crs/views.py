@@ -748,8 +748,8 @@ def application_list_json_emp(request):
                 'recordsTotal': 0,
                 'recordsFiltered': 0,
                 'data': [],
-                'error': 'Access denied: user not found.'
-            })
+                'error': 'You do not have an access to this system.'
+            }, status=400)
         user_type = result[0]
 
 
