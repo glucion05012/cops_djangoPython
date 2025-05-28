@@ -742,15 +742,25 @@ def application_list_json_emp(request):
             LIMIT 1
         """, [user_id])
         result = cursor.fetchone()
-        if not result:
-            return JsonResponse({
-                'draw': 1,
-                'recordsTotal': 0,
-                'recordsFiltered': 0,
-                'data': [],
-                'error': 'You do not have an access to this system.'
-            }, status=400)
-        user_type = result[0]
+        # if not result:
+        #     return JsonResponse({
+        #         'draw': 1,
+        #         'recordsTotal': 0,
+        #         'recordsFiltered': 0,
+        #         'data': [],
+        #         'error': 'You do not have an access to this system.'
+        #     }, status=400)
+        ch_user_type = result[0]
+        
+    with connections['tcp_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT type
+            FROM user_access
+            WHERE userid = %s
+            LIMIT 1
+        """, [user_id])
+        result = cursor.fetchone()
+        tcp_user_type = result[0]
 
 
     draw = int(request.POST.get('draw', 1))
@@ -773,7 +783,7 @@ def application_list_json_emp(request):
 
     data = []
 
-    if(user_type == 'admin'):
+    if(tcp_user_type == 'admin'):
         
         # --- TCP COUNT ---
         with connections['tcp_db'].cursor() as cursor:
@@ -796,7 +806,8 @@ def application_list_json_emp(request):
                 cursor.execute("SELECT COUNT(*) FROM app_tcp")
             tcp_filtered = cursor.fetchone()[0]
             tcp_total = tcp_filtered
-
+            
+    if(ch_user_type == 'admin'):
         # --- CHIMPORT COUNT ---
         with connections['default'].cursor() as cursor:
             if search_value:
@@ -819,6 +830,8 @@ def application_list_json_emp(request):
             ch_filtered = cursor.fetchone()[0]
             ch_total = ch_filtered
 
+
+    if(tcp_user_type == 'admin'):
         # --- TCP DATA ---
         with connections['tcp_db'].cursor() as cursor:
             tcp_filter = ""
@@ -877,6 +890,7 @@ def application_list_json_emp(request):
                     'client_remarks': client_remarks,
                 })
 
+    if(ch_user_type == 'admin'):
         # --- CHIMPORT DATA ---
         with connections['default'].cursor() as cursor:
             ch_filter = ""
@@ -922,10 +936,10 @@ def application_list_json_emp(request):
                     'status': status,
                     'client_remarks': client_remarks,
                 })
+           
+           
                 
-    elif(user_type == 'fus_evaluator'):
-        
-         
+    if(tcp_user_type == 'fus_evaluator'):
         # --- TCP COUNT ---
         with connections['tcp_db'].cursor() as cursor:
             if search_value:
@@ -950,6 +964,7 @@ def application_list_json_emp(request):
             tcp_filtered = cursor.fetchone()[0]
             tcp_total = tcp_filtered
 
+    if(ch_user_type == 'fus_evaluator'):
         # --- CHIMPORT COUNT ---
         with connections['default'].cursor() as cursor:
             if search_value:
@@ -974,6 +989,7 @@ def application_list_json_emp(request):
             ch_filtered = cursor.fetchone()[0]
             ch_total = ch_filtered
 
+    if(tcp_user_type == 'fus_evaluator'):
         # --- TCP DATA ---
         with connections['tcp_db'].cursor() as cursor:
             tcp_filter = ""
@@ -1040,7 +1056,8 @@ def application_list_json_emp(request):
                     'status': status,
                     'client_remarks': client_remarks,
                 })
-
+                
+    if(ch_user_type == 'fus_evaluator'):
         # --- CHIMPORT DATA ---
         with connections['default'].cursor() as cursor:
             ch_filter = ""
