@@ -733,7 +733,14 @@ def process_application(request):
 def application_list_json_emp(request):
     user_id = request.session.get('user_id')
 
-    # Check user access
+    ch_user_type = None
+    tcp_user_type = None
+    tcp_total = 0
+    ch_total = 0
+    tcp_filtered  = 0
+    ch_filtered = 0
+
+    # Check ch_access_level
     with connections['default'].cursor() as cursor:
         cursor.execute("""
             SELECT type
@@ -742,16 +749,10 @@ def application_list_json_emp(request):
             LIMIT 1
         """, [user_id])
         result = cursor.fetchone()
-        # if not result:
-        #     return JsonResponse({
-        #         'draw': 1,
-        #         'recordsTotal': 0,
-        #         'recordsFiltered': 0,
-        #         'data': [],
-        #         'error': 'You do not have an access to this system.'
-        #     }, status=400)
-        ch_user_type = result[0]
-        
+        if result:
+            ch_user_type = result[0]
+
+    # Check tcp_db user_access
     with connections['tcp_db'].cursor() as cursor:
         cursor.execute("""
             SELECT type
@@ -760,7 +761,18 @@ def application_list_json_emp(request):
             LIMIT 1
         """, [user_id])
         result = cursor.fetchone()
-        tcp_user_type = result[0]
+        if result:
+            tcp_user_type = result[0]
+
+    # If no access found in both databases
+    if ch_user_type is None and tcp_user_type is None:
+        return JsonResponse({
+            'draw': 1,
+            'recordsTotal': 0,
+            'recordsFiltered': 0,
+            'data': [],
+            'error': 'You do not have an access to this system.'
+        }, status=403)
 
 
     draw = int(request.POST.get('draw', 1))
