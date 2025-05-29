@@ -965,14 +965,14 @@ def application_list_json_emp(request):
                         WHERE id IN (SELECT MAX(id) FROM app_application GROUP BY app_id)
                     ) c ON a.id = c.app_id
                     WHERE
-                        a.evaluator_id = %s AND (
+                        a.evaluator_id = %s AND a.remarks = %s AND (
                             LOWER(a.estab_name) LIKE %s OR
                             LOWER(COALESCE(a.reference_no_new, a.reference_no)) LIKE %s OR
                             LOWER(a.status) LIKE %s
                         )
-                """, [user_id, like_term, like_term, like_term])
+                """, [user_id, 'fus_evaluator', like_term, like_term, like_term])
             else:
-                cursor.execute("SELECT COUNT(*) FROM app_tcp where evaluator_id = %s", [user_id])
+                cursor.execute("SELECT COUNT(*) FROM app_tcp where evaluator_id = %s AND remarks = %s", [user_id, 'fus_evaluator'])
             tcp_filtered = cursor.fetchone()[0]
             tcp_total = tcp_filtered
 
@@ -990,14 +990,14 @@ def application_list_json_emp(request):
                         WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
                     ) c ON a.id = c.app_id
                     WHERE
-                        evaluator_id = %s AND (
+                        evaluator_id = %s AND a.remarks = %s AND (
                         LOWER(a.estab_name) LIKE %s OR
                         LOWER(a.reference_no) LIKE %s OR
                         LOWER(a.status) LIKE %s
                         )
-                """, [user_id, like_term, like_term, like_term])
+                """, [user_id, 'fus_evaluator', like_term, like_term, like_term])
             else:
-                cursor.execute("SELECT COUNT(*) FROM cps_chimport WHERE evaluator_id = %s", [user_id])
+                cursor.execute("SELECT COUNT(*) FROM cps_chimport WHERE evaluator_id = %s AND remarks = %s", [user_id, 'fus_evaluator'])
             ch_filtered = cursor.fetchone()[0]
             ch_total = ch_filtered
 
@@ -1010,20 +1010,21 @@ def application_list_json_emp(request):
             if search_value:
                 tcp_filter = """
                     WHERE
-                        evaluator_id = %s AND (
+                        evaluator_id = %s AND a.remarks = %s  AND (
                             LOWER(a.estab_name) LIKE %s OR
                             LOWER(COALESCE(a.reference_no_new, a.reference_no)) LIKE %s OR
                             LOWER(a.status) LIKE %s
                         )
                 """
                 like_term = f"%{search_value}%"
-                tcp_params = [user_id, like_term, like_term, like_term]
+                tcp_params = [user_id, 'fus_evaluator', like_term, like_term, like_term]
             else:
                 tcp_filter = """
                     WHERE
-                        evaluator_id = %s
+                        a.evaluator_id = %s
+                        AND a.remarks = %s 
                 """
-                tcp_params = [user_id]
+                tcp_params = [user_id, 'fus_evaluator']
                 
                 
             cursor.execute(f"""
@@ -1078,20 +1079,21 @@ def application_list_json_emp(request):
             if search_value:
                 ch_filter = """
                     WHERE
-                        evaluator_id = %s AND (
+                        evaluator_id = %s AND a.remarks = %s AND (
                             LOWER(a.estab_name) LIKE %s OR
                             LOWER(a.reference_no) LIKE %s OR
                             LOWER(a.status) LIKE %s
                         )
                 """
                 like_term = f"%{search_value}%"
-                ch_params = [user_id, like_term, like_term, like_term]
+                ch_params = [user_id, 'fus_evaluator', like_term, like_term, like_term]
             else:
                 ch_filter = """
                     WHERE
-                        evaluator_id = %s
+                        a.evaluator_id = %s
+                        AND a.remarks = %s 
                 """
-                ch_params = [user_id]
+                ch_params = [user_id, 'fus_evaluator']
                 
             cursor.execute(f"""
                 SELECT 

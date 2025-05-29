@@ -58,6 +58,18 @@ def submit_import(request):
                 brand, _ = ChainsawBrand.objects.get_or_create(name=brand_name)
 
                 # Create CHImport record
+                with connections['default'].cursor() as cursor:
+                    cursor.execute("""
+                        SELECT userid
+                        FROM ch_access_level
+                        WHERE type = %s
+                        ORDER BY RAND()
+                        LIMIT 1
+                    """, ['fus_evaluator'])
+                    result = cursor.fetchone()
+                    if result:
+                        evaluator_id = result[0]
+        
                 application = CHImport.objects.create(
                     brand=brand,
                     origin=request.POST.get('origin'),
@@ -68,11 +80,13 @@ def submit_import(request):
                     estab_email = request.POST.get('estab_email'),
                     estab_id_dniis = request.POST.get('estab_id_dniis'),
                     estab_name = request.POST.get('estab_name'),
-                    remarks = 'New Application',
+                    remarks = 'fus_evaluator',
+                    status = 'Pending',
                     arrival_date=request.POST.get('arrival_date'),
                     is_existing_permittee=request.POST.get('is_existing_permittee') == '1',
                     warehouse_city = request.POST.get('warehouse_city'),
-                    warehouse_address = request.POST.get('warehouse_address')
+                    warehouse_address = request.POST.get('warehouse_address'),
+                    evaluator_id = evaluator_id
                 )
                 
                 # ✅ Generate and save reference number
@@ -86,7 +100,9 @@ def submit_import(request):
                     app_id=application.id,
                     reference_no=ref_no,
                     forwarded_by_id=request.session.get('user_id'),
-                    action='New Application',
+                    forwarded_to_id = evaluator_id,
+                    action='For Evaluation',
+                    notes='Created New Application',
                     status='Pending',
                     days_pending=0
                 )
