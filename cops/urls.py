@@ -41,6 +41,7 @@ urlpatterns = [
     path('myapplications/', views.myApplications, name='myApplications'),
     path('list', views.application_list_json, name='application_list_json'), 
     path('get-application-details/', views.get_application_details, name='get_application_details'),
+    path('process_application_action/', views.process_application_action, name='process_application_action'),
     
     
     # permittee enrollment

@@ -124,6 +124,44 @@
         </div>
     </div>
 
+    <div class="modal fade" id="processModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Process Application</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>APPLICATION FOR <span id="application_for_p" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_p"></span>
+                        <br><br>
+                        <p>Please provide your remarks in the text box below:</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="hidden" id="app_id_p" name="app_id_p">
+                        <textarea class="form-control" id="remarksTextarea" name="remarks" rows="4" placeholder="Enter your remarks here. If returning to the client, please indicate any incomplete requirements."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-warning btnReturnToClient" >
+                            Return to Client
+                        </button>
+                        &nbsp;&nbsp;
+                        <button class="btn btn-sm btn-success btnCompletedRequirements" >
+                            Completed Requirements
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+                                    
     <script>
         $(document).ready(function() {
             $.fn.dataTable.ext.errMode = 'none';  // Prevent default DataTables alert
@@ -567,5 +605,59 @@
                 }
             });
         });
+
+        $(document).on('click', '.process-btn', function () {
+            const referenceNo = $(this).data('reference');
+            const permit_type_short = $(this).data('permit_type_short');
+            // Fetch data from the server using AJAX
+            $.ajax({
+                url: '/get-application-details/', // Your Django view URL
+                method: 'GET',
+                data: { reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+                    $('#application_for_p').html(response.permit_type);
+                    $('#reference_no_p').html(response.reference_no);
+                    $('#app_id_p').val(response.id);
+                    
+
+                    $('#processModal').modal('show');
+                },
+                error: function () {
+                    alert('Failed to fetch application details.');
+                }
+            });
+        });
+
+    $(document).on('click', '.btnReturnToClient', function(e) {
+        e.preventDefault();
+
+        const referenceNo = $('#reference_no_p').text().trim();
+        const appId = $('#app_id_p').val();
+        const remarks = $('#remarksTextarea').val().trim();
+        const permitType = $('#application_for_p').text().trim();
+
+        $.ajax({
+            type: 'POST', // or 'GET'
+            url: '/process_application_action/',
+            data: {
+                    reference_no: referenceNo,
+                    app_id: appId,
+                    remarks: remarks,
+                    action: 'For Client Completion',
+                    notes: 'Returned to Client',
+                    permit_type_short: permitType,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+            success: function(response) {
+                alert('AJAX success: ' + JSON.stringify(response));
+            },
+            error: function(xhr, status, error) {
+                alert('AJAX error. Status: ' + status + ', Error: ' + error);
+            }
+        });
+    });
+
+
     </script>
 {% endblock %}

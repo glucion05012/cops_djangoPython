@@ -1149,3 +1149,7 @@ def application_list_json_emp(request):
         'recordsFiltered': tcp_filtered + ch_filtered,
         'data': paginated_data,
     })
+    
+def process_application_action(request):
+    # Debug only
+    return JsonResponse({'reference_no': request.POST.get('reference_no', 'Not provided')})
