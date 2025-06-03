@@ -640,6 +640,16 @@
         const remarks = $('#remarksTextarea').val().trim();
         const permitType = $('#application_for_p').text().trim();
 
+        
+        if (!remarks) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Remarks Required',
+                text: 'Please provide remarks before returning the application to the client.'
+            });
+            return;
+        }
+        
         $.ajax({
             type: 'POST', // or 'GET'
             url: '/process_application_action/',
@@ -653,10 +663,21 @@
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 },
             success: function(response) {
-                alert('AJAX success: ' + JSON.stringify(response));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Returned to Client',
+                    text: 'The application has been successfully returned to the client.'
+                }).then(() => {
+                    // Optionally reload the page or refresh the DataTable
+                    location.reload();
+                });
             },
             error: function(xhr, status, error) {
-                alert('AJAX error. Status: ' + status + ', Error: ' + error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Request Failed',
+                    text: `An error occurred: ${error}`
+                });
             }
         });
     });
