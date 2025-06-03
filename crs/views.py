@@ -796,7 +796,6 @@ def application_list_json_emp(request):
     data = []
 
     if(tcp_user_type == 'admin'):
-        
         # --- TCP COUNT ---
         with connections['tcp_db'].cursor() as cursor:
             if search_value:
@@ -819,31 +818,7 @@ def application_list_json_emp(request):
             tcp_filtered = cursor.fetchone()[0]
             tcp_total = tcp_filtered
             
-    if(ch_user_type == 'admin'):
-        # --- CHIMPORT COUNT ---
-        with connections['default'].cursor() as cursor:
-            if search_value:
-                like_term = f'%{search_value}%'
-                cursor.execute("""
-                    SELECT COUNT(*)
-                    FROM cps_chimport a
-                    LEFT JOIN (
-                        SELECT app_id, remarks, forwarded_to_id
-                        FROM ch_application
-                        WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
-                    ) c ON a.id = c.app_id
-                    WHERE
-                        LOWER(a.estab_name) LIKE %s OR
-                        LOWER(a.reference_no) LIKE %s OR
-                        LOWER(a.status) LIKE %s
-                """, [like_term, like_term, like_term])
-            else:
-                cursor.execute("SELECT COUNT(*) FROM cps_chimport")
-            ch_filtered = cursor.fetchone()[0]
-            ch_total = ch_filtered
-
-
-    if(tcp_user_type == 'admin'):
+            
         # --- TCP DATA ---
         with connections['tcp_db'].cursor() as cursor:
             tcp_filter = ""
@@ -903,6 +878,28 @@ def application_list_json_emp(request):
                 })
 
     if(ch_user_type == 'admin'):
+        # --- CHIMPORT COUNT ---
+        with connections['default'].cursor() as cursor:
+            if search_value:
+                like_term = f'%{search_value}%'
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM cps_chimport a
+                    LEFT JOIN (
+                        SELECT app_id, remarks, forwarded_to_id
+                        FROM ch_application
+                        WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
+                    ) c ON a.id = c.app_id
+                    WHERE
+                        LOWER(a.estab_name) LIKE %s OR
+                        LOWER(a.reference_no) LIKE %s OR
+                        LOWER(a.status) LIKE %s
+                """, [like_term, like_term, like_term])
+            else:
+                cursor.execute("SELECT COUNT(*) FROM cps_chimport")
+            ch_filtered = cursor.fetchone()[0]
+            ch_total = ch_filtered
+            
         # --- CHIMPORT DATA ---
         with connections['default'].cursor() as cursor:
             ch_filter = ""
@@ -948,9 +945,7 @@ def application_list_json_emp(request):
                     'status': status,
                     'client_remarks': client_remarks,
                 })
-           
-           
-                
+
     if(tcp_user_type == 'fus_evaluator'):
         # --- TCP COUNT ---
         with connections['tcp_db'].cursor() as cursor:
@@ -975,33 +970,7 @@ def application_list_json_emp(request):
                 cursor.execute("SELECT COUNT(*) FROM app_tcp where evaluator_id = %s AND remarks = %s", [user_id, 'fus_evaluator'])
             tcp_filtered = cursor.fetchone()[0]
             tcp_total = tcp_filtered
-
-    if(ch_user_type == 'fus_evaluator'):
-        # --- CHIMPORT COUNT ---
-        with connections['default'].cursor() as cursor:
-            if search_value:
-                like_term = f'%{search_value}%'
-                cursor.execute("""
-                    SELECT COUNT(*)
-                    FROM cps_chimport a
-                    LEFT JOIN (
-                        SELECT app_id, remarks, forwarded_to_id
-                        FROM ch_application
-                        WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
-                    ) c ON a.id = c.app_id
-                    WHERE
-                        evaluator_id = %s AND a.remarks = %s AND (
-                        LOWER(a.estab_name) LIKE %s OR
-                        LOWER(a.reference_no) LIKE %s OR
-                        LOWER(a.status) LIKE %s
-                        )
-                """, [user_id, 'fus_evaluator', like_term, like_term, like_term])
-            else:
-                cursor.execute("SELECT COUNT(*) FROM cps_chimport WHERE evaluator_id = %s AND remarks = %s", [user_id, 'fus_evaluator'])
-            ch_filtered = cursor.fetchone()[0]
-            ch_total = ch_filtered
-
-    if(tcp_user_type == 'fus_evaluator'):
+            
         # --- TCP DATA ---
         with connections['tcp_db'].cursor() as cursor:
             tcp_filter = ""
@@ -1073,6 +1042,30 @@ def application_list_json_emp(request):
                 })
                 
     if(ch_user_type == 'fus_evaluator'):
+         # --- CHIMPORT COUNT ---
+        with connections['default'].cursor() as cursor:
+            if search_value:
+                like_term = f'%{search_value}%'
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM cps_chimport a
+                    LEFT JOIN (
+                        SELECT app_id, remarks, forwarded_to_id
+                        FROM ch_application
+                        WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
+                    ) c ON a.id = c.app_id
+                    WHERE
+                        evaluator_id = %s AND a.remarks = %s AND (
+                        LOWER(a.estab_name) LIKE %s OR
+                        LOWER(a.reference_no) LIKE %s OR
+                        LOWER(a.status) LIKE %s
+                        )
+                """, [user_id, 'fus_evaluator', like_term, like_term, like_term])
+            else:
+                cursor.execute("SELECT COUNT(*) FROM cps_chimport WHERE evaluator_id = %s AND remarks = %s", [user_id, 'fus_evaluator'])
+            ch_filtered = cursor.fetchone()[0]
+            ch_total = ch_filtered
+            
         # --- CHIMPORT DATA ---
         with connections['default'].cursor() as cursor:
             ch_filter = ""
