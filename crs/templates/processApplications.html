@@ -175,10 +175,28 @@
                     {
                         "data": null,
                         "render": function(data, type, row) {
-                            return `
-                                <button class="btn btn-sm btn-primary view-btn" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                            let viewBtn = `
+                                <button class="btn btn-sm btn-primary view-btn" title="View Application" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                     <i class="fas fa-eye"></i>
                                 </button>
+                            `;
+
+                            let processBtn = '';
+                            if(row.permit_type_short === 'PIC'){
+                                if (row.curr_assign === 'fus_evaluator') {
+                                    processBtn = `
+                                        <button class="btn btn-sm btn-success process-btn" title="Process Application" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <i class="fas fa-file-circle-check"></i>
+                                        </button>
+                                    `;
+                                }
+                            }
+
+                            return `
+                                <div class="d-flex flex-row flex-nowrap align-items-center">
+                                    <div class="me-2">${viewBtn}</div> &nbsp;&nbsp;
+                                    <div>${processBtn}</div>
+                                </div>
                             `;
                         },
                         "orderable": false,

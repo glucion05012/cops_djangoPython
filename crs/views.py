@@ -1040,7 +1040,8 @@ def application_list_json_emp(request):
                         c.notes
                     ) AS status,
                     c.remarks AS client_remarks,
-                    a.permit_type
+                    a.permit_type,
+                    a.remarks AS curr_assign
                 FROM app_tcp a
                 LEFT JOIN (
                     SELECT app_id, remarks, forwarded_to_id, notes
@@ -1053,7 +1054,7 @@ def application_list_json_emp(request):
             """, tcp_params)
 
             for row in cursor.fetchall():
-                estab_name, reference_no, date_applied, status, client_remarks, permit_type = row[1:]
+                estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row[1:]
                 data.append({
                     'permit_type_short': 'TCP',
                     'permit_type': {
@@ -1068,6 +1069,7 @@ def application_list_json_emp(request):
                     'date_applied': date_applied,
                     'status': status,
                     'client_remarks': client_remarks,
+                    'curr_assign': curr_assign,
                 })
                 
     if(ch_user_type == 'fus_evaluator'):
@@ -1102,7 +1104,8 @@ def application_list_json_emp(request):
                     a.reference_no,
                     a.date_applied,
                     a.status,
-                    c.remarks AS client_remarks
+                    c.remarks AS client_remarks,
+                    a.remarks AS curr_assign
                 FROM cps_chimport a
                 LEFT JOIN (
                     SELECT app_id, remarks, forwarded_to_id
@@ -1115,7 +1118,7 @@ def application_list_json_emp(request):
             """, ch_params)
 
             for row in cursor.fetchall():
-                estab_name, reference_no, date_applied, status, client_remarks = row[1:]
+                estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row[1:]
                 data.append({
                     'permit_type_short': 'PIC',
                     'permit_type': 'Permit to Import Chainsaw',
@@ -1124,6 +1127,7 @@ def application_list_json_emp(request):
                     'date_applied': date_applied,
                     'status': status,
                     'client_remarks': client_remarks,
+                    'curr_assign': curr_assign,
                 })
                 
                 
