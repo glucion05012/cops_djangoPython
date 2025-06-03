@@ -696,6 +696,7 @@ def get_application_details(request):
         
     # ✅ Add session data if found
     if data is not None:
+        data['app_id'] = request.GET.get('app_id')
         data['app_type'] = request.session.get('app_type', 'N/A')
             
         user_id = request.session['user_id']
@@ -1160,4 +1161,4 @@ def application_list_json_emp(request):
     
 def process_application_action(request):
     # Debug only
-    return JsonResponse({'reference_no': request.POST.get('reference_no', 'Not provided')})
+    return JsonResponse({'app_id': request.POST.get('app_id', 'Not provided')})

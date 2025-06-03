@@ -247,8 +247,6 @@
 
         $(document).on('click', '.view-btn', function () {
             const appid = $(this).data('appid');
-            alert('Application ID: ' + appid); // For debugging, you can remove this later
-
             const referenceNo = $(this).data('reference');
             const permit_type_short = $(this).data('permit_type_short');
             // Fetch data from the server using AJAX
@@ -610,18 +608,20 @@
         });
 
         $(document).on('click', '.process-btn', function () {
+            const appid = $(this).data('appid');
             const referenceNo = $(this).data('reference');
             const permit_type_short = $(this).data('permit_type_short');
             // Fetch data from the server using AJAX
             $.ajax({
                 url: '/get-application-details/', // Your Django view URL
                 method: 'GET',
-                data: { reference_no: referenceNo,
+                data: { app_id: appid,
+                        reference_no: referenceNo,
                         permit_type_short: permit_type_short},
                 success: function (response) {
                     $('#application_for_p').html(response.permit_type);
                     $('#reference_no_p').html(response.reference_no);
-                    $('#app_id_p').val(response.id);
+                    $('#app_id_p').val(response.app_id);
                     
 
                     $('#processModal').modal('show');
