@@ -836,6 +836,7 @@ def application_list_json_emp(request):
 
             cursor.execute(f"""
                 SELECT 
+                    a.id as app_id,
                     'TCP' AS permit_type_short,
                     a.estab_name,
                     COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
@@ -847,7 +848,8 @@ def application_list_json_emp(request):
                         c.notes
                     ) AS status,
                     c.remarks AS client_remarks,
-                    a.permit_type
+                    a.permit_type,
+                    a.remarks AS curr_assign
                 FROM app_tcp a
                 LEFT JOIN (
                     SELECT app_id, remarks, forwarded_to_id, notes
@@ -860,9 +862,10 @@ def application_list_json_emp(request):
             """, tcp_params)
 
             for row in cursor.fetchall():
-                estab_name, reference_no, date_applied, status, client_remarks, permit_type = row[1:]
+                app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row
                 data.append({
-                    'permit_type_short': 'TCP',
+                    'app_id': app_id,
+                    'permit_type_short': permit_type_short,  # Now correctly used
                     'permit_type': {
                         'tcp': 'Tree Cutting Permit',
                         'stcp': 'Special Tree Cutting Permit',
@@ -875,6 +878,7 @@ def application_list_json_emp(request):
                     'date_applied': date_applied,
                     'status': status,
                     'client_remarks': client_remarks,
+                    'curr_assign': curr_assign,
                 })
 
     if(ch_user_type == 'admin'):
@@ -917,12 +921,15 @@ def application_list_json_emp(request):
 
             cursor.execute(f"""
                 SELECT 
+                    a.id as app_id,
                     'PIC' AS permit_type_short,
+                    'Permit to Import Chainsaw' AS permit_type,
                     a.estab_name,
                     a.reference_no,
                     a.date_applied,
                     a.status,
-                    c.remarks AS client_remarks
+                    c.remarks AS client_remarks,
+                    a.remarks AS curr_assign
                 FROM cps_chimport a
                 LEFT JOIN (
                     SELECT app_id, remarks, forwarded_to_id
@@ -935,15 +942,17 @@ def application_list_json_emp(request):
             """, ch_params)
 
             for row in cursor.fetchall():
-                estab_name, reference_no, date_applied, status, client_remarks = row[1:]
+                app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
                 data.append({
-                    'permit_type_short': 'PIC',
-                    'permit_type': 'Permit to Import Chainsaw',
+                    'app_id': app_id,
+                    'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
+                    'permit_type': permit_type,
                     'estab_name': estab_name,
                     'reference_no': reference_no,
                     'date_applied': date_applied,
                     'status': status,
                     'client_remarks': client_remarks,
+                    'curr_assign': curr_assign,
                 })
 
     if(tcp_user_type == 'fus_evaluator'):
@@ -998,6 +1007,7 @@ def application_list_json_emp(request):
                 
             cursor.execute(f"""
                 SELECT 
+                    a.id as app_id,
                     'TCP' AS permit_type_short,
                     a.estab_name,
                     COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
@@ -1023,9 +1033,10 @@ def application_list_json_emp(request):
             """, tcp_params)
 
             for row in cursor.fetchall():
-                estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row[1:]
+                app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row
                 data.append({
-                    'permit_type_short': 'TCP',
+                    'app_id': app_id,
+                    'permit_type_short': permit_type_short,  # Now correctly used
                     'permit_type': {
                         'tcp': 'Tree Cutting Permit',
                         'stcp': 'Special Tree Cutting Permit',
@@ -1040,6 +1051,7 @@ def application_list_json_emp(request):
                     'client_remarks': client_remarks,
                     'curr_assign': curr_assign,
                 })
+
                 
     if(ch_user_type == 'fus_evaluator'):
          # --- CHIMPORT COUNT ---
@@ -1092,7 +1104,9 @@ def application_list_json_emp(request):
                 
             cursor.execute(f"""
                 SELECT 
+                    a.id as app_id,
                     'PIC' AS permit_type_short,
+                    'Permit to Import Chainsaw' AS permit_type,
                     a.estab_name,
                     a.reference_no,
                     a.date_applied,
@@ -1111,10 +1125,11 @@ def application_list_json_emp(request):
             """, ch_params)
 
             for row in cursor.fetchall():
-                estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row[1:]
+                app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
                 data.append({
-                    'permit_type_short': 'PIC',
-                    'permit_type': 'Permit to Import Chainsaw',
+                    'app_id': app_id,
+                    'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
+                    'permit_type': permit_type,
                     'estab_name': estab_name,
                     'reference_no': reference_no,
                     'date_applied': date_applied,
