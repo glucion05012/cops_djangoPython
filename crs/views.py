@@ -19,6 +19,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.csrf import ensure_csrf_cookie
 from operator import itemgetter
 from django.db import transaction
+import traceback
+
+from cps.models import (
+    CHImport,
+    CHApplication
+)
 
 
 def test(request):
@@ -840,6 +846,7 @@ def application_list_json_emp(request):
             cursor.execute(f"""
                 SELECT 
                     a.id as app_id,
+                    a.crs_id,
                     'TCP' AS permit_type_short,
                     a.estab_name,
                     COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
@@ -865,9 +872,10 @@ def application_list_json_emp(request):
             """, tcp_params)
 
             for row in cursor.fetchall():
-                app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row
+                app_id, crs_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row
                 data.append({
                     'app_id': app_id,
+                    'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly used
                     'permit_type': {
                         'tcp': 'Tree Cutting Permit',
@@ -925,6 +933,7 @@ def application_list_json_emp(request):
             cursor.execute(f"""
                 SELECT 
                     a.id as app_id,
+                    a.crs_id,
                     'PIC' AS permit_type_short,
                     'Permit to Import Chainsaw' AS permit_type,
                     a.estab_name,
@@ -945,9 +954,10 @@ def application_list_json_emp(request):
             """, ch_params)
 
             for row in cursor.fetchall():
-                app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
+                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
                 data.append({
                     'app_id': app_id,
+                    'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
                     'permit_type': permit_type,
                     'estab_name': estab_name,
@@ -1011,6 +1021,7 @@ def application_list_json_emp(request):
             cursor.execute(f"""
                 SELECT 
                     a.id as app_id,
+                    a.crs_id,
                     'TCP' AS permit_type_short,
                     a.estab_name,
                     COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
@@ -1036,9 +1047,10 @@ def application_list_json_emp(request):
             """, tcp_params)
 
             for row in cursor.fetchall():
-                app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row
+                app_id, crs_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row
                 data.append({
                     'app_id': app_id,
+                    'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly used
                     'permit_type': {
                         'tcp': 'Tree Cutting Permit',
@@ -1108,6 +1120,7 @@ def application_list_json_emp(request):
             cursor.execute(f"""
                 SELECT 
                     a.id as app_id,
+                    a.crs_id,
                     'PIC' AS permit_type_short,
                     'Permit to Import Chainsaw' AS permit_type,
                     a.estab_name,
@@ -1128,9 +1141,10 @@ def application_list_json_emp(request):
             """, ch_params)
 
             for row in cursor.fetchall():
-                app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
+                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
                 data.append({
                     'app_id': app_id,
+                    'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
                     'permit_type': permit_type,
                     'estab_name': estab_name,
@@ -1161,6 +1175,50 @@ def application_list_json_emp(request):
         'data': paginated_data,
     })
     
+@csrf_exempt
 def process_application_action(request):
-    # Debug only
-    return JsonResponse({'app_id': request.POST.get('app_id', 'Not provided')})
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                
+                app_id = request.POST.get('app_id')
+                crs_id = request.POST.get('crsid')
+                reference_no = request.POST.get('reference_no')
+                remarks = request.POST.get('remarks')
+                action = request.POST.get('action')
+                notes = request.POST.get('notes')
+                status = request.POST.get('status')
+                permit_type_short = request.POST.get('permit_type_short')
+
+                if not all([app_id, reference_no, remarks, permit_type_short]):
+                    return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
+
+                user_id = request.session.get('user_id')
+                
+                # ✅ Create CHApplication record
+                CHApplication.objects.create(
+                    date_created=timezone.now(),
+                    app_id=app_id,
+                    reference_no=reference_no,
+                    forwarded_by_id=request.session.get('user_id'),
+                    forwarded_to_id = crs_id,
+                    action=action,
+                    notes=notes,
+                    remarks=remarks,
+                    status=status,
+                    days_pending=0
+                )
+                
+                CHImport.objects.filter(id=int(app_id)).update(
+                    remarks='client',
+                    status='returned'
+                )
+
+            return JsonResponse({'success': True, 'message': 'Application returned to client successfully.'})
+
+        except Exception as e:
+            # No need to call transaction.set_rollback(True); it happens automatically in an atomic block
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)

@@ -81,7 +81,7 @@ def submit_import(request):
                     estab_id_dniis = request.POST.get('estab_id_dniis'),
                     estab_name = request.POST.get('estab_name'),
                     remarks = 'fus_evaluator',
-                    status = 'Pending',
+                    status = 'pending',
                     arrival_date=request.POST.get('arrival_date'),
                     is_existing_permittee=request.POST.get('is_existing_permittee') == '1',
                     warehouse_city = request.POST.get('warehouse_city'),
@@ -103,7 +103,7 @@ def submit_import(request):
                     forwarded_to_id = evaluator_id,
                     action='For Evaluation',
                     notes='Created New Application',
-                    status='Pending',
+                    status='pending',
                     days_pending=0
                 )
                 

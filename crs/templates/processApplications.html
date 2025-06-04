@@ -143,6 +143,7 @@
 
                     <div class="mb-3">
                         <input type="hidden" id="app_id_p" name="app_id_p">
+                        <input type="hidden" id="crs_id_p" name="crs_id_p">
                         <textarea class="form-control" id="remarksTextarea" name="remarks" rows="4" placeholder="Enter your remarks here. If returning to the client, please indicate any incomplete requirements."></textarea>
                     </div>
 
@@ -214,7 +215,7 @@
                         "data": null,
                         "render": function(data, type, row) {
                             let viewBtn = `
-                                <button class="btn btn-sm btn-primary view-btn" title="View Application" data-appid="${row.app_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                <button class="btn btn-sm btn-primary view-btn" title="View Application" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             `;
@@ -223,7 +224,7 @@
                             if(row.permit_type_short === 'PIC'){
                                 if (row.curr_assign === 'fus_evaluator') {
                                     processBtn = `
-                                        <button class="btn btn-sm btn-success process-btn" title="Process Application" data-appid="${row.app_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <button class="btn btn-sm btn-success process-btn" title="Process Application" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                             <i class="fas fa-file-circle-check"></i>
                                         </button>
                                     `;
@@ -609,27 +610,17 @@
 
         $(document).on('click', '.process-btn', function () {
             const appid = $(this).data('appid');
+            const crsid = $(this).data('crsid');
             const referenceNo = $(this).data('reference');
             const permit_type_short = $(this).data('permit_type_short');
-            // Fetch data from the server using AJAX
-            $.ajax({
-                url: '/get-application-details/', // Your Django view URL
-                method: 'GET',
-                data: { app_id: appid,
-                        reference_no: referenceNo,
-                        permit_type_short: permit_type_short},
-                success: function (response) {
-                    $('#application_for_p').html(response.permit_type);
-                    $('#reference_no_p').html(response.reference_no);
-                    $('#app_id_p').val(response.app_id);
-                    
+            
+            $('#application_for_p').html(permit_type_short);
+            $('#reference_no_p').html(referenceNo);
+            $('#app_id_p').val(appid);
+            $('#crs_id_p').val(crsid);
+            
 
-                    $('#processModal').modal('show');
-                },
-                error: function () {
-                    alert('Failed to fetch application details.');
-                }
-            });
+            $('#processModal').modal('show');
         });
 
     $(document).on('click', '.btnReturnToClient', function(e) {
@@ -637,6 +628,7 @@
 
         const referenceNo = $('#reference_no_p').text().trim();
         const appId = $('#app_id_p').val();
+        const crsId = $('#crs_id_p').val();
         const remarks = $('#remarksTextarea').val().trim();
         const permitType = $('#application_for_p').text().trim();
 
@@ -656,21 +648,30 @@
             data: {
                     reference_no: referenceNo,
                     app_id: appId,
+                    crsid: crsId,
                     remarks: remarks,
                     action: 'For Client Completion',
                     notes: 'Returned to Client',
+                    status: 'pending',
                     permit_type_short: permitType,
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 },
             success: function(response) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Returned to Client',
-                    text: 'The application has been successfully returned to the client.'
-                }).then(() => {
-                    // Optionally reload the page or refresh the DataTable
-                    location.reload();
-                });
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Returned to Client',
+                        text: 'The application has been successfully returned to the client.'
+                    }).then(() => {
+                        location.reload(); // or DataTable refresh
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Failed to Return',
+                        text: response.message || 'An unknown error occurred.'
+                    });
+                }
             },
             error: function(xhr, status, error) {
                 Swal.fire({
