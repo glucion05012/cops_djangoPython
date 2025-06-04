@@ -167,11 +167,21 @@
                     {
                         "data": null,
                         "render": function(data, type, row) {
-                            return `
-                                <button class="btn btn-sm btn-primary view-btn" data-reference="${row.reference_no}"  data-permit_type_short="${row.permit_type_short}">
+                            let buttons = `
+                            <button class="btn btn-sm btn-primary view-btn" data-appid="${row.app_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             `;
+
+                            if (row.status === "Returned to Client") {
+                                buttons += `
+                                <button class="btn btn-sm btn-warning edit-btn" data-appid="${row.app_id}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                `;
+                            }
+
+                            return buttons;
                         },
                         "orderable": false,
                         "searchable": false
@@ -179,7 +189,6 @@
                 ]
             });
         });
-
 
         $(document).on('click', '.view-btn', function () {
             const referenceNo = $(this).data('reference');
@@ -540,6 +549,13 @@
                     alert('Failed to fetch application details.');
                 }
             });
+        });
+
+        $(document).on('click', '.edit-btn', function () {
+            const app_id = $(this).data('appid');
+            const permitType = $(this).data('permit_type_short');
+            window.location.href = `/edit-application/${permitType}/${app_id}/`;
+            
         });
     </script>
 {% endblock %}

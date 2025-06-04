@@ -451,6 +451,7 @@ def application_list_json(request):
 
         cursor.execute(f"""
             SELECT 
+                a.id AS app_id,
                 'TCP' AS permit_type_short,
                 a.estab_name,
                 COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
@@ -478,9 +479,10 @@ def application_list_json(request):
         """, params + [length, start])
 
         for row in cursor.fetchall():
-            estab_name, reference_no, date_applied, status, client_remarks, permit_type = row[1:]
+            app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type = row
             data.append({
-                'permit_type_short': 'TCP',
+                'app_id' : app_id,
+                'permit_type_short': permit_type_short,
                 'permit_type': {
                     'tcp': 'Tree Cutting Permit',
                     'stcp': 'Special Tree Cutting Permit',
@@ -512,7 +514,9 @@ def application_list_json(request):
 
         cursor.execute(f"""
             SELECT 
+                a.id AS app_id,
                 'PIC' AS permit_type_short,
+                'Permit to Import Chainsaw' AS permit_type,
                 a.estab_name,
                 a.reference_no,
                 a.date_applied,
@@ -538,10 +542,11 @@ def application_list_json(request):
         """, params + [length, start])
 
         for row in cursor.fetchall():
-            estab_name, reference_no, date_applied, status, client_remarks = row[1:]
+            app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks = row
             data.append({
-                'permit_type_short': 'PIC',
-                'permit_type': 'Permit to Import Chainsaw',
+                'app_id': app_id,
+                'permit_type_short': permit_type_short,
+                'permit_type': permit_type,
                 'estab_name': estab_name,
                 'reference_no': reference_no,
                 'date_applied': date_applied,

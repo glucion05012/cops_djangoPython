@@ -54,6 +54,7 @@ urlpatterns = [
     
     
     #chainsaw_permit_system
+    path('edit-application/<str:permitType>/<str:app_id>/', cps_views.edit_application, name='edit_application'),
     #import
     path('cps/apply', cps_views.index, name='import_apply'),
     path('submit-import/', cps_views.submit_import, name='submit_import'),

@@ -2,7 +2,7 @@ import os
 from django.http import JsonResponse
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
 from .models import (
@@ -16,6 +16,7 @@ import traceback
 from django.utils import timezone
 from django.db import connections
 from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
 
 
 def index(request):
@@ -149,3 +150,35 @@ def submit_import(request):
             return JsonResponse({'success': False, 'message': 'Error occurred during submission.'})
 
     return render(request, 'import/apply.html')
+
+
+@csrf_exempt
+def edit_application(request, permitType, app_id):
+    # Validate permit type
+    if permitType == 'PIC':
+
+        # if request.method == 'POST':
+        #     try:
+        #         with transaction.atomic():
+                
+        #         return JsonResponse({'success': True, 'message': 'Application resubmitted successfully.'})
+
+        #     except Exception as e:
+        #         # No need to call transaction.set_rollback(True); it happens automatically in an atomic block
+        #         traceback.print_exc()
+        #         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+            
+        # else:
+            # GET request — show form
+            
+            # Get main application
+            ch_import = get_object_or_404(CHImport, id=app_id)
+            app_ch_details = CHImportModelDetail.objects.filter(application_id=app_id)
+            app_attachments = CHImportAttachment.objects.filter(application_id=app_id)
+
+            return render(request, 'import/edit.html', {
+                'application': ch_import,
+                'ch_details': app_ch_details,
+                'attachments': app_attachments,
+                'permit_type': 'PIC',
+            })

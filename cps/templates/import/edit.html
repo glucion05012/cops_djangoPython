@@ -1,0 +1,66 @@
+<h2>Edit Chainsaw Import Application</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div>
+        <label><strong>Brand:</strong></label>
+        {{ application.brand.name }}
+    </div>
+
+    <div>
+        <label><strong>Origin:</strong></label>
+        {{ application.origin }}
+    </div>
+
+    <div>
+        <label><strong>Purpose:</strong></label>
+        {{ application.get_purpose_display }}
+    </div>
+
+    <div>
+        <label><strong>Date Applied:</strong></label>
+        {{ application.date_applied }}
+    </div>
+
+    <div>
+        <label><strong>Reference No:</strong></label>
+        {{ application.reference_no }}
+    </div>
+
+    <div>
+        <label><strong>Status:</strong></label>
+        {{ application.status }}
+    </div>
+
+    <div>
+        <label><strong>Remarks:</strong></label>
+        {{ application.remarks }}
+    </div>
+
+    <!-- You can include inputs if this is an editable form -->
+    <!-- Example:
+    <input type="text" name="origin" value="{{ application.origin }}">
+    -->
+
+    <hr>
+
+    <h3>Chainsaw Models</h3>
+    <ul>
+        {% for model in ch_details %}
+            <li>{{ model.model }} — Qty: {{ model.quantity }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Attachments</h3>
+    <ul>
+        {% for att in attachments %}
+            <li>
+                {{ att.get_type_display }}: <a href="{{ att.file_location }}" target="_blank">{{ att.name }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Submit button if form is editable -->
+    <!-- <button type="submit">Save Changes</button> -->
+</form>
