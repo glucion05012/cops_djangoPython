@@ -138,9 +138,32 @@
                     { "data": "permit_type" },
                     { "data": "estab_name" },
                     { "data": "reference_no" },
-                    { "data": "date_applied" },
-                    { "data": "status" },
-                    { "data": "client_remarks" },
+                    {
+                        "data": "date_applied",
+                        "render": function(data, type, row) {
+                            if (!data) return '';
+                            const date = new Date(data);
+                            return date.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                        }
+                    },
+                    {
+                        "data": "status",
+                        "render": function(data, type, row) {
+                            if (!data) return '';
+                            return data.charAt(0).toUpperCase() + data.slice(1);
+                        }
+                    },
+                    {
+                        "data": "client_remarks",
+                        "render": function(data, type, row) {
+                            if (!data) return '';
+                            return data.charAt(0).toUpperCase() + data.slice(1);
+                        }
+                    },
                     {
                         "data": null,
                         "render": function(data, type, row) {
