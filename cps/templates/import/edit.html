@@ -70,7 +70,7 @@
                                     :
                                 </div>
                                 <div class="col-md-3">
-                                    {{ applicant_type }}
+                                    {{ application.date_applied|date:"F j, Y" }}
                                 </div>
 
                                 <div class="col-md-2">
@@ -80,7 +80,7 @@
                                     :
                                 </div>
                                 <div class="col-md-3">
-                                    <div id="applicant_type"></div>
+                                    {{ applicant_type }}
                                 </div>
 
                                 <div id="ownershsip_type"></div>
@@ -92,7 +92,7 @@
                                     :
                                 </div>
                                 <div class="col-md-3">
-                                    <div id="client_cel_no"></div>
+                                    {{ client_contact }}
                                 </div>
 
                                 <div class="col-md-2">
@@ -102,7 +102,7 @@
                                     :
                                 </div>
                                 <div class="col-md-3">
-                                    <div id="client_name"></div>
+                                    {{ client_name }}
                                 </div>
 
                                 <div class="col-md-2">
@@ -112,7 +112,7 @@
                                     :
                                 </div>
                                 <div class="col-md-3">
-                                    <div id="client_email"></div>
+                                    {{ client_email }}
                                 </div>
 
                             </div>
@@ -134,7 +134,7 @@
                                 <option value="" disabled>-- Select Permittee Name --</option>
                                 {% for bl in business_list %}
                                     <option value="{{ bl.id }}"
-                                        data-address="{{ bl.full_address }}"
+                                        data-address="{% if bl.biz_lgu %}{{ bl.biz_address }}, {{ bl.barangay }} {% if bl.sub_lgu == bl.lgu %}{{ bl.sub_lgu }}{% else %}{{ bl.sub_lgu }} {{ bl.lgu }}{% endif %}{% else %}{{ bl.biz_address }}{% endif %}"
                                         data-email="{{ bl.email_biz }}"
                                         data-contact="{{ bl.cel_no_biz }} / {{ bl.tel_no_biz }}"
                                         data-name="{{ bl.business_name }}"
@@ -265,4 +265,21 @@
     </div>
 </div>
 
+<script>
+    $('#establishment').on('change', function () {
+        const selected = $(this).find(':selected');
+
+        // Get data from selected option
+        const address = selected.data('address') || '';
+        const email = selected.data('email') || '';
+        const contact = selected.data('contact') || '';
+        const name = selected.data('name') || '';
+
+        // Set the values
+        $('#estab_address').val(address);
+        $('#estab_email').val(email);
+        $('#estab_contact').val(contact);
+        $('#estab_name').val(name);
+    });
+</script>
 {% endblock %}

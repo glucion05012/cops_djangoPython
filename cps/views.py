@@ -177,6 +177,8 @@ def edit_application(request, permitType, app_id):
             ch_import = get_object_or_404(CHImport, id=app_id)
             app_ch_details = CHImportModelDetail.objects.filter(application_id=app_id)
             app_attachments = CHImportAttachment.objects.filter(application_id=app_id)
+            brands = ChainsawBrand.objects.all()
+            business_list = []
 
             user_id = ch_import.crs_id
 
@@ -201,6 +203,23 @@ def edit_application(request, permitType, app_id):
                         business_type = 'Government'
                     elif code == '3':
                         business_type = 'Corporation'
+                        
+            with connections['dniis_db'].cursor() as cursor:
+                cursor.execute('''
+                    SELECT a.*, 
+                        l.name AS lgu, 
+                        sl.name AS sub_lgu, 
+                        br.name AS barangay
+                    FROM systems_clients_27_repeat a
+                    LEFT JOIN systems_lgu l ON a.biz_lgu = l.psgc 
+                    LEFT JOIN systems_sub_lgu sl ON a.biz_sub_lgu = sl.psgc 
+                    LEFT JOIN systems_barangays br ON a.biz_barangay = br.psgc
+                    WHERE a.parent_id = %s AND a.business_name != ""
+                ''', [request.session.get('user_id')])
+                
+                columns = [col[0] for col in cursor.description]
+                for row in cursor.fetchall():
+                    business_list.append(dict(zip(columns, row)))
         
             return render(request, 'import/edit.html', {
                 'application': ch_import,
@@ -211,5 +230,7 @@ def edit_application(request, permitType, app_id):
                 'applicant_type': business_type,
                 'client_name': client_name,
                 'client_contact': client_contact,
-                'client_email': client_email
+                'client_email': client_email,
+                'brands': brands,
+                'business_list': business_list,
             })
