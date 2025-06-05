@@ -715,7 +715,7 @@ def get_application_details(request):
         user_id = request.session['user_id']
         with connections['dniis_db'].cursor() as cursor:
             cursor.execute("""
-                SELECT cel_no, email
+                SELECT cel_no, email, fullname
                 FROM systems_clients
                 WHERE user_id = %s
                 LIMIT 1
@@ -724,9 +724,11 @@ def get_application_details(request):
             if client_row:
                 data['client_cel_no'] = client_row[0]
                 data['client_email'] = client_row[1]
+                data['client_name'] = client_row[2]
             else:
                 data['client_cel_no'] = ''
                 data['client_email'] = ''
+                data['client_name'] = ''
                     
         return JsonResponse(data)
     else:

@@ -171,14 +171,45 @@ def edit_application(request, permitType, app_id):
         # else:
             # GET request — show form
             
+
+            
             # Get main application
             ch_import = get_object_or_404(CHImport, id=app_id)
             app_ch_details = CHImportModelDetail.objects.filter(application_id=app_id)
             app_attachments = CHImportAttachment.objects.filter(application_id=app_id)
 
+            user_id = ch_import.crs_id
+
+            with connections['dniis_db'].cursor() as cursor:
+                cursor.execute("""
+                    SELECT business_type, fullname, cel_no, email
+                    FROM systems_clients
+                    WHERE user_id = %s
+                    LIMIT 1
+                """, [user_id])
+                client_info = cursor.fetchone()
+                
+                client_name = client_info[1]
+                client_contact = client_info[2]
+                client_email = client_info[3]
+                
+                if client_info:
+                    code = client_info[0]
+                    if code == '1':
+                        business_type = 'Individual'
+                    elif code == '2':
+                        business_type = 'Government'
+                    elif code == '3':
+                        business_type = 'Corporation'
+        
             return render(request, 'import/edit.html', {
                 'application': ch_import,
                 'ch_details': app_ch_details,
                 'attachments': app_attachments,
-                'permit_type': 'PIC',
+                'permit_type_short': 'PIC',
+                'permit_type': 'Permit to Import Chainsaw',
+                'applicant_type': business_type,
+                'client_name': client_name,
+                'client_contact': client_contact,
+                'client_email': client_email
             })

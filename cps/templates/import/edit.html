@@ -1,66 +1,268 @@
-<h2>Edit Chainsaw Import Application</h2>
+{% extends 'includes/base.html' %}
+{% load static %}
 
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
+{% block title %}Edit Application - Permit to Import Chainsaw{% endblock %}
 
-    <div>
-        <label><strong>Brand:</strong></label>
-        {{ application.brand.name }}
+{% block content %}
+<div class="container py-5">
+
+    <!-- Header with Logo and Title -->
+    <div class="text-center mb-4">
+        <img src="{% static 'images/denr-logo.png' %}" alt="DENR Logo" style="height: 90px;">
+        <h4 class="mt-2 fw-bold text-uppercase text-success">Department of Environment and Natural Resources</h4>
+        <h5 class="text-muted">National Capital Region</h5>
+        <hr class="mt-4">
     </div>
 
-    <div>
-        <label><strong>Origin:</strong></label>
-        {{ application.origin }}
+    <div class="card shadow-sm border-0">
+        <div class="card-body px-4 py-5">
+
+            <!-- Title -->
+            <div style="text-align: center;">
+                <h4 class="text-center text-primary mb-4 fw-semibold">Edit {{ permit_type }}</h4>
+                Permit No. <span class="text-muted">{{ application.reference_no }}</span>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-4" id="formTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="form-tab" data-bs-toggle="tab" data-bs-target="#form-section" type="button" role="tab">
+                        Application Form
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="attachments-tab" data-bs-toggle="tab" data-bs-target="#attachments-section" type="button" role="tab">
+                        Attachments
+                    </button>
+                </li>
+            </ul>
+
+            <form id="editChainsawForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="tab-content" id="formTabsContent">
+                    <!-- Application Form Tab -->
+                    <div class="tab-pane fade show active" id="form-section" role="tabpanel">
+                        <div class="mb-4">
+                            <div class="hr-sect">Application Information</div>
+                            <div class="row">
+
+                                <div class="col-md-2">
+                                    <label for="application_type" class="form-label">Application Type</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="col-md-9">
+                                        <select name="is_existing_permittee" id="is_existing_permittee" class="form-select" required>
+                                            <option value="" disabled {% if application.is_existing_permittee == None %}selected{% endif %}>-- Select --</option>
+                                            <option value="0" {% if application.is_existing_permittee == 0 %}selected{% endif %}>New Permittee</option>
+                                            <option value="1" {% if application.is_existing_permittee == 1 %}selected{% endif %}>Existing Permittee</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="date_applied" class="form-label">Date Applied</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    {{ applicant_type }}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="applicant_type" class="form-label">Applicant Type</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    <div id="applicant_type"></div>
+                                </div>
+
+                                <div id="ownershsip_type"></div>
+
+                                <div class="col-md-2">
+                                    <label for="client_cel_no" class="form-label">Contact No</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    <div id="client_cel_no"></div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="applicant_name" class="form-label">Applicant Name</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    <div id="client_name"></div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="client_email" class="form-label">Email</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    <div id="client_email"></div>
+                                </div>
+
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="hr-sect">General Information</div>
+                                <div class="col-sm-12">
+                                    <p style='color:red'><i>*** Information below will be shown in the permit applied.</i></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+
+                        <!-- Permittee Name -->
+                        <div class="mb-4">
+                            <label for="establishment" class="form-label">Permittee Name <span class="text-danger">*</span></label>
+                            <select id="establishment" name="estab_id_dniis" class="form-select">
+                                <option value="" disabled>-- Select Permittee Name --</option>
+                                {% for bl in business_list %}
+                                    <option value="{{ bl.id }}"
+                                        data-address="{{ bl.full_address }}"
+                                        data-email="{{ bl.email_biz }}"
+                                        data-contact="{{ bl.cel_no_biz }} / {{ bl.tel_no_biz }}"
+                                        data-name="{{ bl.business_name }}"
+                                        {% if bl.id == application.estab_id %}selected{% endif %}>
+                                        {{ bl.business_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a Permittee Name.</div>
+                        </div>
+                        <input type="hidden" id="estab_name" name="estab_name" value="{{ application.estab_name }}">
+
+                        <div class="mb-3 mt-3">
+                            <label class="form-label">Address</label>
+                            <input type="text" id="estab_address" name="estab_address" class="form-control" readonly value="{{ application.estab_address }}">
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="text" id="estab_email" name="estab_email" class="form-control" readonly value="{{ application.estab_email }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact No.</label>
+                                <input type="text" id="estab_contact" name="estab_contact" class="form-control" readonly value="{{ application.estab_contact }}">
+                            </div>
+                        </div>
+
+                        <div class="hr-sect">Warehouse Address Information</div>
+                        <span class="text-danger"><i>* address must be within NCR</i></span>
+                        <div class="row mb-3">
+                            <div class="col-md-2">
+                                <select id="warehouse_city" name="warehouse_city" class="form-control">
+                                    <option value="" disabled>-- Select City --</option>
+                                    {% for city in ncr_cities %}
+                                        <option value="{{ city }}" {% if application.warehouse_city == city %}selected{% endif %}>{{ city }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">Please select a City or Municipality.</div> 
+                            </div>
+                            <div class="col-md-10">
+                                <input type="text" id="warehouse_address" name="warehouse_address" class="form-control" placeholder="Warehouse Address" value="{{ application.warehouse_address }}">
+                            </div>
+                        </div>
+
+                        <div class="hr-sect">Chainsaw Details</div>
+                        <div class="mb-4">
+                            <label for="brand" class="form-label">Brand <span class="text-danger">*</span></label>
+                            <select id="brand" name="brand" class="form-select">
+                                <option value="" disabled>-- Select Brand --</option>
+                                {% for brand in brands %}
+                                    <option value="{{ brand.name }}" {% if application.brand == brand.name %}selected{% endif %}>{{ brand.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a brand.</div>
+                        </div>
+
+                        <!-- Dynamic Model/Quantity Rows -->
+                        <div class="mb-4">
+                            <label class="form-label">Model & Quantity <span class="text-danger">*</span></label>
+                            <small class="text-muted d-block mb-2">Click "Add More" to list multiple models.</small>
+                            <div id="model-quantity-list">
+                                {% for item in application.items %}
+                                <div class="row g-2 mb-2 model-quantity-item">
+                                    <div class="col-md-6">
+                                        <input type="text" name="model[]" class="form-control" placeholder="Model" value="{{ item.model }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1" value="{{ item.quantity }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" id="add-row" class="btn btn-outline-secondary btn-sm mt-2">+ Add More</button>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="origin" class="form-label">Country of Origin / Supplier <span class="text-danger">*</span></label>
+                            <input type="text" id="origin" name="origin" class="form-control" value="{{ application.origin }}">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="arrival_date" class="form-label">Expected Time of Arrival <span class="text-danger">*</span></label>
+                            <input type="date" id="arrival_date" name="arrival_date" class="form-control" value="{{ application.arrival_date|date:'Y-m-d' }}">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="purpose" class="form-label">Purpose <span class="text-danger">*</span></label>
+                            <select id="purpose" name="purpose" class="form-select">
+                                <option value="" disabled>-- Select Purpose --</option>
+                                <option value="Distribution/Sale" {% if application.purpose == "Distribution/Sale" %}selected{% endif %}>Distribution / Sale</option>
+                                <option value="Personal/Legal Use" {% if application.purpose == "Personal/Legal Use" %}selected{% endif %}>Personal / Legal Use</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a purpose.</div>
+                        </div>
+                    </div>
+
+                    <!-- Attachments Tab -->
+                    <div class="tab-pane fade" id="attachments-section" role="tabpanel">
+                        <div class="mb-4">
+                            <label class="form-label">Update Attachments (optional)</label>
+                            <p class="text-muted">You may upload new files to replace the old ones.</p>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Purchase Order</label>
+                            <input type="file" name="purchase_order" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Affidavit</label>
+                            <input type="file" name="affidavit" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Business Name Registration (DTI/SEC)</label>
+                            <input type="file" name="dti_sec" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-primary px-4">Update Application</button>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
 
-    <div>
-        <label><strong>Purpose:</strong></label>
-        {{ application.get_purpose_display }}
-    </div>
-
-    <div>
-        <label><strong>Date Applied:</strong></label>
-        {{ application.date_applied }}
-    </div>
-
-    <div>
-        <label><strong>Reference No:</strong></label>
-        {{ application.reference_no }}
-    </div>
-
-    <div>
-        <label><strong>Status:</strong></label>
-        {{ application.status }}
-    </div>
-
-    <div>
-        <label><strong>Remarks:</strong></label>
-        {{ application.remarks }}
-    </div>
-
-    <!-- You can include inputs if this is an editable form -->
-    <!-- Example:
-    <input type="text" name="origin" value="{{ application.origin }}">
-    -->
-
-    <hr>
-
-    <h3>Chainsaw Models</h3>
-    <ul>
-        {% for model in ch_details %}
-            <li>{{ model.model }} — Qty: {{ model.quantity }}</li>
-        {% endfor %}
-    </ul>
-
-    <h3>Attachments</h3>
-    <ul>
-        {% for att in attachments %}
-            <li>
-                {{ att.get_type_display }}: <a href="{{ att.file_location }}" target="_blank">{{ att.name }}</a>
-            </li>
-        {% endfor %}
-    </ul>
-
-    <!-- Submit button if form is editable -->
-    <!-- <button type="submit">Save Changes</button> -->
-</form>
+{% endblock %}

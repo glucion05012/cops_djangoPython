@@ -42,14 +42,15 @@
 
                     <div class="hr-sect">Application Information</div>
                     <div class="row">
+                        
                         <div class="col-md-2">
-                            <label for="applicant_type" class="form-label">Applicant Type</label>
+                            <label for="application_type" class="form-label">Application Type</label>
                         </div>
                         <div class="col-md-1">
                             :
                         </div>
                         <div class="col-md-3">
-                            <div id="applicant_type"></div>
+                            <div id="application_type"></div>
                         </div>
 
                         <div class="col-md-2">
@@ -63,13 +64,13 @@
                         </div>
 
                         <div class="col-md-2">
-                            <label for="application_type" class="form-label">Application Type</label>
+                            <label for="applicant_type" class="form-label">Applicant Type</label>
                         </div>
                         <div class="col-md-1">
                             :
                         </div>
-                        <div class="col-md-9">
-                            <div id="application_type"></div>
+                        <div class="col-md-3">
+                            <div id="applicant_type"></div>
                         </div>
 
                         <div id="ownershsip_type"></div>
@@ -82,6 +83,16 @@
                         </div>
                         <div class="col-md-3">
                             <div id="client_cel_no"></div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="applicant_name" class="form-label">Applicant Name</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="client_name"></div>
                         </div>
 
                         <div class="col-md-2">
@@ -262,6 +273,7 @@
                     $('#permit_address').html(response.estab_address);
                     $('#client_cel_no').html(response.client_cel_no);
                     $('#client_email').html(response.client_email);
+                    $('#client_name').html(response.client_name);
                     
 
                     //----------------- chainsaw fields -----------------
