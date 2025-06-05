@@ -197,7 +197,7 @@
                             <label class="form-label">Model & Quantity <span class="text-danger">*</span></label>
                             <small class="text-muted d-block mb-2">Click "Add More" to list multiple models.</small>
                             <div id="model-quantity-list">
-                                {% for item in application.items %}
+                                {% for item in ch_details %}
                                 <div class="row g-2 mb-2 model-quantity-item">
                                     <div class="col-md-6">
                                         <input type="text" name="model[]" class="form-control" placeholder="Model" value="{{ item.model }}">
@@ -238,21 +238,45 @@
                     <!-- Attachments Tab -->
                     <div class="tab-pane fade" id="attachments-section" role="tabpanel">
                         <div class="mb-4">
-                            <label class="form-label">Update Attachments (optional)</label>
-                            <p class="text-muted">You may upload new files to replace the old ones.</p>
-                        </div>
-                        <div class="mb-4">
                             <label class="form-label">Purchase Order</label>
-                            <input type="file" name="purchase_order" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                            {% for att in attachments %}
+                                {% if att.type == "purchase_order" %}
+                                    <div class="mb-1">
+                                        <a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            <input type="file" name="purchase_order" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                         </div>
+
+                        {% if request.session.app_type == "1" or request.session.app_type == "2" %}
                         <div class="mb-4">
                             <label class="form-label">Affidavit</label>
-                            <input type="file" name="affidavit" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                            {% for att in attachments %}
+                                {% if att.type == "affidavit" %}
+                                    <div class="mb-1">
+                                        <a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            <input type="file" name="affidavit" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                         </div>
+                        {% endif %}
+
+                        {% if request.session.app_type == "3" %}
                         <div class="mb-4">
                             <label class="form-label">Business Name Registration (DTI/SEC)</label>
-                            <input type="file" name="dti_sec" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                            {% for att in attachments %}
+                                {% if att.type == "dti_sec" %}
+                                    <div class="mb-1">
+                                        <a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            <input type="file" name="dti_sec" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                         </div>
+                        {% endif %}
+
                     </div>
                 </div>
 
@@ -266,6 +290,30 @@
 </div>
 
 <script>
+    document.getElementById('add-row').addEventListener('click', function () {
+        const container = document.getElementById('model-quantity-list');
+        const newRow = document.createElement('div');
+        newRow.className = 'row g-2 mb-2 model-quantity-item';
+        newRow.innerHTML = `
+            <div class="col-md-6">
+                <input type="text" name="model[]" class="form-control" placeholder="Model">
+            </div>
+            <div class="col-md-4">
+                <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
+            </div>
+        `;
+        container.appendChild(newRow);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-row')) {
+            e.target.closest('.model-quantity-item').remove();
+        }
+    });
+
     $('#establishment').on('change', function () {
         const selected = $(this).find(':selected');
 
