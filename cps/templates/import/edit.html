@@ -235,49 +235,110 @@
                         </div>
                     </div>
 
-                    <!-- Attachments Tab -->
                     <div class="tab-pane fade" id="attachments-section" role="tabpanel">
+
+                        <!-- Purchase Order -->
                         <div class="mb-4">
                             <label class="form-label">Purchase Order</label>
-                            {% for att in attachments %}
-                                {% if att.type == "purchase_order" %}
-                                    <div class="mb-1">
-                                        <a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>File</th>
+                                        <th style="width: 150px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for att in attachments %}
+                                        {% if att.type == "purchase_order" %}
+                                            <tr>
+                                                <td><a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a></td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="text-danger medium">Remove</span>
+                                                        <input type="checkbox" name="delete_attachments" value="{{ att.id }}">
+                                                        
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                             <input type="file" name="purchase_order" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            <small class="text-muted">Leave blank to keep existing file.</small>
                         </div>
 
+                        <!-- Affidavit -->
                         {% if request.session.app_type == "1" or request.session.app_type == "2" %}
                         <div class="mb-4">
                             <label class="form-label">Affidavit</label>
-                            {% for att in attachments %}
-                                {% if att.type == "affidavit" %}
-                                    <div class="mb-1">
-                                        <a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>File</th>
+                                        <th style="width: 150px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for att in attachments %}
+                                        {% if att.type == "affidavit" %}
+                                            <tr>
+                                                <td><a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a></td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="text-danger medium">Remove</span>
+                                                        <input type="checkbox" name="delete_attachments" value="{{ att.id }}">
+                                                        
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                             <input type="file" name="affidavit" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            <small class="text-muted">Leave blank to keep existing file.</small>
                         </div>
                         {% endif %}
 
+                        <!-- DTI/SEC -->
                         {% if request.session.app_type == "3" %}
                         <div class="mb-4">
                             <label class="form-label">Business Name Registration (DTI/SEC)</label>
-                            {% for att in attachments %}
-                                {% if att.type == "dti_sec" %}
-                                    <div class="mb-1">
-                                        <a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>File</th>
+                                        <th style="width: 150px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for att in attachments %}
+                                        {% if att.type == "dti_sec" %}
+                                            <tr>
+                                                <td><a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a></td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="text-danger medium">Remove</span>
+                                                        <input type="checkbox" name="delete_attachments" value="{{ att.id }}">
+                                                        
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                             <input type="file" name="dti_sec" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            <small class="text-muted">Leave blank to keep existing file.</small>
                         </div>
                         {% endif %}
 
                     </div>
+
+
+
+
                 </div>
 
                 <!-- Submit Button -->
