@@ -233,6 +233,39 @@ def edit_application(request, permitType, app_id):
                     save_files(request.FILES.getlist('dti_sec'), 'dti_sec', 'dti')
                     
                     
+                    #TRANSACTION DETAILS
+                    user_id = request.session.get('user_id')
+                    
+                    #prev_transaction
+                    ch_application = CHApplication.objects.filter(app_id=app_id).order_by('-id').first()
+                    
+                    reference_no = ch_application.reference_no
+                    last_forwarded_to_id = ch_application.forwarded_to_id
+                    action="For Re-evaluation"
+                    notes="Resubmit Application"
+                    remarks =  request.POST.get('remarks', '').strip()
+                    status = 'pending'
+                        
+                        
+                    # ✅ Create CHApplication record
+                    CHApplication.objects.create(
+                        date_created=timezone.now(),
+                        app_id=app_id,
+                        reference_no=reference_no,
+                        forwarded_by_id = user_id,
+                        forwarded_to_id = last_forwarded_to_id,
+                        action=action,
+                        notes=notes,
+                        remarks=remarks,
+                        status=status,
+                        days_pending=0
+                    )
+                    
+                    CHImport.objects.filter(id=int(app_id)).update(
+                        remarks='fus_evaluator',
+                        status='pending'
+                    )
+                    
                 return JsonResponse({'success': True, 'message': 'Application resubmitted successfully.'})
 
             except Exception as e:

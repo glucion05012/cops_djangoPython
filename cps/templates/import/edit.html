@@ -342,6 +342,8 @@
 
                 <!-- Submit Button -->
                 <div class="text-end mt-4">
+                    <textarea class="form-control" id="remarksTextarea" name="remarks" rows="4" placeholder="Enter your remarks here. If resubmitting, please indicate any necessary information."></textarea>
+                    <br>
                     <button type="submit" class="btn btn-primary px-4">Update Application</button>
                 </div>
             </form>
@@ -393,6 +395,17 @@
 
     $(document).on('submit', '#editChainsawForm', function (e) {
         e.preventDefault();
+        
+        const remarks = $('#remarksTextarea').val().trim();
+
+        if (!remarks) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Remarks Required',
+                text: 'Please provide remarks before resubmitting the application.'
+            });
+            return;
+        }
 
         // Clear previous error styles
         $('#editChainsawForm input, #editChainsawForm select').removeClass('is-invalid');
