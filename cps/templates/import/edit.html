@@ -130,6 +130,7 @@
                         <!-- Permittee Name -->
                         <div class="mb-4">
                             <label for="establishment" class="form-label">Permittee Name <span class="text-danger">*</span></label>
+                           
                             <select id="establishment" name="estab_id_dniis" class="form-select">
                                 <option value="" disabled>-- Select Permittee Name --</option>
                                 {% for bl in business_list %}
@@ -138,10 +139,11 @@
                                         data-email="{{ bl.email_biz }}"
                                         data-contact="{{ bl.cel_no_biz }} / {{ bl.tel_no_biz }}"
                                         data-name="{{ bl.business_name }}"
-                                        {% if bl.id == application.estab_id %}selected{% endif %}>
+                                        {% if bl.id|stringformat:"s" == application.estab_id_dniis|stringformat:"s" %}selected{% endif %}>
                                         {{ bl.business_name }}
                                     </option>
                                 {% endfor %}
+
                             </select>
                             <div class="invalid-feedback">Please select a Permittee Name.</div>
                         </div>
@@ -186,7 +188,7 @@
                             <select id="brand" name="brand" class="form-select">
                                 <option value="" disabled>-- Select Brand --</option>
                                 {% for brand in brands %}
-                                    <option value="{{ brand.name }}" {% if application.brand == brand.name %}selected{% endif %}>{{ brand.name }}</option>
+                                    <option value="{{ brand.name }}" {% if application.brand_id == brand.id %}selected{% endif %}>{{ brand.name }}</option>
                                 {% endfor %}
                             </select>
                             <div class="invalid-feedback">Please select a brand.</div>
@@ -336,9 +338,6 @@
 
                     </div>
 
-
-
-
                 </div>
 
                 <!-- Submit Button -->
@@ -351,6 +350,7 @@
 </div>
 
 <script>
+
     document.getElementById('add-row').addEventListener('click', function () {
         const container = document.getElementById('model-quantity-list');
         const newRow = document.createElement('div');
@@ -389,6 +389,147 @@
         $('#estab_email').val(email);
         $('#estab_contact').val(contact);
         $('#estab_name').val(name);
+    });
+
+    $(document).on('submit', '#editChainsawForm', function (e) {
+        e.preventDefault();
+
+        // Clear previous error styles
+        $('#editChainsawForm input, #editChainsawForm select').removeClass('is-invalid');
+
+        let hasError = false;
+        let firstErrorTab = null;
+
+        if (!$('#is_existing_permittee').val()) {
+            $('#is_existing_permittee').addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        if (!$('#establishment').val()) {
+            $('#establishment').addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        if (!$('#warehouse_city').val()) {
+            $('#warehouse_city').addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        // Validate Brand dropdown
+        if (!$('#brand').val()) {
+            $('#brand').addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        // Validate Purpose dropdown
+        if (!$('#purpose').val()) {
+            $('#purpose').addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        // Validate Origin
+        const origin = $('#origin');
+        if (!origin.val().trim()) {
+            origin.addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        const arrival_date = $('#arrival_date');
+        if (!arrival_date.val().trim()) {
+            arrival_date.addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        const warehouse_address = $('#warehouse_address');
+        if (!warehouse_address.val().trim()) {
+            warehouse_address.addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+        
+
+        // Validate Model and Quantity rows
+        $('#model-quantity-list .model-quantity-item').each(function () {
+            const model = $(this).find('input[name="model[]"]');
+            const qty = $(this).find('input[name="quantity[]"]');
+
+            if (!model.val().trim()) {
+                model.addClass('is-invalid');
+                hasError = true;
+                firstErrorTab = 'form-section';
+            }
+
+            if (!qty.val() || parseInt(qty.val()) < 1) {
+                qty.addClass('is-invalid');
+                hasError = true;
+                firstErrorTab = 'form-section';
+            }
+        });
+
+
+        // If there's an error, switch to the tab
+        if (hasError) {
+            $(`#formTabs button[data-bs-target="#${firstErrorTab}"]`).tab('show');
+            return;
+        }
+
+        Swal.fire({
+            title: "Confirm Submission",
+            text: "Are you sure you want to submit this application?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#198754",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, submit it"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let form = $('#editChainsawForm')[0];  // adjust selector
+                let formData = new FormData(form);
+
+                $.ajax({
+                    url: form.action,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: "success",
+                                title: "Success",
+                                text: response.message,
+                            }).then(() => {
+                                window.location.href = "/myapplications/";
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Submission Failed",
+                                text: response.message || "Something went wrong.",
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Server Error",
+                            text: "An error occurred. Please try again later.",
+                        });
+                    }
+                });
+            }
+        });
+
     });
 </script>
 {% endblock %}

@@ -265,10 +265,10 @@ $(document).on('submit', '#chainsawImportForm', function (e) {
     }
 
     if (!$('#warehouse_city').val()) {
-    $('#warehouse_city').addClass('is-invalid');
-    hasError = true;
-    firstErrorTab = 'form-section';
-}
+        $('#warehouse_city').addClass('is-invalid');
+        hasError = true;
+        firstErrorTab = 'form-section';
+    }
 
     // Validate Brand dropdown
     if (!$('#brand').val()) {

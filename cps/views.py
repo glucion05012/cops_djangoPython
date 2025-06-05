@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.db import connections
 from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
 
 
 def index(request):
@@ -157,21 +158,89 @@ def edit_application(request, permitType, app_id):
     # Validate permit type
     if permitType == 'PIC':
 
-        # if request.method == 'POST':
-        #     try:
-        #         with transaction.atomic():
+        if request.method == 'POST':
+            try:
+                with transaction.atomic():
+                    brand_name = request.POST.get('brand')
+                    
+                    chimport = get_object_or_404(CHImport, id=app_id)
+                    brand, _ = ChainsawBrand.objects.get_or_create(name=brand_name)
                 
-        #         return JsonResponse({'success': True, 'message': 'Application resubmitted successfully.'})
+                    chimport.brand_id = brand.id
+                    chimport.origin = request.POST.get('origin')
+                    chimport.purpose = request.POST.get('purpose')
+                    chimport.estab_id_dniis = request.POST.get('estab_id_dniis')
+                    chimport.estab_name = request.POST.get('estab_name')
+                    chimport.estab_address = request.POST.get('estab_address')
+                    chimport.estab_email = request.POST.get('estab_email')
+                    chimport.estab_contact = request.POST.get('estab_contact')
+                    chimport.arrival_date = request.POST.get('arrival_date')
+                    chimport.is_existing_permittee = request.POST.get('is_existing_permittee')
+                    chimport.warehouse_city = request.POST.get('warehouse_city')
+                    chimport.warehouse_address = request.POST.get('warehouse_address')
+                    chimport.save()
 
-        #     except Exception as e:
-        #         # No need to call transaction.set_rollback(True); it happens automatically in an atomic block
-        #         traceback.print_exc()
-        #         return JsonResponse({'success': False, 'message': str(e)}, status=500)
-            
-        # else:
-            # GET request — show form
-            
+                    # Chainsaw Details
+                    CHImportModelDetail.objects.filter(application_id=app_id).delete()
+                    model_list = request.POST.getlist('model[]')
+                    quantity_list = request.POST.getlist('quantity[]')
+                    # Save model/quantity details
+                    for model, quantity in zip(model_list, quantity_list):
+                        if model.strip() and quantity.isdigit():
+                            CHImportModelDetail.objects.create(
+                                application_id=app_id,
+                                model=model.strip(),
+                                quantity=int(quantity)
+                            )
+                            
+                    # Attachments
+                    # --- DELETE SELECTED ATTACHMENTS ---
+                    delete_ids = request.POST.getlist('delete_attachments')
+                    if delete_ids:
+                        for att_id in delete_ids:
+                            try:
+                                att = CHImportAttachment.objects.get(id=att_id)
+                                if att.file_location:
+                                    if default_storage.exists(att.file_location):
+                                        default_storage.delete(att.file_location)
+                                att.delete()
+                            except CHImportAttachment.DoesNotExist:
+                                pass
 
+                    # --- ADD NEW ATTACHMENTS IF PROVIDED ---
+                    def save_files(files, type_key, subfolder):
+                        if not files:
+                            return
+                        folder_path = os.path.join(settings.BASE_DIR, 'cps', 'media', 'attachments', subfolder)
+                        os.makedirs(folder_path, exist_ok=True)
+                        fs = FileSystemStorage(location=folder_path)
+
+                        for file in files:
+                            formatted_filename = f"{app_id}-{file.name}"
+                            filename = fs.save(formatted_filename, file)
+                            file_path = os.path.join('attachments', subfolder, filename)
+                            CHImportAttachment.objects.create(
+                                application_id=app_id,
+                                name=file.name,
+                                file_location=file_path,
+                                type=type_key,
+                                date_uploaded=timezone.now()
+                            )
+
+                    # === Save each attachment type (multiple files supported) ===
+                    save_files(request.FILES.getlist('purchase_order'), 'purchase_order', 'purchase_orders')
+                    save_files(request.FILES.getlist('affidavit'), 'affidavit', 'affidavits')
+                    save_files(request.FILES.getlist('dti_sec'), 'dti_sec', 'dti')
+                    
+                    
+                return JsonResponse({'success': True, 'message': 'Application resubmitted successfully.'})
+
+            except Exception as e:
+                # No need to call transaction.set_rollback(True); it happens automatically in an atomic block
+                traceback.print_exc()
+                return JsonResponse({'success': False, 'message': str(e)}, status=500)
+            
+        else:
             
             # Get main application
             ch_import = get_object_or_404(CHImport, id=app_id)
@@ -226,7 +295,7 @@ def edit_application(request, permitType, app_id):
                 'Muntinlupa', 'Navotas', 'Parañaque', 'Pasay', 'Pasig', 'Pateros', 'Quezon City',
                 'San Juan', 'Taguig', 'Valenzuela'
             ]
-            
+   
             return render(request, 'import/edit.html', {
                 'application': ch_import,
                 'ch_details': app_ch_details,
