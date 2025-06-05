@@ -240,7 +240,7 @@ def edit_application(request, permitType, app_id):
                     ch_application = CHApplication.objects.filter(app_id=app_id).order_by('-id').first()
                     
                     reference_no = ch_application.reference_no
-                    last_forwarded_to_id = ch_application.forwarded_to_id
+                    last_forwarded_by_id = ch_application.forwarded_by_id
                     action="For Re-evaluation"
                     notes="Resubmit Application"
                     remarks =  request.POST.get('remarks', '').strip()
@@ -253,7 +253,7 @@ def edit_application(request, permitType, app_id):
                         app_id=app_id,
                         reference_no=reference_no,
                         forwarded_by_id = user_id,
-                        forwarded_to_id = last_forwarded_to_id,
+                        forwarded_to_id = last_forwarded_by_id,
                         action=action,
                         notes=notes,
                         remarks=remarks,

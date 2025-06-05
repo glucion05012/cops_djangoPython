@@ -319,6 +319,20 @@
                     $('#permit_address').html(response.estab_address);
                     $('#client_cel_no').html(response.client_cel_no);
                     $('#client_email').html(response.client_email);
+
+                    if (response.arrival_date) {
+                        const parts = response.arrival_date.split('-');
+
+                        const months = [
+                            'January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'
+                        ];
+
+                        const year = parts[0];
+                        const month = months[parseInt(parts[1], 10) - 1];
+                        const day = parseInt(parts[2], 10);
+                        response.arrival_date = `${month} ${day}, ${year}`; // Format it in-place
+                    }
                     
 
                     //----------------- chainsaw fields -----------------
