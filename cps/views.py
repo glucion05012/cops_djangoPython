@@ -221,6 +221,12 @@ def edit_application(request, permitType, app_id):
                 for row in cursor.fetchall():
                     business_list.append(dict(zip(columns, row)))
         
+            ncr_cities = [
+                'Caloocan', 'Las Piñas', 'Makati', 'Malabon', 'Mandaluyong', 'Manila', 'Marikina',
+                'Muntinlupa', 'Navotas', 'Parañaque', 'Pasay', 'Pasig', 'Pateros', 'Quezon City',
+                'San Juan', 'Taguig', 'Valenzuela'
+            ]
+            
             return render(request, 'import/edit.html', {
                 'application': ch_import,
                 'ch_details': app_ch_details,
@@ -233,4 +239,5 @@ def edit_application(request, permitType, app_id):
                 'client_email': client_email,
                 'brands': brands,
                 'business_list': business_list,
+                'ncr_cities': ncr_cities,
             })
