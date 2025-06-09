@@ -637,6 +637,7 @@
             $('#processModal').modal('show');
         });
 
+    {% comment %} EVALUATOR TO CLIENT {% endcomment %}
     $(document).on('click', '.btnReturnToClient', function(e) {
         e.preventDefault();
 
@@ -696,6 +697,68 @@
             }
         });
     });
+
+    {% comment %} EVALUATOR TO CASHIER {% endcomment %}
+    $(document).on('click', '.btnCompletedRequirements', function(e) {
+        e.preventDefault();
+
+        const referenceNo = $('#reference_no_p').text().trim();
+        const appId = $('#app_id_p').val();
+        const crsId = $('#crs_id_p').val();
+        const remarks = $('#remarksTextarea').val().trim();
+        const permitType = $('#application_for_p').text().trim();
+
+        
+        if (!remarks) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Remarks Required',
+                text: 'Please provide remarks before submitting the application as for payment.'
+            });
+            return;
+        }
+        
+        $.ajax({
+            type: 'POST', // or 'GET'
+            url: '/process_application_action/',
+            data: {
+                    reference_no: referenceNo,
+                    app_id: appId,
+                    crsid: crsId,
+                    remarks: remarks,
+                    action: 'For Payment',
+                    notes: 'For Payment',
+                    status: 'pending',
+                    permit_type_short: permitType,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Application Processed',
+                        text: 'The application has been successfully returned to the client for payment.'
+                    }).then(() => {
+                        location.reload(); // or DataTable refresh
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Failed to Return',
+                        text: response.message || 'An unknown error occurred.'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Request Failed',
+                    text: `An error occurred: ${error}`
+                });
+            }
+        });
+    });
+    
 
 
     </script>

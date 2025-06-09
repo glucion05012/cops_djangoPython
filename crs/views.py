@@ -464,10 +464,11 @@ def application_list_json(request):
                     WHEN c.forwarded_to_id = %s THEN c.remarks
                     ELSE 'Pending'
                 END AS client_remarks,
+                c.client_notes,
                 a.permit_type
             FROM app_tcp a
             LEFT JOIN (
-                SELECT app_id, remarks, forwarded_to_id
+                SELECT app_id, remarks, forwarded_to_id, notes AS client_notes
                 FROM app_application
                 WHERE id IN (
                     SELECT MAX(id) FROM app_application GROUP BY app_id
@@ -479,7 +480,7 @@ def application_list_json(request):
         """, params + [length, start])
 
         for row in cursor.fetchall():
-            app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type = row
+            app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, client_notes, permit_type = row
             data.append({
                 'app_id' : app_id,
                 'permit_type_short': permit_type_short,
@@ -495,6 +496,7 @@ def application_list_json(request):
                 'date_applied': date_applied,
                 'status': status,
                 'client_remarks': client_remarks,
+                'client_notes': client_notes
             })
 
     # CHIMPORT Data
@@ -527,10 +529,11 @@ def application_list_json(request):
                 CASE 
                     WHEN c.forwarded_to_id = %s THEN c.remarks
                     ELSE 'Pending'
-                END AS client_remarks
+                END AS client_remarks,
+                c.client_notes
             FROM cps_chimport a
             LEFT JOIN (
-                SELECT app_id, remarks, forwarded_to_id
+                SELECT app_id, remarks, forwarded_to_id, notes AS client_notes
                 FROM ch_application
                 WHERE id IN (
                     SELECT MAX(id) FROM ch_application GROUP BY app_id
@@ -542,7 +545,7 @@ def application_list_json(request):
         """, params + [length, start])
 
         for row in cursor.fetchall():
-            app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks = row
+            app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, client_notes = row
             data.append({
                 'app_id': app_id,
                 'permit_type_short': permit_type_short,
@@ -552,6 +555,7 @@ def application_list_json(request):
                 'date_applied': date_applied,
                 'status': status,
                 'client_remarks': client_remarks,
+                'client_notes': client_notes
             })
 
     # Sort in Python
@@ -1191,7 +1195,7 @@ def process_application_action(request):
                 app_id = request.POST.get('app_id')
                 crs_id = request.POST.get('crsid')
                 reference_no = request.POST.get('reference_no')
-                remarks = request.POST.get('remarks')
+                remarks = request.POST.get('remarks', '').strip()
                 action = request.POST.get('action')
                 notes = request.POST.get('notes')
                 status = request.POST.get('status')

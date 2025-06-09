@@ -184,10 +184,16 @@
                                 </button>
                             `;
 
-                            if (row.status === "Returned to Client") {
+                            if (row.client_notes === "Returned to Client") {
                                 buttons += `
                                 <button class="btn btn-sm btn-warning edit-btn" data-appid="${row.app_id}" data-permit_type_short="${row.permit_type_short}">
                                         <i class="fas fa-edit"></i>
+                                    </button>
+                                `;
+                            }else if (row.client_notes === "For Payment") {
+                                buttons += `
+                                <button class="btn btn-sm btn-warning paid-btn" data-appid="${row.app_id}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-receipt"></i>
                                     </button>
                                 `;
                             }
