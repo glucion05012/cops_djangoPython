@@ -1200,6 +1200,8 @@ def process_application_action(request):
                 notes = request.POST.get('notes')
                 status = request.POST.get('status')
                 permit_type_short = request.POST.get('permit_type_short')
+                chi_remarks = request.POST.get('chi_remarks')
+                chi_status = request.POST.get('chi_status')
 
                 if not all([app_id, reference_no, remarks, permit_type_short]):
                     return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
@@ -1221,8 +1223,8 @@ def process_application_action(request):
                 )
                 
                 CHImport.objects.filter(id=int(app_id)).update(
-                    remarks='client',
-                    status='returned'
+                    remarks=chi_remarks,
+                    status=chi_status
                 )
 
             return JsonResponse({'success': True, 'message': 'Application returned to client successfully.'})

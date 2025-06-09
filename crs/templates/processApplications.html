@@ -667,8 +667,10 @@
                     remarks: remarks,
                     action: 'For Client Completion',
                     notes: 'Returned to Client',
-                    status: 'pending',
+                    status: 'pending to client',
                     permit_type_short: permitType,
+                    chi_remarks: 'client',
+                    chi_status: 'pending',
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 },
             success: function(response) {
@@ -728,7 +730,9 @@
                     remarks: remarks,
                     action: 'For Payment',
                     notes: 'For Payment',
-                    status: 'pending',
+                    status: 'pending for payment',
+                    chi_remarks: 'client',
+                    chi_status: 'pending',
                     permit_type_short: permitType,
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 },
