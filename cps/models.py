@@ -105,3 +105,35 @@ class CHUserAccess(models.Model):
         
     def __str__(self):
         return f"{self.user.username} - {self.get_type_display()}"
+
+
+class ChPayment(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    app_id = models.IntegerField()
+    op_id = models.CharField(max_length=100)
+    date_paid = models.DateField(null=True, blank=True)
+    or_no = models.CharField(max_length=100, null=True, blank=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    fund_cluster = models.CharField(max_length=100)
+    type = models.CharField(max_length=50)
+    status = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'ch_payment'
+
+    def __str__(self):
+        return f"Payment {self.id} - App {self.app_id}"
+
+
+class ProofOfPayment(models.Model):
+    app_id = models.IntegerField()
+    payment = models.ForeignKey(ChPayment, on_delete=models.CASCADE, related_name='proofs')
+    file_name = models.CharField(max_length=255)
+    file_location = models.CharField(max_length=500)
+    date_uploaded = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ch_proof_of_payment'
+
+    def __str__(self):
+        return self.file_name

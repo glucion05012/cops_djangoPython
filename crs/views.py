@@ -20,10 +20,13 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from operator import itemgetter
 from django.db import transaction
 import traceback
+from datetime import datetime
 
 from cps.models import (
     CHImport,
-    CHApplication
+    CHApplication,
+    ProofOfPayment,
+    ChPayment
 )
 
 
@@ -583,7 +586,7 @@ def get_application_details(request):
     reference_no = request.GET.get('reference_no')
     permit_type_short = request.GET.get('permit_type_short', '').lower()  # Normalize
 
-    data = None
+    data = {}
 
     if permit_type_short == 'pic':
         # Query CHIMPORT table (default DB)
@@ -594,9 +597,13 @@ def get_application_details(request):
                     'PIC' AS permit_type,
                     a.*,
                     b.name as brand_name,
-                    a.remarks AS client_remarks
+                    a.remarks AS client_remarks,
+                    c.op_id,
+                    c.amount,
+                    c.date_created AS op_date
                 FROM cps_chimport a
                 LEFT JOIN cps_chainsawbrand b ON a.brand_id = b.id
+                LEFT JOIN ch_payment c ON a.id = c.app_id
                 WHERE a.reference_no = %s
             """, [reference_no])
             row = cursor.fetchone()
@@ -1226,6 +1233,23 @@ def process_application_action(request):
                     remarks=chi_remarks,
                     status=chi_status
                 )
+                
+                if permit_type_short == 'PIC' and notes == 'For Payment':
+                    # Generate OP number
+                    today = datetime.now().strftime('%Y-%m-%d')
+                    op_number = f"{today}-OP-{permit_type_short}-{app_id}"
+                
+                    # Create Order of Payment
+                    ChPayment.objects.create(
+                        app_id=app_id,
+                        op_id=op_number,
+                        date_paid=None,  # Set to None initially
+                        or_no=None,  # Set to None initially
+                        amount=500,  # Default amount, can be updated later
+                        fund_cluster='01101101',
+                        type=permit_type_short,
+                        status=0
+                    )
 
             return JsonResponse({'success': True, 'message': 'Application returned to client successfully.'})
 
@@ -1235,3 +1259,37 @@ def process_application_action(request):
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+def upload_proof(request):
+    if request.method == 'POST':
+        app_id = request.POST.get('app_id')
+        payment_id = request.POST.get('payment_id')
+        uploaded_files = request.FILES.getlist('files')
+
+        if not uploaded_files:
+            return JsonResponse({'success': False, 'message': 'No files received'})
+
+        upload_dir = os.path.join(settings.MEDIA_ROOT, 'proof_of_payment')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        for file in uploaded_files:
+            file_name = file.name
+            file_path = os.path.join(upload_dir, file_name)
+
+            # Save file to disk
+            with open(file_path, 'wb+') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
+
+            # Save record to DB
+            ProofOfPayment.objects.create(
+                app_id=app_id,
+                payment_id=payment_id,
+                file_name=file_name,
+                file_location=os.path.join('proof_of_payment', file_name),
+                date_uploaded=timezone.now()
+            )
+
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})

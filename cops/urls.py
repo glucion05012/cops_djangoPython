@@ -58,6 +58,8 @@ urlpatterns = [
     #import
     path('cps/apply', cps_views.index, name='import_apply'),
     path('submit-import/', cps_views.submit_import, name='submit_import'),
+    #upload poof of payment
+    path('upload_proof/', views.upload_proof, name='upload_proof'),
     
     
     # DENR EMPLOYEE
