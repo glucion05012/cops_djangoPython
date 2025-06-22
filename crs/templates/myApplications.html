@@ -148,13 +148,21 @@
 
                 <div class="modal-body">
                 <div class="mb-3">
+                    <input type="hidden" id="payment_id_or" name="payment_id" value="">
+                    <input type="hidden" id="permit_type_or" name="permit_type" value="">
+                    <input type="hidden" id="app_id_or" name="app_id" value="">
                     <label for="proof_file" class="form-label">Upload File <small class="text-muted">(PDF, JPG, PNG)</small></label>
-                    <input type="file" class="form-control" id="proof_file" name="proof_file" accept=".pdf,.jpg,.jpeg,.png" required multiple>
+                    <input type="file" class="form-control" id="proof_file" name="proof_file" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                </div>
+
+                <div class="mb-3">
+                    <label for="proof_remarks" class="form-label">OR Number</label><span class="text-danger">*</span>
+                    <input type="text" class="form-label" id="or_no" name="or_no" value="" required>
                 </div>
 
                 <div class="mb-3">
                     <label for="proof_remarks" class="form-label">Remarks (optional)</label>
-                    <textarea class="form-control" id="proof_remarks" name="remarks" rows="2"></textarea>
+                    <textarea class="form-control" id="proof_remarks_or" name="remarks" rows="2"></textarea>
                 </div>
                 </div>
 
@@ -754,15 +762,29 @@
 
         
         $(document).on('click', '.or-btn', function() {
-            const appid = $(this).data('appid');
             const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
 
-            $('#proofOfPaymentModal').modal('show');
+
+            $.ajax({
+                url: '/get-application-details/', // Your Django view URL
+                method: 'GET',
+                data: { reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
+                    $('#payment_id_or').val(response.payment_id);
+                    $('#permit_type_or').val(permit_type_short);
+                    $('#app_id_or').val(response.id);
+                    
+                    $('#proofOfPaymentModal').modal('show');
+                }
+            });
         });
 
-        $(document).on('click', '.upload_or_btn', function(e) {
-            const app_id = $(this).data('appid');
-            const permit_type_short = $(this).data('permit_type_short');
+        $('#proofOfPaymentForm').on('submit', function(e) {
+            e.preventDefault();
+
             const files = $('#proof_file')[0].files;
 
             if (!files.length) {
@@ -774,13 +796,24 @@
                 return;
             }
 
+           // 🔹 Get values from form inputs
+            const app_id = $('#app_id_or').val();
+            const permit_type = $('#permit_type_or').val();
+            const remarks = $('#proof_remarks_or').val().trim();
+            const or_no = $('#or_no').val().trim();
+            const payment_id = $('#payment_id_or').val();
+
             const formData = new FormData();
-            formData.append('app_id', appId);
+            formData.append('app_id', app_id);
+            formData.append('permit_type', permit_type);  // renamed from payment_id
+            formData.append('remarks', remarks);
             formData.append('payment_id', payment_id);
+            formData.append('or_no', or_no);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
+            // 🔹 Append each file
             for (let i = 0; i < files.length; i++) {
-                formData.append('files', files[i]);
+                formData.append('proof_file', files[i]);  // must match Django's expected name
             }
 
             $.ajax({
@@ -893,5 +926,6 @@
                 printWindow.close();
             }, 500);
         }
+
     </script>
 {% endblock %}

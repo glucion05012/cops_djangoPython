@@ -599,6 +599,7 @@ def get_application_details(request):
                     b.name as brand_name,
                     a.remarks AS client_remarks,
                     c.op_id,
+                    c.id AS payment_id,
                     c.amount,
                     c.date_created AS op_date
                 FROM cps_chimport a
@@ -1264,7 +1265,8 @@ def upload_proof(request):
     if request.method == 'POST':
         app_id = request.POST.get('app_id')
         payment_id = request.POST.get('payment_id')
-        uploaded_files = request.FILES.getlist('files')
+        uploaded_files = request.FILES.getlist('proof_file')
+        or_no = request.POST.get('or_no')
 
         if not uploaded_files:
             return JsonResponse({'success': False, 'message': 'No files received'})
@@ -1272,24 +1274,50 @@ def upload_proof(request):
         upload_dir = os.path.join(settings.MEDIA_ROOT, 'proof_of_payment')
         os.makedirs(upload_dir, exist_ok=True)
 
-        for file in uploaded_files:
-            file_name = file.name
-            file_path = os.path.join(upload_dir, file_name)
+        try:
+            with transaction.atomic():
+                for file in uploaded_files:
+                    original_name = file.name
+                    extension = os.path.splitext(original_name)[1]
+                    timestamp = int(time.time() * 1000)
 
-            # Save file to disk
-            with open(file_path, 'wb+') as destination:
-                for chunk in file.chunks():
-                    destination.write(chunk)
+                    new_file_name = f"{payment_id}_proof_{timestamp}{extension}"
+                    file_path = os.path.join(upload_dir, new_file_name)
 
-            # Save record to DB
-            ProofOfPayment.objects.create(
-                app_id=app_id,
-                payment_id=payment_id,
-                file_name=file_name,
-                file_location=os.path.join('proof_of_payment', file_name),
-                date_uploaded=timezone.now()
-            )
+                    while os.path.exists(file_path):
+                        timestamp += 1
+                        new_file_name = f"{payment_id}_proof_{timestamp}{extension}"
+                        file_path = os.path.join(upload_dir, new_file_name)
+
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in file.chunks():
+                            destination.write(chunk)
+
+                    # Save proof record
+                    ProofOfPayment.objects.create(
+                        app_id=app_id,
+                        payment_id=payment_id,
+                        file_name=new_file_name,
+                        file_location=os.path.join('proof_of_payment', new_file_name),
+                        date_uploaded=timezone.now()
+                    )
+
+                # ✅ Update ChPayment after all files are processed
+                try:
+                    payment = ChPayment.objects.get(id=payment_id)
+                    payment.or_no = or_no
+                    payment.date_paid = timezone.now().date()
+                    payment.status = 1  # Paid
+                    payment.save()
+                except ChPayment.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'Payment record not found'})
+                
+                
+
+        except Exception as e:
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
         return JsonResponse({'success': True})
-    
+
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
