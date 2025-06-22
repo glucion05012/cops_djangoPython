@@ -116,7 +116,7 @@ class ChPayment(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     fund_cluster = models.CharField(max_length=100)
     type = models.CharField(max_length=50)
-    status = models.CharField(max_length=50)
+    status = models.CharField(max_length=50, help_text="0 = Unpaid, 1 = Paid, 2 = Validated")
 
     class Meta:
         db_table = 'ch_payment'
