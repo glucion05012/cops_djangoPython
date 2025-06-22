@@ -468,7 +468,8 @@ def application_list_json(request):
                     ELSE 'Pending'
                 END AS client_remarks,
                 c.client_notes,
-                a.permit_type
+                a.permit_type,
+                p.status AS paid_status
             FROM app_tcp a
             LEFT JOIN (
                 SELECT app_id, remarks, forwarded_to_id, notes AS client_notes
@@ -477,13 +478,14 @@ def application_list_json(request):
                     SELECT MAX(id) FROM app_application GROUP BY app_id
                 )
             ) c ON a.id = c.app_id
+            LEFT JOIN payment p ON a.id = p.app_id
             WHERE a.crs_id = %s
             {sql_filter}
             LIMIT %s OFFSET %s
         """, params + [length, start])
 
         for row in cursor.fetchall():
-            app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, client_notes, permit_type = row
+            app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, client_notes, permit_type, paid_status = row
             data.append({
                 'app_id' : app_id,
                 'permit_type_short': permit_type_short,
@@ -499,7 +501,8 @@ def application_list_json(request):
                 'date_applied': date_applied,
                 'status': status,
                 'client_remarks': client_remarks,
-                'client_notes': client_notes
+                'client_notes': client_notes,
+                'paid_status': paid_status
             })
 
     # CHIMPORT Data
@@ -526,14 +529,20 @@ def application_list_json(request):
                 a.reference_no,
                 a.date_applied,
                 CASE 
-                    WHEN c.forwarded_to_id = %s THEN 'Returned to Client'
+                    WHEN c.forwarded_to_id = %s THEN 
+                        CASE 
+                            WHEN p.status = 0 THEN 'Returned to Client'
+                            WHEN p.status = 1 THEN 'For Validation of Payment'
+                            ELSE a.status
+                        END
                     ELSE a.status
                 END AS status,
                 CASE 
                     WHEN c.forwarded_to_id = %s THEN c.remarks
                     ELSE 'Pending'
                 END AS client_remarks,
-                c.client_notes
+                c.client_notes,
+                p.status AS paid_status
             FROM cps_chimport a
             LEFT JOIN (
                 SELECT app_id, remarks, forwarded_to_id, notes AS client_notes
@@ -542,13 +551,14 @@ def application_list_json(request):
                     SELECT MAX(id) FROM ch_application GROUP BY app_id
                 )
             ) c ON a.id = c.app_id
+            LEFT JOIN ch_payment p ON a.id = p.app_id
             WHERE a.crs_id = %s
             {sql_filter}
             LIMIT %s OFFSET %s
         """, params + [length, start])
 
         for row in cursor.fetchall():
-            app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, client_notes = row
+            app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, client_notes, paid_status = row
             data.append({
                 'app_id': app_id,
                 'permit_type_short': permit_type_short,
@@ -558,7 +568,8 @@ def application_list_json(request):
                 'date_applied': date_applied,
                 'status': status,
                 'client_remarks': client_remarks,
-                'client_notes': client_notes
+                'client_notes': client_notes,
+                'paid_status': paid_status
             })
 
     # Sort in Python
