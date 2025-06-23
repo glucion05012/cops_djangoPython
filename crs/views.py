@@ -1096,8 +1096,7 @@ def application_list_json_emp(request):
                     'client_remarks': client_remarks,
                     'curr_assign': curr_assign,
                 })
-
-                
+             
     if(ch_user_type == 'fus_evaluator'):
          # --- CHIMPORT COUNT ---
         with connections['default'].cursor() as cursor:
@@ -1185,7 +1184,92 @@ def application_list_json_emp(request):
                     'curr_assign': curr_assign,
                 })
                 
+    if(ch_user_type == 'cashier'):
+         # --- CHIMPORT COUNT ---
+        with connections['default'].cursor() as cursor:
+            if search_value:
+                like_term = f'%{search_value}%'
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM cps_chimport a
+                    LEFT JOIN (
+                        SELECT app_id, remarks, forwarded_to_id
+                        FROM ch_application
+                        WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
+                    ) c ON a.id = c.app_id
+                    LEFT JOIN ch_payment p ON a.id = p.app_id
+                    WHERE
+                        p.status = '1' AND (
+                        LOWER(a.estab_name) LIKE %s OR
+                        LOWER(a.reference_no) LIKE %s OR
+                        LOWER(a.status) LIKE %s
+                        )
+                """, [like_term, like_term, like_term])
+            else:
+                cursor.execute("SELECT COUNT(*) FROM cps_chimport a LEFT JOIN ch_payment p ON a.id = p.app_id WHERE p.status = '1'")
+            ch_filtered = cursor.fetchone()[0]
+            ch_total = ch_filtered
+            
+        # --- CHIMPORT DATA ---
+        with connections['default'].cursor() as cursor:
+            ch_filter = ""
+            ch_params = []
+
+            if search_value:
+                ch_filter = """
+                    WHERE
+                        p.status = '1' AND (
+                            LOWER(a.estab_name) LIKE %s OR
+                            LOWER(a.reference_no) LIKE %s OR
+                            LOWER(a.status) LIKE %s
+                        )
+                """
+                like_term = f"%{search_value}%"
+                ch_params = [like_term, like_term, like_term]
+            else:
+                ch_filter = """
+                    WHERE
+                        p.status = '1'
+                """
                 
+            cursor.execute(f"""
+                SELECT 
+                    a.id as app_id,
+                    a.crs_id,
+                    'PIC' AS permit_type_short,
+                    'Permit to Import Chainsaw' AS permit_type,
+                    a.estab_name,
+                    a.reference_no,
+                    a.date_applied,
+                    a.status,
+                    c.remarks AS client_remarks,
+                    a.remarks AS curr_assign
+                FROM cps_chimport a
+                LEFT JOIN (
+                    SELECT app_id, remarks, forwarded_to_id
+                    FROM ch_application
+                    WHERE id IN (
+                        SELECT MAX(id) FROM ch_application GROUP BY app_id
+                    )
+                ) c ON a.id = c.app_id
+                LEFT JOIN ch_payment p ON a.id = p.app_id
+                {ch_filter}
+            """, ch_params)
+
+            for row in cursor.fetchall():
+                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
+                data.append({
+                    'app_id': app_id,
+                    'crs_id': crs_id,
+                    'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
+                    'permit_type': permit_type,
+                    'estab_name': estab_name,
+                    'reference_no': reference_no,
+                    'date_applied': date_applied,
+                    'status': status,
+                    'client_remarks': client_remarks,
+                    'curr_assign': curr_assign,
+                })            
 
     # --- SORT + PAGINATE ---
     def safe_key(item):
