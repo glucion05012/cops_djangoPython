@@ -113,6 +113,7 @@ class ChPayment(models.Model):
     op_id = models.CharField(max_length=100)
     date_paid = models.DateField(null=True, blank=True)
     or_no = models.CharField(max_length=100, null=True, blank=True)
+    lbp_ref_no = models.CharField(max_length=100, null=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     fund_cluster = models.CharField(max_length=100)
     type = models.CharField(max_length=50)

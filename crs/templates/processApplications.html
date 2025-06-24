@@ -162,6 +162,40 @@
         </div>
     </div>
 
+    <div class="modal fade" id="confimPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>APPLICATION FOR <span id="application_for_cp" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_cp"></span>
+                        <br><br>
+                        <p>Please provide Landbank Reference No. below to confirm payment:</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="hidden" id="app_id_cp" name="app_id_cp">
+                        <input type="hidden" id="crs_id_cp" name="crs_id_cp">
+                        <input type="text" class="form-control" id="lbp_ref_no_cp" name="lbp_ref_no_cp" placeholder="Enter LBP Reference No." >
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-success btnPaymentConfirmed" >
+                            Payment Confirmed
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
                                     
     <script>
         $(document).ready(function() {
@@ -226,6 +260,14 @@
                                     processBtn = `
                                         <button class="btn btn-sm btn-success process-btn" title="Process Application" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                             <i class="fas fa-file-circle-check"></i>
+                                        </button>
+                                    `;
+                                }
+
+                                if (row.user_type === 'cashier') {
+                                    processBtn = `
+                                        <button class="btn btn-sm btn-warning confirm-btn" title="Confirm Payment" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <i class="fas fa-square-minus"></i>
                                         </button>
                                     `;
                                 }
@@ -637,6 +679,21 @@
             $('#processModal').modal('show');
         });
 
+        $(document).on('click', '.confirm-btn', function () {
+            const appid = $(this).data('appid');
+            const crsid = $(this).data('crsid');
+            const referenceNo = $(this).data('reference');
+            const permit_type_short = $(this).data('permit_type_short');
+            
+            $('#application_for_cp').html(permit_type_short);
+            $('#reference_no_cp').html(referenceNo);
+            $('#app_id_cp').val(appid);
+            $('#crs_id_cp').val(crsid);
+            
+
+            $('#confimPaymentModal').modal('show');
+        });
+
     {% comment %} EVALUATOR TO CLIENT {% endcomment %}
     $(document).on('click', '.btnReturnToClient', function(e) {
         e.preventDefault();
@@ -732,6 +789,69 @@
                     notes: 'For Payment',
                     status: 'pending for payment',
                     chi_remarks: 'client',
+                    chi_status: 'pending',
+                    permit_type_short: permitType,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Application Processed',
+                        text: 'The application has been successfully returned to the client for payment.'
+                    }).then(() => {
+                        location.reload(); // or DataTable refresh
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Failed to Return',
+                        text: response.message || 'An unknown error occurred.'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Request Failed',
+                    text: `An error occurred: ${error}`
+                });
+            }
+        });
+    });
+    
+
+    //----------------------------------------- TODO -----------------------------------------
+    $(document).on('click', '.btnPaymentConfirmed', function(e) {
+        e.preventDefault();
+
+        const referenceNo = $('#reference_no_cp').text().trim();
+        const appId = $('#app_id_cp').val();
+        const crsId = $('#crs_id_cp').val();
+        const lbp_ref_no = $('#lbp_ref_no_cp').val().trim();
+        const permitType = $('#application_for_cp').text().trim();
+
+        
+        if (!lbp_ref_no) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Required',
+                text: 'Please provide Landbank Reference No.'
+            });
+            return;
+        }
+        $.ajax({
+            type: 'POST', // or 'GET'
+            url: '/confirm_payment_action/',
+            data: {
+                    reference_no: referenceNo,
+                    app_id: appId,
+                    crsid: crsId,
+                    remarks: remarks,
+                    action: 'For Payment',
+                    notes: 'For Payment',
+                    status: 'pending for payment',
+                    chi_lbp_ref_no: lbp_ref_no,
                     chi_status: 'pending',
                     permit_type_short: permitType,
                     csrfmiddlewaretoken: '{{ csrf_token }}'

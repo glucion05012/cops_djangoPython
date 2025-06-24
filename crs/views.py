@@ -1259,6 +1259,7 @@ def application_list_json_emp(request):
             for row in cursor.fetchall():
                 app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
                 data.append({
+                    'user_type': ch_user_type,
                     'app_id': app_id,
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
