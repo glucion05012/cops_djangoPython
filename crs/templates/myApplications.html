@@ -352,13 +352,15 @@
         });
 
         $(document).on('click', '.view-btn', function () {
+            const appid = $(this).data('appid');
             const referenceNo = $(this).data('reference');
             const permit_type_short = $(this).data('permit_type_short');
             // Fetch data from the server using AJAX
             $.ajax({
                 url: '/get-application-details/', // Your Django view URL
                 method: 'GET',
-                data: { reference_no: referenceNo,
+                data: { appid: appid,
+                        reference_no: referenceNo,
                         permit_type_short: permit_type_short},
                 success: function (response) {
                     // Populate the textboxes with data
