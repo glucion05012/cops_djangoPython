@@ -60,6 +60,7 @@ urlpatterns = [
     path('submit-import/', cps_views.submit_import, name='submit_import'),
     #upload poof of payment
     path('upload_proof/', views.upload_proof, name='upload_proof'),
+    path('confirm_payment_action/', views.confirm_payment_action, name='confirm_payment_action'),
     
     
     # DENR EMPLOYEE

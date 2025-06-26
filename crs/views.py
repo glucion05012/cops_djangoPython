@@ -1243,7 +1243,8 @@ def application_list_json_emp(request):
                     a.date_applied,
                     a.status,
                     c.remarks AS client_remarks,
-                    a.remarks AS curr_assign
+                    a.remarks AS curr_assign,
+                    p.id AS payment_id
                 FROM cps_chimport a
                 LEFT JOIN (
                     SELECT app_id, remarks, forwarded_to_id
@@ -1257,7 +1258,7 @@ def application_list_json_emp(request):
             """, ch_params)
 
             for row in cursor.fetchall():
-                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
+                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, payment_id = row
                 data.append({
                     'user_type': ch_user_type,
                     'app_id': app_id,
@@ -1270,6 +1271,7 @@ def application_list_json_emp(request):
                     'status': status,
                     'client_remarks': client_remarks,
                     'curr_assign': curr_assign,
+                    'payment_id': payment_id,
                 })            
 
     # --- SORT + PAGINATE ---
@@ -1417,3 +1419,56 @@ def upload_proof(request):
         return JsonResponse({'success': True})
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+@csrf_exempt
+def confirm_payment_action(request):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                payment_id = request.POST.get('payment_id')
+
+                # Update ChPayment status
+                ChPayment.objects.filter(id=int(payment_id)).update(
+                    lbp_ref_no=request.POST.get('chi_lbp_ref_no'),
+                    status=2,
+                    date_confirmed=timezone.now().date()
+                )
+                
+                #ch_application
+                app_id = request.POST.get('app_id')
+                reference_no = request.POST.get('reference_no')
+                forwarded_to = request.POST.get('forwarded_to')
+                action = request.POST.get('action')
+                notes = request.POST.get('notes')
+                remarks = request.POST.get('remarks', '').strip()
+                status = request.POST.get('status')
+                
+                chi_remarks = request.POST.get('chi_remarks')
+                chi_status = request.POST.get('chi_status')
+
+                # ✅ Create CHApplication record
+                CHApplication.objects.create(
+                    date_created=timezone.now(),
+                    app_id=app_id,
+                    reference_no=reference_no,
+                    forwarded_by_id=request.session.get('user_id'),
+                    forwarded_to_id = forwarded_to,
+                    action=action,
+                    notes=notes,
+                    remarks=remarks,
+                    status=status,
+                    days_pending=0
+                )
+                
+                #chimport
+                CHImport.objects.filter(id=int(app_id)).update(
+                    remarks=chi_remarks,
+                    status=chi_status
+                )
+
+            return JsonResponse({'success': True, 'message': 'Payment action processed successfully.'})
+        except Exception as e:
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
