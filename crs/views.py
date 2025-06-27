@@ -1569,3 +1569,84 @@ def confirm_payment_action(request):
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+def get_action_officer(request):
+    try:
+        # Step 1: Get access records from default DB (ch_access_level)
+        with connections['default'].cursor() as cursor:
+            cursor.execute("""
+                SELECT id, userid, type
+                FROM ch_access_level
+                WHERE type = %s
+            """, ['fus_evaluator'])
+            access_rows = cursor.fetchall()
+
+        officers = []
+
+        # Step 2: Get user details from dniis_db (core_users)
+        for row in access_rows:
+            ch_id, userid, user_type = row
+
+            with connections['dniis_db'].cursor() as cursor:
+                cursor.execute("""
+                    SELECT name FROM core_users WHERE id = %s
+                """, [userid])
+                user = cursor.fetchone()
+
+            fullname = user[0] if user else ''
+
+            officers.append({
+                'id': ch_id,
+                'userid': userid,
+                'fullname': fullname,
+                'user_type': user_type
+            })
+
+        return JsonResponse({'success': True, 'officers': officers})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+    
+    
+def assign_action_officer(request):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                
+                app_id = request.POST.get('app_id')
+                reference_no = request.POST.get('reference_no')
+                action_officer_id = request.POST.get('officer_id')
+                action = request.POST.get('action')
+                notes = request.POST.get('notes')
+                status = request.POST.get('status')
+                chi_remarks = request.POST.get('chi_remarks')
+                chi_status = request.POST.get('chi_status')
+                
+                # ✅ Create CHApplication record
+                CHApplication.objects.create(
+                    date_created=timezone.now(),
+                    app_id=app_id,
+                    reference_no=reference_no,
+                    forwarded_by_id=request.session.get('user_id'),
+                    forwarded_to_id = action_officer_id,
+                    action=action,
+                    notes=notes,
+                    status=status,
+                    days_pending=0
+                )
+                
+                CHImport.objects.filter(id=int(app_id)).update(
+                    remarks=chi_remarks,
+                    status=chi_status
+                )
+                
+                
+
+            return JsonResponse({'success': True, 'message': 'Application assigned to Action Officer successfully.'})
+
+        except Exception as e:
+            # No need to call transaction.set_rollback(True); it happens automatically in an atomic block
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)

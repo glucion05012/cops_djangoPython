@@ -36,7 +36,7 @@ urlpatterns = [
     # get session from dashboard
     path('get_session/', views.get_session, name='get_session'),
     
-    # dashbaord
+    # dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
     path('myapplications/', views.myApplications, name='myApplications'),
     path('list', views.application_list_json, name='application_list_json'), 
@@ -52,7 +52,6 @@ urlpatterns = [
     path('add_permittee', views_permittee.add_permittee, name='add_permittee'),
     
     
-    
     #chainsaw_permit_system
     path('edit-application/<str:permitType>/<str:app_id>/', cps_views.edit_application, name='edit_application'),
     #import
@@ -66,6 +65,9 @@ urlpatterns = [
     # DENR EMPLOYEE
     path('dashboard', views.process_application, name='processApplications'),
     path('list_emp', views.application_list_json_emp, name='application_list_json_emp'), 
+    path('get-action-officer/', views.get_action_officer, name='get_action_officer'), 
+    path('assign-action-officer/', views.assign_action_officer, name='assign_action_officer'), 
+    
     
 ]
 

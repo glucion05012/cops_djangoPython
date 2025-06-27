@@ -36,7 +36,8 @@ class CHImport(models.Model):
     date_approved = models.DateField(blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
-    evaluator_id = models.CharField(max_length=100)  # Required
+    evaluator_id = models.TextField(blank=True, null=True)
+    action_officer_id = models.TextField(blank=True, null=True)
     survey = models.TextField(blank=True, null=True)
     arrival_date = models.DateField(blank=True, null=True)
     is_existing_permittee = models.BooleanField(default=False)

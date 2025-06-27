@@ -197,6 +197,45 @@
         </div>
     </div>
 
+    <div class="modal fade" id="assignInspectorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assignment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>Assignment of Action Officer for <span id="application_for_as" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_as"></span>
+                    </div>
+
+                    <div class="mb-3" style="margin-top: 1rem;">
+                        <input type="hidden" id="app_id_as" name="app_id_as">
+                        <input type="hidden" id="crs_id_as" name="crs_id_as">
+
+                        <label for="inspector" class="form-label">Inspector</label>
+                        <label id="inspector_as" class="form-label fw-bold"></label>
+
+                        <label for="action_officer_list" class="form-label">Select Action Officer</label>
+                        <select id="action_officer_list" class="form-select">
+                            <option value="">-- Select Officer --</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-success btnAssign" >
+                            Assign Officer
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
                                     
     <script>
         $(document).ready(function() {
@@ -707,6 +746,39 @@
             $('#confimPaymentModal').modal('show');
         });
 
+        $(document).on('click', '.assign-btn', function() {
+            const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            const appid = $(this).data('appid');
+
+            $.ajax({
+                url: '/get-action-officer/', // Your Django view URL
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
+                    $('#application_for_as').html(permit_type_short);
+                    $('#reference_no_as').html(referenceNo);
+                    $('#app_id_as').val(appid);
+
+                    // Clear and populate the dropdown
+                    const $dropdown = $('#action_officer_list');
+                    $dropdown.empty();  // Clear existing options
+
+                    $dropdown.append('<option value="">-- Select Officer --</option>');
+
+                    $.each(response.officers, function (index, officer) {
+                        const option = `<option value="${officer.userid}">${officer.fullname}</option>`;
+                        $dropdown.append(option);
+                    });
+                        
+                    $('#assignInspectorModal').modal('show');
+                }
+            });
+        });
+
     {% comment %} EVALUATOR TO CLIENT {% endcomment %}
     $(document).on('click', '.btnReturnToClient', function(e) {
         e.preventDefault();
@@ -876,6 +948,60 @@
                         icon: 'success',
                         title: 'Payment Confirmed',
                         text: 'The payment has been successfully confirmed.'
+                    }).then(() => {
+                        location.reload(); // or DataTable refresh
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Failed to Return',
+                        text: response.message || 'An unknown error occurred.'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Request Failed',
+                    text: `An error occurred: ${error}`
+                });
+            }
+        });
+    });
+
+    $(document).on('click', '.btnAssign', function(e) {
+        e.preventDefault();
+
+        const officerID = $('#action_officer_list').val();
+
+        if (!officerID) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Action Officer Required',
+                text: 'Please select Action Officer.'
+            });
+            return;
+        }
+        
+        $.ajax({
+            type: 'POST', // or 'GET'
+            url: '/assign_action_officer/',
+            data: {
+                    app_id: appId,
+                    officer_id: officerID,
+                    action: 'For Inspection',
+                    notes: 'Inspection Assigned',
+                    status: 'for inspection',
+                    chi_remarks: 'fus_evaluator',
+                    chi_status: 'pending',
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Application Processed',
+                        text: 'The application has been successfully returned to the client for payment.'
                     }).then(() => {
                         location.reload(); // or DataTable refresh
                     });
