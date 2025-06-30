@@ -216,9 +216,9 @@
                         <input type="hidden" id="app_id_as" name="app_id_as">
                         <input type="hidden" id="crs_id_as" name="crs_id_as">
 
-                        <label for="inspector" class="form-label">Inspector</label>
+                        <label for="inspector" class="form-label">Evaluator: </label>
                         <label id="inspector_as" class="form-label fw-bold"></label>
-
+                        <br><br>
                         <label for="action_officer_list" class="form-label">Select Action Officer</label>
                         <select id="action_officer_list" class="form-select">
                             <option value="">-- Select Officer --</option>
@@ -799,6 +799,8 @@
                         const option = `<option value="${officer.userid}">${officer.fullname}</option>`;
                         $dropdown.append(option);
                     });
+
+                    $('#inspector_as').html(response.current_handler);
                         
                     $('#assignInspectorModal').modal('show');
                 }

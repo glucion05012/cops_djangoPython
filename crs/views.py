@@ -1613,7 +1613,29 @@ def get_action_officer(request):
                 'user_type': user_type
             })
 
-        return JsonResponse({'success': True, 'officers': officers})
+        # Step 3: Determine current handler (from cps or chimport)
+        evaluator_id = None
+        with connections['default'].cursor() as cursor:
+            cursor.execute("SELECT evaluator_id FROM cps_chimport WHERE evaluator_id IS NOT NULL LIMIT 1")
+            result = cursor.fetchone()
+            if result and result[0]:
+                evaluator_id = result[0]
+            else:
+                cursor.execute("SELECT evaluator_id FROM cps_chimport WHERE evaluator_id IS NOT NULL LIMIT 1")
+                result = cursor.fetchone()
+                if result and result[0]:
+                    evaluator_id = result[0]
+
+        current_handler_name = ''
+        if evaluator_id:
+            with connections['dniis_db'].cursor() as cursor:
+                cursor.execute("SELECT name FROM core_users WHERE id = %s", [evaluator_id])
+                user = cursor.fetchone()
+                current_handler_name = user[0] if user else ''
+                
+        return JsonResponse({'success': True, 
+                             'officers': officers,
+                             'current_handler': current_handler_name})
 
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
