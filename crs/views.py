@@ -736,16 +736,26 @@ def get_application_details(request):
         appid = request.GET.get('appid')
         data['app_id'] = appid
         
-        
-        with connections['default'].cursor() as cursor:
-            cursor.execute("""
-                SELECT crs_id FROM cps_chimport WHERE id = %s LIMIT 1
-            """, [appid])
-            result = cursor.fetchone()
-            if result:
-                user_id = result[0]
-            else:
-                return JsonResponse({'error': 'Application not found (no user_id)'}, status=404)
+        if permit_type_short == 'pic':
+            with connections['default'].cursor() as cursor:
+                cursor.execute("""
+                    SELECT crs_id FROM cps_chimport WHERE id = %s LIMIT 1
+                """, [appid])
+                result = cursor.fetchone()
+                if result:
+                    user_id = result[0]
+                else:
+                    return JsonResponse({'error': 'Application not found (no user_id)'}, status=404)
+        elif permit_type_short == 'tcp':
+            with connections['tcp_db'].cursor() as cursor:
+                cursor.execute("""
+                    SELECT crs_id FROM app_tcp WHERE id = %s LIMIT 1
+                """, [appid])
+                result = cursor.fetchone()
+                if result:
+                    user_id = result[0]
+                else:
+                    return JsonResponse({'error': 'Application not found (no user_id)'}, status=404)
             
         with connections['dniis_db'].cursor() as cursor:
             cursor.execute("""

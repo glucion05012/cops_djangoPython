@@ -749,7 +749,8 @@
                 $.ajax({
                 url: '/get-application-details/', // Your Django view URL
                 method: 'GET',
-                data: { reference_no: referenceNo,
+                data: { appid: appid,
+                        reference_no: referenceNo,
                         permit_type_short: permit_type_short},
                 success: function (response) {
 
@@ -792,12 +793,13 @@
         $(document).on('click', '.or-btn', function() {
             const permit_type_short = $(this).data('permit_type_short');
             const referenceNo = $(this).data('reference');
-
+            const appid = $(this).data('appid');
 
             $.ajax({
                 url: '/get-application-details/', // Your Django view URL
                 method: 'GET',
-                data: { reference_no: referenceNo,
+                data: { appid: appid,
+                        reference_no: referenceNo,
                         permit_type_short: permit_type_short},
                 success: function (response) {
 
