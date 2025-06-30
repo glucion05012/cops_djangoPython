@@ -531,6 +531,7 @@ def application_list_json(request):
                 CASE 
                     WHEN c.forwarded_to_id = %s THEN 
                         CASE 
+                            WHEN a.status = 'pending' AND a.remarks='client' THEN 'Returned to Client'
                             WHEN p.status = 0 THEN 'Returned to Client'
                             WHEN p.status = 1 THEN 'For Validation of Payment'
                             ELSE a.status
