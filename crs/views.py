@@ -1134,14 +1134,18 @@ def application_list_json_emp(request):
                         WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
                     ) c ON a.id = c.app_id
                     WHERE
-                        evaluator_id = %s AND a.remarks = %s AND (
+                        c.forwarded_to_id = %s AND a.remarks = %s AND (
                         LOWER(a.estab_name) LIKE %s OR
                         LOWER(a.reference_no) LIKE %s OR
                         LOWER(a.status) LIKE %s
                         )
                 """, [user_id, 'fus_evaluator', like_term, like_term, like_term])
             else:
-                cursor.execute("SELECT COUNT(*) FROM cps_chimport WHERE evaluator_id = %s AND remarks = %s", [user_id, 'fus_evaluator'])
+                cursor.execute("""SELECT COUNT(*) FROM cps_chimport a LEFT JOIN (
+                        SELECT app_id, remarks, forwarded_to_id
+                        FROM ch_application a
+                        WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
+                    ) c ON a.id = c.app_id WHERE c.forwarded_to_id = %s AND a.remarks = %s""", [user_id, 'fus_evaluator'])
             ch_filtered = cursor.fetchone()[0]
             ch_total = ch_filtered
             
@@ -1153,7 +1157,7 @@ def application_list_json_emp(request):
             if search_value:
                 ch_filter = """
                     WHERE
-                        evaluator_id = %s AND a.remarks = %s AND (
+                        c.forwarded_to_id = %s AND a.remarks = %s AND (
                             LOWER(a.estab_name) LIKE %s OR
                             LOWER(a.reference_no) LIKE %s OR
                             LOWER(a.status) LIKE %s
@@ -1164,7 +1168,7 @@ def application_list_json_emp(request):
             else:
                 ch_filter = """
                     WHERE
-                        a.evaluator_id = %s
+                        c.forwarded_to_id = %s
                         AND a.remarks = %s 
                 """
                 ch_params = [user_id, 'fus_evaluator']
@@ -1204,7 +1208,7 @@ def application_list_json_emp(request):
                     'date_applied': date_applied,
                     'status': status,
                     'client_remarks': client_remarks,
-                    'curr_assign': curr_assign,
+                    'curr_assign': curr_assign
                 })
                 
     if(ch_user_type == 'cashier'):

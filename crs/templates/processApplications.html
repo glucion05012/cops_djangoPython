@@ -807,252 +807,252 @@
             });
         });
 
-    {% comment %} EVALUATOR TO CLIENT {% endcomment %}
-    $(document).on('click', '.btnReturnToClient', function(e) {
-        e.preventDefault();
+        {% comment %} EVALUATOR TO CLIENT {% endcomment %}
+        $(document).on('click', '.btnReturnToClient', function(e) {
+            e.preventDefault();
 
-        const referenceNo = $('#reference_no_p').text().trim();
-        const appId = $('#app_id_p').val();
-        const crsId = $('#crs_id_p').val();
-        const remarks = $('#remarksTextarea').val().trim();
-        const permitType = $('#application_for_p').text().trim();
+            const referenceNo = $('#reference_no_p').text().trim();
+            const appId = $('#app_id_p').val();
+            const crsId = $('#crs_id_p').val();
+            const remarks = $('#remarksTextarea').val().trim();
+            const permitType = $('#application_for_p').text().trim();
 
-        
-        if (!remarks) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Remarks Required',
-                text: 'Please provide remarks before returning the application to the client.'
-            });
-            return;
-        }
-        
-        $.ajax({
-            type: 'POST', // or 'GET'
-            url: '/process_application_action/',
-            data: {
-                    reference_no: referenceNo,
-                    app_id: appId,
-                    crsid: crsId,
-                    remarks: remarks,
-                    action: 'For Client Completion',
-                    notes: 'Returned to Client',
-                    status: 'pending to client',
-                    permit_type_short: permitType,
-                    chi_remarks: 'client',
-                    chi_status: 'pending',
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
+            
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before returning the application to the client.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        crsid: crsId,
+                        remarks: remarks,
+                        action: 'For Client Completion',
+                        notes: 'Returned to Client',
+                        status: 'pending to client',
+                        permit_type_short: permitType,
+                        chi_remarks: 'client',
+                        chi_status: 'pending',
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Returned to Client',
+                            text: 'The application has been successfully returned to the client.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
                 },
-            success: function(response) {
-                if (response.success) {
+                error: function(xhr, status, error) {
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Returned to Client',
-                        text: 'The application has been successfully returned to the client.'
-                    }).then(() => {
-                        location.reload(); // or DataTable refresh
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Failed to Return',
-                        text: response.message || 'An unknown error occurred.'
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
                     });
                 }
-            },
-            error: function(xhr, status, error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Request Failed',
-                    text: `An error occurred: ${error}`
-                });
-            }
-        });
-    });
-
-    {% comment %} EVALUATOR TO CASHIER {% endcomment %}
-    $(document).on('click', '.btnCompletedRequirements', function(e) {
-        e.preventDefault();
-
-        const referenceNo = $('#reference_no_p').text().trim();
-        const appId = $('#app_id_p').val();
-        const crsId = $('#crs_id_p').val();
-        const remarks = $('#remarksTextarea').val().trim();
-        const permitType = $('#application_for_p').text().trim();
-
-        
-        if (!remarks) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Remarks Required',
-                text: 'Please provide remarks before submitting the application as for payment.'
             });
-            return;
-        }
-        
-        $.ajax({
-            type: 'POST', // or 'GET'
-            url: '/process_application_action/',
-            data: {
-                    reference_no: referenceNo,
-                    app_id: appId,
-                    crsid: crsId,
-                    remarks: remarks,
-                    action: 'For Payment',
-                    notes: 'For Payment',
-                    status: 'pending for payment',
-                    chi_remarks: 'client',
-                    chi_status: 'pending',
-                    permit_type_short: permitType,
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
+        });
+
+        {% comment %} EVALUATOR TO CASHIER {% endcomment %}
+        $(document).on('click', '.btnCompletedRequirements', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_p').text().trim();
+            const appId = $('#app_id_p').val();
+            const crsId = $('#crs_id_p').val();
+            const remarks = $('#remarksTextarea').val().trim();
+            const permitType = $('#application_for_p').text().trim();
+
+            
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting the application as for payment.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        crsid: crsId,
+                        remarks: remarks,
+                        action: 'For Payment',
+                        notes: 'For Payment',
+                        status: 'pending for payment',
+                        chi_remarks: 'client',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Application Processed',
+                            text: 'The application has been successfully returned to the client for payment.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
                 },
-            success: function(response) {
-                if (response.success) {
+                error: function(xhr, status, error) {
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Application Processed',
-                        text: 'The application has been successfully returned to the client for payment.'
-                    }).then(() => {
-                        location.reload(); // or DataTable refresh
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Failed to Return',
-                        text: response.message || 'An unknown error occurred.'
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
                     });
                 }
-            },
-            error: function(xhr, status, error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Request Failed',
-                    text: `An error occurred: ${error}`
-                });
-            }
-        });
-    });
-    
-
-    $(document).on('click', '.btnPaymentConfirmed', function(e) {
-        e.preventDefault();
-
-        const referenceNo = $('#reference_no_cp').text().trim();
-        const appId = $('#app_id_cp').val();
-        const crsId = $('#crs_id_cp').val();
-        const payment_id = $('#payment_id').val();
-        const lbp_ref_no = $('#lbp_ref_no_cp').val().trim();
-        const permitType = $('#application_for_cp').text().trim();
-
-        
-        if (!lbp_ref_no) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Required',
-                text: 'Please provide Landbank Reference No.'
             });
-            return;
-        }
-        $.ajax({
-            type: 'POST', // or 'GET'
-            url: '/confirm_payment_action/',
-            data: {
-                    payment_id: payment_id,
-                    chi_lbp_ref_no: lbp_ref_no,
-                    app_id: appId,
-                    reference_no: referenceNo,
-                    forwarded_to: 497, // Cashier ID
-                    action: 'For Assignment of Action Officer',
-                    notes: 'Submitted to Forest Utilization Section Chief',
-                    remarks: 'Paid',
-                    status: 'for assignment of action officer',
-                    chi_status: 'pending',
-                    chi_remarks: 'fus_sc',
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
+        });
+        
+
+        $(document).on('click', '.btnPaymentConfirmed', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_cp').text().trim();
+            const appId = $('#app_id_cp').val();
+            const crsId = $('#crs_id_cp').val();
+            const payment_id = $('#payment_id').val();
+            const lbp_ref_no = $('#lbp_ref_no_cp').val().trim();
+            const permitType = $('#application_for_cp').text().trim();
+
+            
+            if (!lbp_ref_no) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Required',
+                    text: 'Please provide Landbank Reference No.'
+                });
+                return;
+            }
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/confirm_payment_action/',
+                data: {
+                        payment_id: payment_id,
+                        chi_lbp_ref_no: lbp_ref_no,
+                        app_id: appId,
+                        reference_no: referenceNo,
+                        forwarded_to: 497, // Cashier ID
+                        action: 'For Assignment of Action Officer',
+                        notes: 'Submitted to Forest Utilization Section Chief',
+                        remarks: 'Paid',
+                        status: 'for assignment of action officer',
+                        chi_status: 'pending',
+                        chi_remarks: 'fus_sc',
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Payment Confirmed',
+                            text: 'The payment has been successfully confirmed.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
                 },
-            success: function(response) {
-                if (response.success) {
+                error: function(xhr, status, error) {
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Payment Confirmed',
-                        text: 'The payment has been successfully confirmed.'
-                    }).then(() => {
-                        location.reload(); // or DataTable refresh
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Failed to Return',
-                        text: response.message || 'An unknown error occurred.'
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
                     });
                 }
-            },
-            error: function(xhr, status, error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Request Failed',
-                    text: `An error occurred: ${error}`
-                });
-            }
-        });
-    });
-
-    $(document).on('click', '.btnAssign', function(e) {
-        e.preventDefault();
-
-        const officerID = $('#action_officer_list').val();
-        const appId = $('#app_id_as').val();
-        const reference_no = $('#reference_no_as').html();
-
-        if (!officerID) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Action Officer Required',
-                text: 'Please select Action Officer.'
             });
-            return;
-        }
-        
-        $.ajax({
-            type: 'POST', // or 'GET'
-            url: '/assign-action-officer/',
-            data: {
-                    app_id: appId,
-                    officer_id: officerID,
-                    reference_no: reference_no,
-                    action: 'For Inspection',
-                    notes: 'Inspection Assigned',
-                    status: 'for inspection',
-                    chi_remarks: 'fus_evaluator',
-                    chi_status: 'pending',
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
+        });
+
+        $(document).on('click', '.btnAssign', function(e) {
+            e.preventDefault();
+
+            const officerID = $('#action_officer_list').val();
+            const appId = $('#app_id_as').val();
+            const reference_no = $('#reference_no_as').html();
+
+            if (!officerID) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Action Officer Required',
+                    text: 'Please select Action Officer.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/assign-action-officer/',
+                data: {
+                        app_id: appId,
+                        officer_id: officerID,
+                        reference_no: reference_no,
+                        action: 'For Inspection',
+                        notes: 'Inspection Assigned',
+                        status: 'for inspection',
+                        chi_remarks: 'fus_evaluator',
+                        chi_status: 'pending',
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Application Processed',
+                            text: 'The application has been successfully returned to the client for payment.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
                 },
-            success: function(response) {
-                if (response.success) {
+                error: function(xhr, status, error) {
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Application Processed',
-                        text: 'The application has been successfully returned to the client for payment.'
-                    }).then(() => {
-                        location.reload(); // or DataTable refresh
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Failed to Return',
-                        text: response.message || 'An unknown error occurred.'
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
                     });
                 }
-            },
-            error: function(xhr, status, error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Request Failed',
-                    text: `An error occurred: ${error}`
-                });
-            }
+            });
         });
-    });
     
 
 
