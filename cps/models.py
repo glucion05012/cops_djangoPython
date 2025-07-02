@@ -140,3 +140,23 @@ class ProofOfPayment(models.Model):
 
     def __str__(self):
         return self.file_name
+
+
+class InspectionReport(models.Model):
+    application = models.ForeignKey(CHImport, on_delete=models.CASCADE, related_name='inspection_reports')
+    inspector =  models.IntegerField()
+    report_content = models.TextField()  # HTML from CKEditor
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Inspection Report for CPS Import #{self.application.id}"
+
+
+class InspectionAttachment(models.Model):
+    report = models.ForeignKey(InspectionReport, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='inspection_attachments/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.file.name
