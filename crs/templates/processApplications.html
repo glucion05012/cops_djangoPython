@@ -1001,6 +1001,8 @@
         e.preventDefault();
 
         const officerID = $('#action_officer_list').val();
+        const appId = $('#app_id_as').val();
+        const reference_no = $('#reference_no_as').html();
 
         if (!officerID) {
             Swal.fire({
@@ -1013,10 +1015,11 @@
         
         $.ajax({
             type: 'POST', // or 'GET'
-            url: '/assign_action_officer/',
+            url: '/assign-action-officer/',
             data: {
                     app_id: appId,
                     officer_id: officerID,
+                    reference_no: reference_no,
                     action: 'For Inspection',
                     notes: 'Inspection Assigned',
                     status: 'for inspection',

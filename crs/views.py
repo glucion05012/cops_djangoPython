@@ -1670,9 +1670,9 @@ def assign_action_officer(request):
                 
                 CHImport.objects.filter(id=int(app_id)).update(
                     remarks=chi_remarks,
-                    status=chi_status
+                    status=chi_status,
+                    action_officer_id=action_officer_id
                 )
-                
                 
 
             return JsonResponse({'success': True, 'message': 'Application assigned to Action Officer successfully.'})
