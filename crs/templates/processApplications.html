@@ -251,17 +251,25 @@
                         Permit No. <span class="text-muted" id="reference_no_ir"></span>
                     </div>
 
-                    <div class="mb-3" style="margin-top: 1rem;">
+                    <div class="mb-3 mt-3">
                         <input type="hidden" id="app_id_ir" name="app_id_ir">
                         <input type="hidden" id="crs_id_ir" name="crs_id_ir">
+                    </div>
 
-                       
+                    <!-- Rich Text Area -->
+                    <div class="mb-3">
+                        <label for="inspection_report_text" class="form-label">Inspection Report</label>
+                        <textarea id="inspection_report_text" name="inspection_report_text" class="form-control" rows="10" placeholder="Type your report here."></textarea>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="mb-3">
+                        <label for="ir_attachments" class="form-label">Attachments</label>
+                        <input type="file" id="ir_attachments" name="ir_attachments[]" class="form-control" multiple>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-sm btn-success btnSubmitIR" >
-                            Submit
-                        </button>
+                        <button class="btn btn-sm btn-success btnSubmitIR">Submit</button>
                     </div>
 
                 </div>
