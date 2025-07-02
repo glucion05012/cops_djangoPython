@@ -238,42 +238,43 @@
 
     <div class="modal fade" id="inspectionReportModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Inspection Report</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <form id="inspectionReportForm" enctype="multipart/form-data">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Inspection Report</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="applicationModalBody">
+
+                        <div style="text-align: center;">
+                            <b>Inspection Report for <span id="application_for_ir" style="text-transform: uppercase;"></span></b>
+                            <br>
+                            Permit No. <span class="text-muted" id="reference_no_ir"></span>
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <input type="hidden" id="app_id_ir" name="app_id_ir">
+                        </div>
+
+                        <!-- Rich Text Area -->
+                        <div class="mb-3">
+                            <label for="inspection_report_text" class="form-label">Inspection Report</label>
+                            <textarea id="inspection_report_text" name="inspection_report_text" class="form-control" rows="10" placeholder="Type your report here."></textarea>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label for="ir_attachments" class="form-label">Attachments</label>
+                            <input type="file" id="ir_attachments" name="ir_attachments[]" class="form-control" multiple>
+                        </div>
+
+                        <div class="modal-footer">
+                        <button type="submit" class="btnSubmitIR btn btn-success">Submit</button>
+                        </div>
+
+                    </div>
                 </div>
-                <div class="modal-body" id="applicationModalBody">
-
-                    <div style="text-align: center;">
-                        <b>Inspection Report for <span id="application_for_ir" style="text-transform: uppercase;"></span></b>
-                        <br>
-                        Permit No. <span class="text-muted" id="reference_no_ir"></span>
-                    </div>
-
-                    <div class="mb-3 mt-3">
-                        <input type="hidden" id="app_id_ir" name="app_id_ir">
-                        <input type="hidden" id="crs_id_ir" name="crs_id_ir">
-                    </div>
-
-                    <!-- Rich Text Area -->
-                    <div class="mb-3">
-                        <label for="inspection_report_text" class="form-label">Inspection Report</label>
-                        <textarea id="inspection_report_text" name="inspection_report_text" class="form-control" rows="10" placeholder="Type your report here."></textarea>
-                    </div>
-
-                    <!-- File Upload -->
-                    <div class="mb-3">
-                        <label for="ir_attachments" class="form-label">Attachments</label>
-                        <input type="file" id="ir_attachments" name="ir_attachments[]" class="form-control" multiple>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-sm btn-success btnSubmitIR">Submit</button>
-                    </div>
-
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -1112,6 +1113,65 @@
                         Swal.fire({
                             icon: 'warning',
                             title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('submit', '#inspectionReportForm', function(e) {
+            e.preventDefault();
+
+            const appId = $('#app_id_ir').val();
+            const reference_no = $('#reference_no_ir').html();
+            const inspectionReportText = $('#inspection_report_text').val().trim();
+            const irAttachments = $('#ir_attachments')[0].files;
+
+            if (!inspectionReportText) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Inspection Report Required',
+                    text: 'Please provide the inspection report.'
+                });
+                return;
+            }
+
+            const formData = new FormData(this);
+            formData.append('app_id_ir', appId);
+            formData.append('reference_no_ir', reference_no);
+            formData.append('inspection_report_text', inspectionReportText);
+
+            for (let i = 0; i < irAttachments.length; i++) {
+                formData.append('ir_attachments[]', irAttachments[i]);
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'submit_inspection_report' %}",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Inspection Report Submitted',
+                            text: 'The inspection report has been successfully submitted.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Submission Failed',
                             text: response.message || 'An unknown error occurred.'
                         });
                     }

@@ -26,7 +26,8 @@ from cps.models import (
     CHImport,
     CHApplication,
     ProofOfPayment,
-    ChPayment
+    ChPayment,
+    InspectionReport
 )
 
 
@@ -1684,6 +1685,57 @@ def assign_action_officer(request):
 
         except Exception as e:
             # No need to call transaction.set_rollback(True); it happens automatically in an atomic block
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+
+def submit_inspection_report(request):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                app_id = request.POST.get('app_id_ir')
+                reference_no = request.POST.get('reference_no_ir')
+                inspection_report_text = request.POST.get('inspection_report_text', '').strip()
+                ir_attachments = request.FILES.getlist('ir_attachments')
+
+                if not all([app_id, reference_no, inspection_report_text]):
+                    return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
+
+                # Validate application
+                application = CHImport.objects.get(id=int(app_id))
+                
+                 # Create InspectionReport
+                report = InspectionReport.objects.create(
+                    application_id=application,
+                    inspector=request.user.id,  # Store user ID as IntegerField
+                    report_content=inspection_report_text
+                )
+
+                # Save attachments
+                for file in ir_attachments:
+                    original_name = file.name
+                    extension = os.path.splitext(original_name)[1]
+                    timestamp = int(time.time() * 1000)
+
+                    new_file_name = f"{app_id}_ir_{timestamp}{extension}"
+                    file_path = os.path.join(settings.MEDIA_ROOT, 'inspection_reports', new_file_name)
+
+                    while os.path.exists(file_path):
+                        timestamp += 1
+                        new_file_name = f"{app_id}_ir_{timestamp}{extension}"
+                        file_path = os.path.join(settings.MEDIA_ROOT, 'inspection_reports', new_file_name)
+
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in file.chunks():
+                            destination.write(chunk)
+
+                # TODO --------------------- save attachment for inspection report ---------------------
+
+            return JsonResponse({'success': True, 'message': 'Inspection report submitted successfully.'})
+
+        except Exception as e:
             traceback.print_exc()
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 

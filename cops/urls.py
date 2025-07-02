@@ -67,6 +67,7 @@ urlpatterns = [
     path('list_emp', views.application_list_json_emp, name='application_list_json_emp'), 
     path('get-action-officer/', views.get_action_officer, name='get_action_officer'), 
     path('assign-action-officer/', views.assign_action_officer, name='assign_action_officer'), 
+    path('submit_inspection_report/', views.submit_inspection_report, name='submit_inspection_report'),
     
     
 ]
