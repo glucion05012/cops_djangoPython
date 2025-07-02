@@ -1668,6 +1668,7 @@ def assign_action_officer(request):
                     forwarded_to_id = action_officer_id,
                     action=action,
                     notes=notes,
+                    remarks=action,
                     status=status,
                     days_pending=0
                 )
