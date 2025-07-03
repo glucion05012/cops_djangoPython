@@ -27,7 +27,8 @@ from cps.models import (
     CHApplication,
     ProofOfPayment,
     ChPayment,
-    InspectionReport
+    InspectionReport,
+    InspectionAttachment
 )
 
 
@@ -1185,7 +1186,11 @@ def application_list_json_emp(request):
                     a.date_applied,
                     a.status,
                     c.remarks AS client_remarks,
-                    a.remarks AS curr_assign
+                    a.remarks AS curr_assign,
+                    CASE 
+                        WHEN ir.id IS NOT NULL THEN 1
+                        ELSE 0
+                    END AS inspection_exists
                 FROM cps_chimport a
                 LEFT JOIN (
                     SELECT app_id, remarks, forwarded_to_id
@@ -1194,11 +1199,12 @@ def application_list_json_emp(request):
                         SELECT MAX(id) FROM ch_application GROUP BY app_id
                     )
                 ) c ON a.id = c.app_id
+                LEFT JOIN cps_inspectionreport ir ON a.id = ir.application_id
                 {ch_filter}
             """, ch_params)
 
             for row in cursor.fetchall():
-                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
+                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, inspection_exists = row
                 data.append({
                     'app_id': app_id,
                     'crs_id': crs_id,
@@ -1209,7 +1215,8 @@ def application_list_json_emp(request):
                     'date_applied': date_applied,
                     'status': status,
                     'client_remarks': client_remarks,
-                    'curr_assign': curr_assign
+                    'curr_assign': curr_assign,
+                    'inspection_exists': inspection_exists,
                 })
                 
     if(ch_user_type == 'cashier'):
@@ -1693,6 +1700,12 @@ def assign_action_officer(request):
 
 def submit_inspection_report(request):
     if request.method == 'POST':
+        upload_dir = os.path.join(settings.MEDIA_ROOT, 'inspection_attachments')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        print("FILES IN REQUEST:", request.FILES)
+        print("FILES RECEIVED:", len(request.FILES.getlist('ir_attachments')))
+        
         try:
             with transaction.atomic():
                 app_id = request.POST.get('app_id_ir')
@@ -1700,38 +1713,43 @@ def submit_inspection_report(request):
                 inspection_report_text = request.POST.get('inspection_report_text', '').strip()
                 ir_attachments = request.FILES.getlist('ir_attachments')
 
+                print("FILES RECEIVED:", len(ir_attachments))
+
                 if not all([app_id, reference_no, inspection_report_text]):
                     return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
 
-                # Validate application
                 application = CHImport.objects.get(id=int(app_id))
-                
-                 # Create InspectionReport
+
                 report = InspectionReport.objects.create(
-                    application_id=application,
-                    inspector=request.user.id,  # Store user ID as IntegerField
+                    application_id=application.id,
+                    inspector=request.session.get('user_id'),
                     report_content=inspection_report_text
                 )
 
-                # Save attachments
                 for file in ir_attachments:
                     original_name = file.name
                     extension = os.path.splitext(original_name)[1]
                     timestamp = int(time.time() * 1000)
 
-                    new_file_name = f"{app_id}_ir_{timestamp}{extension}"
-                    file_path = os.path.join(settings.MEDIA_ROOT, 'inspection_reports', new_file_name)
+                    new_file_name = f"{app_id}_IR_{timestamp}{extension}"
+                    file_path = os.path.join(upload_dir, new_file_name)
 
                     while os.path.exists(file_path):
                         timestamp += 1
-                        new_file_name = f"{app_id}_ir_{timestamp}{extension}"
-                        file_path = os.path.join(settings.MEDIA_ROOT, 'inspection_reports', new_file_name)
+                        new_file_name = f"{app_id}_IR_{timestamp}{extension}"
+                        file_path = os.path.join(upload_dir, new_file_name)
 
                     with open(file_path, 'wb+') as destination:
                         for chunk in file.chunks():
                             destination.write(chunk)
 
-                # TODO --------------------- save attachment for inspection report ---------------------
+                    relative_path = os.path.join('inspection_attachments', new_file_name)
+                    print("Saving attachment:", relative_path)
+
+                    InspectionAttachment.objects.create(
+                        report=report,
+                        file_path=relative_path
+                    )
 
             return JsonResponse({'success': True, 'message': 'Inspection report submitted successfully.'})
 

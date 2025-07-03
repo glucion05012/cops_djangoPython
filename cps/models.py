@@ -155,8 +155,8 @@ class InspectionReport(models.Model):
 
 class InspectionAttachment(models.Model):
     report = models.ForeignKey(InspectionReport, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='inspection_attachments/')
+    file_path = models.CharField(max_length=255, default='')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.file.name
+        return self.file_path

@@ -238,7 +238,7 @@
 
     <div class="modal fade" id="inspectionReportModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <form id="inspectionReportForm" enctype="multipart/form-data">
+            <form id="inspectionReportForm" method="post" enctype="multipart/form-data" action="{% url 'submit_inspection_report' %}">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Inspection Report</h5>
@@ -265,7 +265,7 @@
                         <!-- File Upload -->
                         <div class="mb-3">
                             <label for="ir_attachments" class="form-label">Attachments</label>
-                            <input type="file" id="ir_attachments" name="ir_attachments[]" class="form-control" multiple>
+                            <input type="file" id="ir_attachments" name="ir_attachments" class="form-control" multiple>
                         </div>
 
                         <div class="modal-footer">
@@ -340,11 +340,20 @@
                             if(row.permit_type_short === 'PIC'){
                                 if (row.curr_assign === 'fus_evaluator') {
                                     if(row.client_remarks === 'For Inspection') {
+                                        
+                                        if(row.inspection_exists === 0) {
                                         processBtn = `
                                             <button class="btn btn-sm btn-warning ir-btn" title="Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                                 <i class="fa-solid fa-file"></i>
                                             </button>
                                         `;
+                                        }else{
+                                        processBtn = `
+                                            <button class="btn btn-sm btn-primary view-ir-btn" title="View Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                                <i class="fa-solid fa-file"></i>
+                                            </button>
+                                        `;
+                                        }
                                     } else {
                                         processBtn = `
                                             <button class="btn btn-sm btn-success process-btn" title="Process Application" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
@@ -1150,7 +1159,7 @@
             formData.append('inspection_report_text', inspectionReportText);
 
             for (let i = 0; i < irAttachments.length; i++) {
-                formData.append('ir_attachments[]', irAttachments[i]);
+                formData.append('ir_attachments', irAttachments[i]);
             }
 
             $.ajax({
