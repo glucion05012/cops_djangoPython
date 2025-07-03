@@ -1142,7 +1142,6 @@
             const appId = $('#app_id_ir').val();
             const reference_no = $('#reference_no_ir').html();
             const inspectionReportText = $('#inspection_report_text').val().trim();
-            const irAttachments = $('#ir_attachments')[0].files;
 
             if (!inspectionReportText) {
                 Swal.fire({
@@ -1153,14 +1152,11 @@
                 return;
             }
 
-            const formData = new FormData(this);
+            const formData = new FormData(this); // Automatically includes files via input[name="ir_attachments"]
+
             formData.append('app_id_ir', appId);
             formData.append('reference_no_ir', reference_no);
-            formData.append('inspection_report_text', inspectionReportText);
-
-            for (let i = 0; i < irAttachments.length; i++) {
-                formData.append('ir_attachments', irAttachments[i]);
-            }
+            formData.set('inspection_report_text', inspectionReportText); // Use `set` to avoid duplicates
 
             $.ajax({
                 type: 'POST',
@@ -1175,7 +1171,7 @@
                             title: 'Inspection Report Submitted',
                             text: 'The inspection report has been successfully submitted.'
                         }).then(() => {
-                            location.reload(); // or DataTable refresh
+                            location.reload(); // or refresh DataTable
                         });
                     } else {
                         Swal.fire({
@@ -1194,6 +1190,7 @@
                 }
             });
         });
+
     
 
 
