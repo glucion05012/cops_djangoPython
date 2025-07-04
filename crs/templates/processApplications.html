@@ -278,47 +278,45 @@
         </div>
     </div>
 
-    {% comment %} <div class="modal fade" id="viewInspectionReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="viewInspectionReportModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <form id="inspectionReportForm" method="post" enctype="multipart/form-data" action="{% url 'submit_inspection_report' %}">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Inspection Report</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body" id="applicationModalBody">
-
-                        <div style="text-align: center;">
-                            <b>Inspection Report for <span id="application_for_ir" style="text-transform: uppercase;"></span></b>
-                            <br>
-                            Permit No. <span class="text-muted" id="reference_no_ir"></span>
-                        </div>
-
-                        <div class="mb-3 mt-3">
-                            <input type="hidden" id="app_id_ir" name="app_id_ir">
-                        </div>
-
-                        <!-- Rich Text Area -->
-                        <div class="mb-3">
-                            <label for="inspection_report_text" class="form-label">Inspection Report</label>
-                            <textarea id="inspection_report_text" name="inspection_report_text" class="form-control" rows="10" placeholder="Type your report here."></textarea>
-                        </div>
-
-                        <!-- File Upload -->
-                        <div class="mb-3">
-                            <label for="ir_attachments" class="form-label">Attachments</label>
-                            <input type="file" id="ir_attachments" name="ir_attachments" class="form-control" multiple>
-                        </div>
-
-                        <div class="modal-footer">
-                        <button type="submit" class="btnSubmitIR btn btn-success">Submit</button>
-                        </div>
-
-                    </div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">View Inspection Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-            </form>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>Inspection Report for <span id="application_for_vir" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_vir"></span>
+                    </div>
+
+                    <div class="mb-3 mt-3">
+                        <input type="hidden" id="app_id_vir" name="app_id_vir">
+                    </div>
+
+                    <!-- Rich Text Area -->
+                    <div class="mb-3">
+                        <label for="inspection_report_text_v" class="form-label">Inspection Report</label>
+                        <div id="inspection_report_text_v"></div>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="mb-3">
+                        <label for="ir_attachments_v" class="form-label">Attachments</label>
+                        <input type="file" id="ir_attachments_v" name="ir_attachments_v" class="form-control" multiple>
+                    </div>
+
+                    <div class="modal-footer">
+                    <button type="submit" class="btnSubmitIR btn btn-success">Submit</button>
+                    </div>
+
+                </div>
+            </div>
         </div>
-    </div> {% endcomment %}
+    </div>
 
                                     
     <script>
@@ -944,9 +942,10 @@
                         permit_type_short: permit_type_short},
                 success: function (response) {
 
-                    $('#application_for_ir').html(permit_type_short);
-                    $('#reference_no_ir').html(referenceNo);
-                    $('#app_id_ir').val(appid);
+                    $('#application_for_vir').html(permit_type_short);
+                    $('#reference_no_vir').html(referenceNo);
+                    $('#app_id_vir').val(appid);
+                    document.getElementById('inspection_report_text_v').innerHTML = response.report_content;
                         
                     $('#viewInspectionReportModal').modal('show');
                 }
