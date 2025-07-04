@@ -299,7 +299,7 @@
 
                     <!-- Rich Text Area -->
                     <div class="mb-3">
-                        <label for="inspection_report_text_v" class="form-label">Inspection Report</label>
+                        <label class="form-label">Inspection Report created by: &nbsp;</label><span id="inpector_name_vir"></span>
                         <div id="inspection_report_text_v"></div>
                     </div>
 
@@ -946,6 +946,7 @@
                     $('#reference_no_vir').html(referenceNo);
                     $('#app_id_vir').val(appid);
                     document.getElementById('inspection_report_text_v').innerHTML = response.report_content;
+                    $('#inpector_name_vir').html(response.inspector_name);
                         
                     $('#viewInspectionReportModal').modal('show');
                 }
