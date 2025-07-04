@@ -1758,3 +1758,58 @@ def submit_inspection_report(request):
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+
+def get_ir_details(request):
+    appid = request.GET.get('appid')
+    permit_type_short = request.GET.get('permit_type_short', '').lower()
+
+    if not appid or permit_type_short != 'pic':
+        return JsonResponse({'error': 'Invalid parameters'}, status=400)
+
+    data = {'app_id': appid}
+
+    # Step 1: Fetch inspection report
+    with connections['default'].cursor() as cursor:
+        cursor.execute("""
+            SELECT id, inspector, report_content, created_at, updated_at
+            FROM cps_inspectionreport
+            WHERE application_id = %s
+            LIMIT 1
+        """, [appid])
+        report = cursor.fetchone()
+
+    if not report:
+        return JsonResponse({'error': 'Inspection report not found'}, status=404)
+
+    report_id, inspector_id, report_content, created_at, updated_at = report
+    data.update({
+        'report_id': report_id,
+        'inspector_id': inspector_id,
+        'report_content': report_content,
+        'created_at': created_at,
+        'updated_at': updated_at
+    })
+
+    # Step 2: Fetch inspector name from core_users (in dniis_db)
+    with connections['dniis_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT name
+            FROM core_users
+            WHERE id = %s
+            LIMIT 1
+        """, [inspector_id])
+        user_row = cursor.fetchone()
+        data['inspector_name'] = user_row[0] if user_row else ''
+
+    # Step 3: Fetch attachments
+    with connections['default'].cursor() as cursor:
+        cursor.execute("""
+            SELECT file_path
+            FROM cps_inspectionattachment
+            WHERE report_id = %s
+        """, [report_id])
+        attachments = cursor.fetchall()
+        data['attachments'] = [row[0] for row in attachments] if attachments else []
+
+    return JsonResponse(data)

@@ -278,6 +278,48 @@
         </div>
     </div>
 
+    {% comment %} <div class="modal fade" id="viewInspectionReportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form id="inspectionReportForm" method="post" enctype="multipart/form-data" action="{% url 'submit_inspection_report' %}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Inspection Report</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="applicationModalBody">
+
+                        <div style="text-align: center;">
+                            <b>Inspection Report for <span id="application_for_ir" style="text-transform: uppercase;"></span></b>
+                            <br>
+                            Permit No. <span class="text-muted" id="reference_no_ir"></span>
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <input type="hidden" id="app_id_ir" name="app_id_ir">
+                        </div>
+
+                        <!-- Rich Text Area -->
+                        <div class="mb-3">
+                            <label for="inspection_report_text" class="form-label">Inspection Report</label>
+                            <textarea id="inspection_report_text" name="inspection_report_text" class="form-control" rows="10" placeholder="Type your report here."></textarea>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label for="ir_attachments" class="form-label">Attachments</label>
+                            <input type="file" id="ir_attachments" name="ir_attachments" class="form-control" multiple>
+                        </div>
+
+                        <div class="modal-footer">
+                        <button type="submit" class="btnSubmitIR btn btn-success">Submit</button>
+                        </div>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div> {% endcomment %}
+
                                     
     <script>
         $(document).ready(function() {
@@ -343,7 +385,7 @@
                                         
                                         if(row.inspection_exists === 0) {
                                         processBtn = `
-                                            <button class="btn btn-sm btn-warning ir-btn" title="Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <button class="btn btn-sm btn-warning ir-btn" title="Create Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                                 <i class="fa-solid fa-file"></i>
                                             </button>
                                         `;
@@ -880,11 +922,33 @@
                         permit_type_short: permit_type_short},
                 success: function (response) {
 
+                    $('#content_ir').html(report_content);
+                    $('#created_ir').html(created_at);
+                    $('#inspector_name_ir').val(inspector_name);
+                        
+                    $('#inspectionReportModal').modal('show');
+                }
+            });
+        });
+        
+        $(document).on('click', '.view-ir-btn', function() {
+            const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            const appid = $(this).data('appid');
+
+            $.ajax({
+                url: '/get-ir-details/',
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
                     $('#application_for_ir').html(permit_type_short);
                     $('#reference_no_ir').html(referenceNo);
                     $('#app_id_ir').val(appid);
                         
-                    $('#inspectionReportModal').modal('show');
+                    $('#viewInspectionReportModal').modal('show');
                 }
             });
         });
