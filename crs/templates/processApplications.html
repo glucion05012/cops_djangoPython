@@ -1000,6 +1000,7 @@
             });
         });
 
+        let inspectionEditorInstance;
         $(document).on('click', '.edit-ir-btn', function() {
             const permit_type_short = $(this).data('permit_type_short');
             const referenceNo = $(this).data('reference');
@@ -1012,20 +1013,24 @@
                         reference_no: referenceNo,
                         permit_type_short: permit_type_short},
                 success: function (response) {
-
                     $('#application_for_eir').html(permit_type_short);
                     $('#reference_no_eir').html(referenceNo);
                     $('#app_id_eir').val(appid);
-                    ClassicEditor
-                        .create(document.querySelector('#inspection_report_text_e'))
-                        .then(editor => {
-                            editorInstance = editor;
-                            editor.setData(response.report_content); // <-- Set content here
-                        })
-                        .catch(error => {
-                            console.error(error);
-                        });
                     $('#inpector_name_eir').html(response.inspector_name);
+                    
+                    if (inspectionEditorInstance) {
+                        inspectionEditorInstance.setData(response.report_content);
+                    } else {
+                        ClassicEditor
+                            .create(document.querySelector('#inspection_report_text_e'))
+                            .then(editor => {
+                                inspectionEditorInstance = editor;
+                                editor.setData(response.report_content);
+                            })
+                            .catch(error => {
+                                console.error(error);
+                            });
+                    }
                         
                     // Example for rendering attachments (if needed)
                     let attachmentsHTML = '';
