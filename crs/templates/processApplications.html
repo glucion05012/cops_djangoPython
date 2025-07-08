@@ -314,6 +314,42 @@
         </div>
     </div>
 
+    <div class="modal fade" id="editInspectionReportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Inspection Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>Inspection Report for <span id="application_for_eir" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_eir"></span>
+                    </div>
+
+                    <div class="mb-3 mt-3">
+                        <input type="hidden" id="app_id_eir" name="app_id_eir">
+                    </div>
+
+                    <!-- Rich Text Area -->
+                    <div class="mb-3">
+                        <label class="form-label">Inspection Report created by: &nbsp;</label><span id="inpector_name_eir"></span>
+                        <textarea id="inspection_report_text_e" name="inspection_report_text_e" class="form-control" rows="10" placeholder="Type your report here."></textarea>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="mb-3">
+                        <label for="ir_attachments_e" class="form-label">Attachments</label>
+                        <ul id="inspection_attachments_list_e" class="list-unstyled"></ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
                                     
     <script>
         $(document).ready(function() {
@@ -385,8 +421,11 @@
                                         `;
                                         }else{
                                         processBtn = `
-                                            <button class="btn btn-sm btn-primary view-ir-btn" title="View Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                                 <i class="fa-solid fa-file"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning edit-ir-btn" title="Edit Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                                <i class="fa-solid fa-pen"></i>
                                             </button>
                                         `;
                                         }
@@ -957,6 +996,50 @@
                     $('#inspection_attachments_list').html(attachmentsHTML);
                     
                     $('#viewInspectionReportModal').modal('show');
+                }
+            });
+        });
+
+        $(document).on('click', '.edit-ir-btn', function() {
+            const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            const appid = $(this).data('appid');
+
+            $.ajax({
+                url: '/get-ir-details/',
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
+                    $('#application_for_eir').html(permit_type_short);
+                    $('#reference_no_eir').html(referenceNo);
+                    $('#app_id_eir').val(appid);
+                    ClassicEditor
+                        .create(document.querySelector('#inspection_report_text_e'))
+                        .then(editor => {
+                            editorInstance = editor;
+                            editor.setData(response.report_content); // <-- Set content here
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                    $('#inpector_name_eir').html(response.inspector_name);
+                        
+                    // Example for rendering attachments (if needed)
+                    let attachmentsHTML = '';
+                    if (response.attachments && response.attachments.length > 0) {
+                        response.attachments.forEach(function(path) {
+                            const filename = path.split('/').pop();
+                            attachmentsHTML += `<li><a href="${path}" target="_blank">${filename}</a></li>`;
+                        });
+                    } else {
+                        attachmentsHTML = '<li>No attachments</li>';
+                    }
+                    $('#inspection_attachments_list_e').html(attachmentsHTML);
+                    
+                    $('#editInspectionReportModal').modal('show');
                 }
             });
         });
