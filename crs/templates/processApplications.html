@@ -306,11 +306,7 @@
                     <!-- File Upload -->
                     <div class="mb-3">
                         <label for="ir_attachments_v" class="form-label">Attachments</label>
-                        <input type="file" id="ir_attachments_v" name="ir_attachments_v" class="form-control" multiple>
-                    </div>
-
-                    <div class="modal-footer">
-                    <button type="submit" class="btnSubmitIR btn btn-success">Submit</button>
+                        <ul id="inspection_attachments_list" class="list-unstyled"></ul>
                     </div>
 
                 </div>
@@ -948,6 +944,18 @@
                     document.getElementById('inspection_report_text_v').innerHTML = response.report_content;
                     $('#inpector_name_vir').html(response.inspector_name);
                         
+                    // Example for rendering attachments (if needed)
+                    let attachmentsHTML = '';
+                    if (response.attachments && response.attachments.length > 0) {
+                        response.attachments.forEach(function(path) {
+                            const filename = path.split('/').pop();
+                            attachmentsHTML += `<li><a href="${path}" target="_blank">${filename}</a></li>`;
+                        });
+                    } else {
+                        attachmentsHTML = '<li>No attachments</li>';
+                    }
+                    $('#inspection_attachments_list').html(attachmentsHTML);
+                    
                     $('#viewInspectionReportModal').modal('show');
                 }
             });
