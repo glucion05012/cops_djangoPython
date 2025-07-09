@@ -465,11 +465,20 @@
                                 }
 
                                  if (row.curr_assign === 'fus_sc') {
-                                    processBtn = `
-                                        <button class="btn btn-sm btn-warning assign-btn" title="Assign Evaluator" data-appid="${row.app_id}" data-paymentid="${row.payment_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                            <i class="fas fa-users"></i>
-                                        </button>
-                                    `;
+                                    if(row.curr_action === 'For Approval of Section Chief'){
+                                        processBtn = `
+                                            <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                                <i class="fa-solid fa-file"></i>
+                                            </button>
+                                        `;
+                                    }else if(row.curr_action === 'For Assignment of Action Officer') {
+                                        processBtn = `
+                                            <button class="btn btn-sm btn-warning assign-btn" title="Assign Evaluator" data-appid="${row.app_id}" data-paymentid="${row.payment_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                                <i class="fas fa-users"></i>
+                                            </button>
+                                        `;
+                                    }
+                                    
                                 }
                             }
 

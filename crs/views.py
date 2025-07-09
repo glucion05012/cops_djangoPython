@@ -1368,10 +1368,11 @@ def application_list_json_emp(request):
                     a.date_applied,
                     a.status,
                     c.remarks AS client_remarks,
-                    a.remarks AS curr_assign
+                    a.remarks AS curr_assign,
+                    c.action AS curr_action
                 FROM cps_chimport a
                 LEFT JOIN (
-                    SELECT app_id, remarks, forwarded_to_id
+                    SELECT app_id, remarks, forwarded_to_id, action
                     FROM ch_application
                     WHERE id IN (
                         SELECT MAX(id) FROM ch_application GROUP BY app_id
@@ -1381,7 +1382,7 @@ def application_list_json_emp(request):
             """, ch_params)
 
             for row in cursor.fetchall():
-                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
+                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, curr_action = row
                 data.append({
                     'app_id': app_id,
                     'crs_id': crs_id,
@@ -1393,6 +1394,7 @@ def application_list_json_emp(request):
                     'status': status,
                     'client_remarks': client_remarks,
                     'curr_assign': curr_assign,
+                    'curr_action': curr_action,
                 })
     # --- SORT + PAGINATE ---
     def safe_key(item):
