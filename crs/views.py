@@ -1813,3 +1813,71 @@ def get_ir_details(request):
         data['attachments'] = [row[0] for row in attachments] if attachments else []
 
     return JsonResponse(data)
+
+@csrf_exempt
+def save_ir(request):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                app_id = request.POST.get('app_id')
+                report_content = request.POST.get('report_content', '').strip()
+                removed_attachments = request.POST.getlist('removed_attachments[]')
+                ir_attachments = request.FILES.getlist('new_attachments[]')
+
+                if not app_id or not report_content:
+                    return JsonResponse({'status': 'error', 'message': 'Missing required fields'}, status=400)
+
+                # Ensure upload directory exists
+                upload_dir = os.path.join(settings.MEDIA_ROOT, 'inspection_attachments')
+                os.makedirs(upload_dir, exist_ok=True)
+
+                # Get or create the InspectionReport instance
+                report, created = InspectionReport.objects.get_or_create(application_id=app_id)
+
+                # Optional: Update inspector if not yet assigned
+                if created and request.session.get('user_id'):
+                    report.inspector_id = request.session.get('user_id')
+
+                # Update report content
+                report.report_content = report_content
+                report.save()
+
+                # Delete removed attachments (from DB and disk)
+                for rel_path in removed_attachments:
+                    abs_path = os.path.join(settings.MEDIA_ROOT, rel_path)
+                    if os.path.exists(abs_path):
+                        os.remove(abs_path)
+                    InspectionAttachment.objects.filter(report=report, file_path=rel_path).delete()
+
+                # Save new uploaded files
+                for file in ir_attachments:
+                    original_name = file.name
+                    extension = os.path.splitext(original_name)[1]
+                    timestamp = int(time.time() * 1000)
+
+                    new_file_name = f"{app_id}_IR_{timestamp}{extension}"
+                    file_path = os.path.join(upload_dir, new_file_name)
+
+                    while os.path.exists(file_path):
+                        timestamp += 1
+                        new_file_name = f"{app_id}_IR_{timestamp}{extension}"
+                        file_path = os.path.join(upload_dir, new_file_name)
+
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in file.chunks():
+                            destination.write(chunk)
+
+                    relative_path = os.path.join('inspection_attachments', new_file_name)
+
+                    InspectionAttachment.objects.create(
+                        report=report,
+                        file_path=relative_path
+                    )
+
+                return JsonResponse({'status': 'success'})
+
+        except Exception as e:
+            traceback.print_exc()
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)

@@ -71,7 +71,7 @@ urlpatterns = [
     #INSPECTION REPORT
     path('submit_inspection_report/', views.submit_inspection_report, name='submit_inspection_report'),
     path('get-ir-details/', views.get_ir_details, name='get_ir_details'),
-    
+    path('save-ir/', views.save_ir, name='save_ir'),
     
 ]
 

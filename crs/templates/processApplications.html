@@ -269,7 +269,7 @@
                         </div>
 
                         <div class="modal-footer">
-                        <button type="submit" class="btnSubmitIR btn btn-success">Submit</button>
+                            <button type="submit" class="btnSubmitIR btn btn-success">Submit</button>
                         </div>
 
                     </div>
@@ -342,9 +342,17 @@
                     <!-- File Upload -->
                     <div class="mb-3">
                         <label for="ir_attachments_e" class="form-label">Attachments</label>
-                        <ul id="inspection_attachments_list_e" class="list-unstyled"></ul>
+                        
+                        <!-- Existing Attachments -->
+                        <ul id="inspection_attachments_list_e" class="list-styled"></ul>
+
+                        <!-- New File Upload -->
+                        <input type="file" id="ir_attachments_e" name="ir_attachments_e[]" class="form-control mt-2" multiple>
                     </div>
 
+                    <div class="modal-footer">
+                        <button type="submit" id="saveInspectionReportBtn" class="btnSubmitIR btn btn-success">Save</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1001,6 +1009,8 @@
         });
 
         let inspectionEditorInstance;
+        let removedAttachments = [];
+
         $(document).on('click', '.edit-ir-btn', function() {
             const permit_type_short = $(this).data('permit_type_short');
             const referenceNo = $(this).data('reference');
@@ -1031,26 +1041,64 @@
                                 console.error(error);
                             });
                     }
-                        
-                    // ----------------------------- TO DO -----------------------------
-                        // attachments must be editable and can be added or removed
-                    // ----------------------------- TO DO -----------------------------
 
                     // Example for rendering attachments (if needed)
                     let attachmentsHTML = '';
                     if (response.attachments && response.attachments.length > 0) {
-                        response.attachments.forEach(function(path) {
-                            const filename = path.split('/').pop();
-                            attachmentsHTML += `<li><a href="${path}" target="_blank">${filename}</a></li>`;
-                        });
+                    response.attachments.forEach(function(path, index) {
+                        const filename = path.split('/').pop();
+                        attachmentsHTML += `
+                            <li data-index="${index}" data-path="${path}">
+                                <a href="${path}" target="_blank">${filename}</a>
+                                <button type="button" class="btn btn-sm btn-danger ms-2 remove-attachment-btn">Remove</button>
+                            </li>`;
+                    });
                     } else {
-                        attachmentsHTML = '<li>No attachments</li>';
+                    attachmentsHTML = '<li>No attachments</li>';
                     }
                     $('#inspection_attachments_list_e').html(attachmentsHTML);
                     
                     $('#editInspectionReportModal').modal('show');
                 }
             });
+        });
+
+        $('#saveInspectionReportBtn').on('click', function () {
+            const formData = new FormData();
+            formData.append('app_id', $('#app_id_eir').val());
+            formData.append('report_content', inspectionEditorInstance.getData());
+
+            // Append new uploaded files
+            const files = $('#ir_attachments_e')[0].files;
+            for (let i = 0; i < files.length; i++) {
+                formData.append('new_attachments[]', files[i]);
+            }
+
+            // Append removed file paths
+            removedAttachments.forEach(path => {
+                formData.append('removed_attachments[]', path);
+            });
+
+            $.ajax({
+                url: '/save-ir/',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    Swal.fire('Success', 'Inspection report saved.', 'success');
+                    $('#editInspectionReportModal').modal('hide');
+                },
+                error: function () {
+                    Swal.fire('Error', 'Could not save the report.', 'error');
+                }
+            });
+        });
+
+        $(document).on('click', '.remove-attachment-btn', function() {
+            const path = $(this).closest('li').data('path');
+            removedAttachments.push(path);  // Add to removal list
+            $(this).closest('li').remove(); // Remove from UI
         });
 
         {% comment %} EVALUATOR TO CLIENT {% endcomment %}
