@@ -42,6 +42,7 @@ urlpatterns = [
     path('list', views.application_list_json, name='application_list_json'), 
     path('get-application-details/', views.get_application_details, name='get_application_details'),
     path('process_application_action/', views.process_application_action, name='process_application_action'),
+        path('process_application_action_emp/', views.process_application_action_emp, name='process_application_action_emp'),
     
     
     # permittee enrollment

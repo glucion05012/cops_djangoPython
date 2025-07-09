@@ -1593,6 +1593,52 @@ def confirm_payment_action(request):
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
 
+@csrf_exempt
+def process_application_action_emp(request):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                
+                #ch_application
+                app_id = request.POST.get('app_id')
+                reference_no = request.POST.get('reference_no')
+                forwarded_to = request.POST.get('forwarded_to')
+                action = request.POST.get('action')
+                notes = request.POST.get('notes')
+                remarks = request.POST.get('remarks', '').strip()
+                status = request.POST.get('status')
+                
+                chi_remarks = request.POST.get('chi_remarks')
+                chi_status = request.POST.get('chi_status')
+
+                # ✅ Create CHApplication record
+                CHApplication.objects.create(
+                    date_created=timezone.now(),
+                    app_id=app_id,
+                    reference_no=reference_no,
+                    forwarded_by_id=request.session.get('user_id'),
+                    forwarded_to_id = forwarded_to,
+                    action=action,
+                    notes=notes,
+                    remarks=remarks,
+                    status=status,
+                    days_pending=0
+                )
+                
+                #chimport
+                CHImport.objects.filter(id=int(app_id)).update(
+                    remarks=chi_remarks,
+                    status=chi_status
+                )
+
+            return JsonResponse({'success': True, 'message': 'Transaction processed successfully.'})
+        except Exception as e:
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+
 def get_action_officer(request):
     try:
         # Step 1: Get access records from default DB (ch_access_level)

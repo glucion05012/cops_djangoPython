@@ -280,37 +280,46 @@
 
     <div class="modal fade" id="viewInspectionReportModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">View Inspection Report</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <form id="viewInspectionReportForm" method="post" enctype="multipart/form-data" action="{% url 'submit_inspection_report' %}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">View Inspection Report</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="applicationModalBody">
+
+                        <div style="text-align: center;">
+                            <b>Inspection Report for <span id="application_for_vir" style="text-transform: uppercase;"></span></b>
+                            <br>
+                            Permit No. <span class="text-muted" id="reference_no_vir"></span>
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <input type="hidden" id="app_id_vir" name="app_id_vir">
+                        </div>
+
+                        <!-- Rich Text Area -->
+                        <div class="mb-3">
+                            <label class="form-label">Inspection Report created by: &nbsp;</label><span id="inpector_name_vir"></span>
+                            <div id="inspection_report_text_v"></div>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label for="ir_attachments_v" class="form-label">Attachments</label>
+                            <ul id="inspection_attachments_list" class="list-unstyled"></ul>
+                        </div>
+
+                        <div class="mb-3">
+                            <textarea class="form-control" id="inspectionReportRemarks" name="remarks" rows="4" placeholder="Enter your remarks here."></textarea>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="btnForwardIR btn btn-success">Submit</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body" id="applicationModalBody">
-
-                    <div style="text-align: center;">
-                        <b>Inspection Report for <span id="application_for_vir" style="text-transform: uppercase;"></span></b>
-                        <br>
-                        Permit No. <span class="text-muted" id="reference_no_vir"></span>
-                    </div>
-
-                    <div class="mb-3 mt-3">
-                        <input type="hidden" id="app_id_vir" name="app_id_vir">
-                    </div>
-
-                    <!-- Rich Text Area -->
-                    <div class="mb-3">
-                        <label class="form-label">Inspection Report created by: &nbsp;</label><span id="inpector_name_vir"></span>
-                        <div id="inspection_report_text_v"></div>
-                    </div>
-
-                    <!-- File Upload -->
-                    <div class="mb-3">
-                        <label for="ir_attachments_v" class="form-label">Attachments</label>
-                        <ul id="inspection_attachments_list" class="list-unstyled"></ul>
-                    </div>
-
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -1403,8 +1412,66 @@
             });
         });
 
-    
+        $(document).on('click', '.btnForwardIR', function(e) {
+            e.preventDefault();
 
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const remarks = $('#inspectionReportRemarks').val().trim();
+            const permitType = $('#application_for_vir').text().trim();
+
+            
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting the application as for payment.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action_emp/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: 'For Approval of Section Chief',
+                        notes: 'For Approval of Forest Utilization Section Chief',
+                        status: 'for approval of permit',
+                        forwarded_to: 497,
+                        chi_remarks: 'fus_sc',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Application Processed',
+                            text: 'The application has been successfully forwarded to FUS Section Chief for approval.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
 
     </script>
 {% endblock %}
