@@ -366,7 +366,6 @@
             </div>
         </div>
     </div>
-
                                     
     <script>
         $(document).ready(function() {
@@ -483,7 +482,7 @@
 
                                 if (row.curr_assign === 'lpdd_dc') {
                                         processBtn = `
-                                            <button class="btn btn-sm btn-success approve-btn" title="Approve Permit" data-appid="${row.app_id}" data-paymentid="${row.payment_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <button class="btn btn-sm btn-success approve-dc-modal" title="Approve Permit" data-appid="${row.app_id}" data-paymentid="${row.payment_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                                 <i class="fas fa-check"></i>
                                             </button>
                                         `;
@@ -1546,6 +1545,102 @@
                             icon: 'success',
                             title: 'Application Processed',
                             text: 'The application has been successfully forwarded to FUS Section Chief for approval.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '.assign-btn', function() {
+            const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            const appid = $(this).data('appid');
+
+            $.ajax({
+                url: '/get-action-officer/', // Your Django view URL
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
+                    $('#application_for_as').html(permit_type_short);
+                    $('#reference_no_as').html(referenceNo);
+                    $('#app_id_as').val(appid);
+
+                    // Clear and populate the dropdown
+                    const $dropdown = $('#action_officer_list');
+                    $dropdown.empty();  // Clear existing options
+
+                    $dropdown.append('<option value="">-- Select Officer --</option>');
+
+                    $.each(response.officers, function (index, officer) {
+                        const option = `<option value="${officer.userid}">${officer.fullname}</option>`;
+                        $dropdown.append(option);
+                    });
+
+                    $('#inspector_as').html(response.current_handler);
+                        
+                    $('#assignInspectorModal').modal('show');
+                }
+            });
+        });
+
+
+        $(document).on('click', '.approve-dc-btn', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const remarks = $('#inspectionReportRemarks').val().trim();
+            const permitType = $('#application_for_vir').text().trim();
+
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting for approval of ARD - Technical Services.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action_emp/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: 'For Recommendation of ARD TS',
+                        notes: 'For Recommendation of  ARD TS',
+                        status: 'for approval of permit',
+                        forwarded_to: '{{ request.session.ts_id }}', // Division Chief ID
+                        chi_remarks: 'ard_ts',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Application Processed',
+                            text: 'The application has been successfully forwarded to ARD - Technical Services.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
                         });
