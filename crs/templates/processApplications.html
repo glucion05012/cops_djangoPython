@@ -315,7 +315,7 @@
                         </div>
 
                         <div class="modal-footer">
-                            <button type="submit" class="btnForwardIR btn btn-success">Submit</button>
+                            <div id="buttonIRContainer"></div>
                         </div>
                     </div>
                 </div>
@@ -438,7 +438,7 @@
                                         `;
                                         }else{
                                         processBtn = `
-                                            <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_creation" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                                 <i class="fa-solid fa-file"></i>
                                             </button>
                                             <button class="btn btn-sm btn-warning edit-ir-btn" title="Edit Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
@@ -467,7 +467,7 @@
                                  if (row.curr_assign === 'fus_sc') {
                                     if(row.curr_action === 'For Approval of Section Chief'){
                                         processBtn = `
-                                            <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_approval" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                                 <i class="fa-solid fa-file"></i>
                                             </button>
                                         `;
@@ -981,10 +981,18 @@
                         permit_type_short: permit_type_short},
                 success: function (response) {
 
-                    $('#content_ir').html(report_content);
-                    $('#created_ir').html(created_at);
-                    $('#inspector_name_ir').val(inspector_name);
-                        
+                    if (typeof $ !== 'undefined') {
+                        if ($('#content_ir').length) $('#content_ir').html(report_content);
+                        if ($('#created_ir').length) $('#created_ir').html(created_at);
+                        if ($('#inspector_name_ir').length) $('#inspector_name_ir').val(inspector_name);
+                    } else {
+                        console.error("jQuery is not loaded.");
+                    }
+
+                    $('#application_for_ir').html(permit_type_short);
+                    $('#reference_no_ir').html(referenceNo);
+                    $('#app_id_ir').val(appid);
+                    
                     $('#inspectionReportModal').modal('show');
                 }
             });
@@ -994,6 +1002,7 @@
             const permit_type_short = $(this).data('permit_type_short');
             const referenceNo = $(this).data('reference');
             const appid = $(this).data('appid');
+            const btnType = $(this).data('btntype');
 
             $.ajax({
                 url: '/get-ir-details/',
@@ -1020,6 +1029,14 @@
                         attachmentsHTML = '<li>No attachments</li>';
                     }
                     $('#inspection_attachments_list').html(attachmentsHTML);
+
+                    let buttonHTML = '';
+                    if (btnType === 'ir_creation') {
+                        buttonHTML = '<button type="submit" class="btnForwardIR btn btn-success">Submit</button>';
+                    } else if (btnType === 'ir_approval') {
+                        buttonHTML = '<button type="submit" class="btnApproveIR btn btn-success">For Approval of Division Chief</button>';
+                    }
+                    document.getElementById('buttonIRContainer').innerHTML = buttonHTML;
                     
                     $('#viewInspectionReportModal').modal('show');
                 }
@@ -1451,6 +1468,67 @@
                         status: 'for approval of permit',
                         forwarded_to: 497,
                         chi_remarks: 'fus_sc',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Application Processed',
+                            text: 'The application has been successfully forwarded to FUS Section Chief for approval.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '.btnApproveIR', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const remarks = $('#inspectionReportRemarks').val().trim();
+            const permitType = $('#application_for_vir').text().trim();
+
+            
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting for approval of Division Chief.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action_emp/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: 'For Approval of Division Chief',
+                        notes: 'For Approval of LPDD Division Chief',
+                        status: 'for approval of permit',
+                        forwarded_to: 550, // Division Chief ID
+                        chi_remarks: 'lpdd_dc',
                         chi_status: 'pending',
                         permit_type_short: permitType,
                         csrfmiddlewaretoken: '{{ csrf_token }}'
