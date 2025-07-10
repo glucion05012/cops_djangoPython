@@ -464,7 +464,7 @@
                                     `;
                                 }
 
-                                 if (row.curr_assign === 'fus_sc') {
+                                if (row.curr_assign === 'fus_sc') {
                                     if(row.curr_action === 'For Approval of Section Chief'){
                                         processBtn = `
                                             <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_approval" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
@@ -479,6 +479,14 @@
                                         `;
                                     }
                                     
+                                }
+
+                                if (row.curr_assign === 'lpdd_dc') {
+                                        processBtn = `
+                                            <button class="btn btn-sm btn-success approve-btn" title="Approve Permit" data-appid="${row.app_id}" data-paymentid="${row.payment_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        `;
                                 }
                             }
 
