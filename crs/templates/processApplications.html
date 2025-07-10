@@ -1290,7 +1290,7 @@
                         chi_lbp_ref_no: lbp_ref_no,
                         app_id: appId,
                         reference_no: referenceNo,
-                        forwarded_to: 497, // Cashier ID
+                        forwarded_to: '{{ request.session.fus_sc_id }}',
                         action: 'For Assignment of Action Officer',
                         notes: 'Submitted to Forest Utilization Section Chief',
                         remarks: 'Paid',
@@ -1466,7 +1466,7 @@
                         action: 'For Approval of Section Chief',
                         notes: 'For Approval of Forest Utilization Section Chief',
                         status: 'for approval of permit',
-                        forwarded_to: 497,
+                        forwarded_to: '{{ request.session.fus_sc_id }}',
                         chi_remarks: 'fus_sc',
                         chi_status: 'pending',
                         permit_type_short: permitType,
@@ -1507,7 +1507,6 @@
             const remarks = $('#inspectionReportRemarks').val().trim();
             const permitType = $('#application_for_vir').text().trim();
 
-            
             if (!remarks) {
                 Swal.fire({
                     icon: 'warning',
@@ -1527,7 +1526,7 @@
                         action: 'For Approval of Division Chief',
                         notes: 'For Approval of LPDD Division Chief',
                         status: 'for approval of permit',
-                        forwarded_to: 550, // Division Chief ID
+                        forwarded_to: '{{ request.session.lpdd_dc_id }}', // Division Chief ID
                         chi_remarks: 'lpdd_dc',
                         chi_status: 'pending',
                         permit_type_short: permitType,

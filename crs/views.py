@@ -270,7 +270,13 @@ def login(request):
                     cursor.execute("SELECT * FROM core_users WHERE username = %s AND employee_type = %s", [username, 10])
                     user = cursor.fetchone()
                     
-                   
+                    # set session for approvers
+                    request.session['fus_sc_id'] = 497
+                    request.session['lpdd_dc_id'] = 550
+                    request.session['ts_id'] = 1400
+                    request.session['red_id'] = 1465
+                    
+                
                     if not user:
                         # DENR NCR Employee Account
                         cursor.execute("SELECT * FROM core_users WHERE username = %s", [username])
