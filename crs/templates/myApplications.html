@@ -312,14 +312,12 @@
                     {
                         "data": "client_remarks",
                         "render": function(data, type, row) {
-                            if (row.survey !=1 && row.status === 'approved') {
+                            if (row.survey != 1 && row.status === 'approved') {
                                 return 'Please Complete Client Satisfaction Survey';
                             }else{
                                 if (!data) return '';
                                 return data.charAt(0).toUpperCase() + data.slice(1);
                             }
-
-                            
                         }
                     },
                     {
@@ -344,6 +342,12 @@
                                     </button>
                                 <button class="btn btn-sm btn-success or-btn" title="Upload Proof of Payment" data-reference="${row.reference_no}" data-appid="${row.app_id}" data-permit_type_short="${row.permit_type_short}">
                                         <i class="fas fa-hand-holding-dollar"></i>
+                                    </button>
+                                `;
+                            }else if (row.survey != 1 && row.status === 'approved') {
+                                buttons += `
+                                <button class="btn btn-sm btn-warning css-btn" data-appid="${row.app_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fa-solid fa-square-poll-vertical"></i>
                                     </button>
                                 `;
                             }
