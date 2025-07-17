@@ -312,8 +312,14 @@
                     {
                         "data": "client_remarks",
                         "render": function(data, type, row) {
-                            if (!data) return '';
-                            return data.charAt(0).toUpperCase() + data.slice(1);
+                            if (row.survey !=1 && row.status === 'approved') {
+                                return 'Please Complete Client Satisfaction Survey';
+                            }else{
+                                if (!data) return '';
+                                return data.charAt(0).toUpperCase() + data.slice(1);
+                            }
+
+                            
                         }
                     },
                     {

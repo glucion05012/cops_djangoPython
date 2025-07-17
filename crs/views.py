@@ -551,7 +551,8 @@ def application_list_json(request):
                     ELSE 'Pending'
                 END AS client_remarks,
                 c.client_notes,
-                p.status AS paid_status
+                p.status AS paid_status,
+                a.survey
             FROM cps_chimport a
             LEFT JOIN (
                 SELECT app_id, remarks, forwarded_to_id, notes AS client_notes
@@ -567,7 +568,7 @@ def application_list_json(request):
         """, params + [length, start])
 
         for row in cursor.fetchall():
-            app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, client_notes, paid_status = row
+            app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, client_notes, paid_status, survey = row
             data.append({
                 'app_id': app_id,
                 'permit_type_short': permit_type_short,
@@ -578,7 +579,8 @@ def application_list_json(request):
                 'status': status,
                 'client_remarks': client_remarks,
                 'client_notes': client_notes,
-                'paid_status': paid_status
+                'paid_status': paid_status,
+                'survey': survey
             })
 
     # Sort in Python
