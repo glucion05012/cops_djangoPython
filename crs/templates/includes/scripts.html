@@ -60,11 +60,24 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        ClassicEditor
-            .create(document.querySelector('#inspection_report_text'))
-            .catch(error => {
-                console.error(error);
-            });
+        const editor1 = document.querySelector('#inspection_report_text');
+        const editor2 = document.querySelector('#inspection_report_text_e');
+
+        if (editor1) {
+            ClassicEditor
+                .create(editor1)
+                .catch(error => {
+                    console.error('Error initializing #inspection_report_text:', error);
+                });
+        }
+
+        if (editor2) {
+            ClassicEditor
+                .create(editor2)
+                .catch(error => {
+                    console.error('Error initializing #inspection_report_text_e:', error);
+                });
+        }
     });
 
     function getCookie(name) {

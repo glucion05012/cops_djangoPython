@@ -119,6 +119,8 @@
 
                     <div id="attachments"></div>
 
+                    <div id="view_remarks"></div>
+
                 </div>
             </div>
         </div>
@@ -479,14 +481,6 @@
                                     }
                                     
                                 }
-
-                                if (row.curr_assign === 'lpdd_dc') {
-                                        processBtn = `
-                                            <button class="btn btn-sm btn-success approve-dc-modal" title="Approve Permit" data-appid="${row.app_id}" data-paymentid="${row.payment_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                        `;
-                                }
                             }
 
                             return `
@@ -751,6 +745,20 @@
                                 </tbody>
                             </table>
                         `);
+
+                        //view remarks textarea
+                        $('#remarks_div').remove();
+                        {% if response.client_remarks == "lpdd_dc" %}
+                            $('#view_remarks').after(`
+                                <div id="remarks_div" class="mt-3">
+                                    <label for="viewRemarks" class="form-label">Remarks</label>
+                                    <textarea id="viewRemarks" class="form-control" placeholder="Enter your remarks here." rows="4"></textarea>
+                                    <br>
+                                    <button type="submit" class="btnApproveDC btn btn-success">For Approval of ARD - Technical Services</button>
+                                </div>
+                            `);
+                        {% endif %}
+
                     } else if (response.permit_type_short === 'TCP') {
                         // Always remove the previous section before adding
                         $('#other_info_row').remove();
