@@ -890,6 +890,15 @@
             
         });
 
+        $(document).on('click', '.css-btn', function () {
+            const app_id = $(this).data('appid');
+            const permitType = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            
+            //window.location.href = `/edit-application/${permitType}/${app_id}/`;
+            
+        });
+
         function printOrderOfPayment() {
             const modalContent = document.querySelector('#orderOfPaymentModal .modal-content').cloneNode(true);
 
