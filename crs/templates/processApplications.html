@@ -484,6 +484,14 @@
 
                                 if (row.curr_assign === 'lpdd_dc') {
                                     processBtn = `
+                                        <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_dc_approval" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <i class="fa-solid fa-file"></i>
+                                        </button>
+                                    `;
+                                }
+
+                                if (row.curr_assign === 'ard_ts') {
+                                    processBtn = `
                                         <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_ts_approval" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                             <i class="fa-solid fa-file"></i>
                                         </button>
@@ -1058,8 +1066,10 @@
                         buttonHTML = '<button type="submit" class="btnForwardIR btn btn-success">Submit</button>';
                     } else if (btnType === 'ir_approval') {
                         buttonHTML = '<button type="submit" class="btnApproveIR btn btn-success">For Approval of Division Chief</button>';
-                    }else if (btnType === 'ir_ts_approval') {
+                    }else if (btnType === 'ir_dc_approval') {
                         buttonHTML = '<button type="submit" class="btnApproveDCIR btn btn-success">For Recommendation of ARD - Technical Services</button>';
+                    }else if (btnType === 'ir_ts_approval') {
+                        buttonHTML = '<button type="submit" class="btnApproveTSIR btn btn-success">For Approval of RED</button>';
                     }
                     document.getElementById('buttonIRContainer').innerHTML = buttonHTML;
                     
@@ -1623,6 +1633,66 @@
                             icon: 'success',
                             title: 'Application Processed',
                             text: 'The application has been successfully forwarded to ARD - Technical Services.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '.btnApproveTSIR', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const remarks = $('#inspectionReportRemarks').val().trim();
+            const permitType = $('#application_for_vir').text().trim();
+
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting for approval of RED.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action_emp/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: 'For Approval of RED',
+                        notes: 'For Approval of RED',
+                        status: 'for approval of permit',
+                        forwarded_to: '{{ request.session.red_id }}',
+                        chi_remarks: 'red',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Application Processed',
+                            text: 'The application has been successfully forwarded to RED.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
                         });
