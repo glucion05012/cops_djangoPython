@@ -160,3 +160,28 @@ class InspectionAttachment(models.Model):
 
     def __str__(self):
         return self.file_path
+    
+    
+class Survey(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    application = models.ForeignKey(CHImport, on_delete=models.CASCADE, related_name='surveys')
+    client_id = models.IntegerField()
+
+    cc1 = models.SmallIntegerField(blank=True, null=True)
+    cc2 = models.SmallIntegerField(blank=True, null=True)
+    cc3 = models.SmallIntegerField(blank=True, null=True)
+    cc41 = models.SmallIntegerField(blank=True, null=True)
+    cc42 = models.SmallIntegerField(blank=True, null=True)
+    cc43 = models.SmallIntegerField(blank=True, null=True)
+    cc44 = models.SmallIntegerField(blank=True, null=True)
+    cc45 = models.SmallIntegerField(blank=True, null=True)
+    cc46 = models.SmallIntegerField(blank=True, null=True)
+    cc47 = models.SmallIntegerField(blank=True, null=True)
+    cc48 = models.SmallIntegerField(blank=True, null=True)
+    cc49 = models.SmallIntegerField(blank=True, null=True)
+    suggestions = models.TextField(blank=True, null=True)
+
+
+    def __str__(self):
+        return f"Survey #{self.application.id}"
