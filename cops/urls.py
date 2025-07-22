@@ -43,7 +43,7 @@ urlpatterns = [
     path('get-application-details/', views.get_application_details, name='get_application_details'),
     path('process_application_action/', views.process_application_action, name='process_application_action'),
     path('process_application_action_emp/', views.process_application_action_emp, name='process_application_action_emp'),
-    
+    path('transaction-history/', views.transaction_history, name='transaction_history'), 
     
     # permittee enrollment
     path('permittee_enrollment/', views_permittee.index, name='permittee_enrollment'),

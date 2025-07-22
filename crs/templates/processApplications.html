@@ -126,6 +126,43 @@
         </div>
     </div>
 
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Transaction History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="historyModalBody">
+
+                    <div style="text-align: center;">
+                        <b>HISTORY FOR <span id="application_for_h" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_h"></span>
+                    </div>
+
+                    <div class="hr-sect">Transaction History</div>
+
+                    <table id="historyTable" class="table table-striped table-bordered table-sm align">
+                        <thead>
+                                <th>No of Days Processed</th>
+                                <th>Date Received</th>
+                                <th>Created By</th>
+                                <th>Forwarded To</th>
+                                <th>Notes</th>
+                                <th>Remarks</th>
+                                <th>Status</th>
+                        </thead>
+
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div class="modal fade" id="processModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -425,6 +462,9 @@
                                 <button class="btn btn-sm btn-primary view-btn" title="View Application" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                     <i class="fas fa-eye"></i>
                                 </button>
+                                <button class="btn btn-sm btn-info history-btn" title="View History" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                    <i class="fas fa-list"></i>
+                                </button>
                             `;
 
                             let processBtn = '';
@@ -510,8 +550,7 @@
 
                             return `
                                 <div class="d-flex flex-row flex-nowrap align-items-center">
-                                    <div class="me-2">${viewBtn}</div> &nbsp;&nbsp;
-                                    <div>${processBtn}</div>
+                                    <div class="me-2">${viewBtn}&nbsp${processBtn}</div>
                                 </div>
                             `;
                         },
@@ -938,6 +977,51 @@
                     alert('Failed to fetch application details.');
                 }
             });
+        });
+
+        $(document).on('click', '.history-btn', function () {
+            const appid = $(this).data('appid');
+            const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            
+            $('#application_for_h').html(permit_type_short);
+            $('#reference_no_h').html(referenceNo);
+
+            $("#historyTable tbody").empty();
+            // AJAX call to get history data
+            $.ajax({
+                url: "/transaction-history/",  // URL to Django view
+                data: { reference_no: referenceNo },
+                method: "GET",
+                dataType: "json",
+                success: function(response) {
+                    if (response.data.length > 0) {
+                        response.data.forEach(function(item) {
+                            $("#historyTable tbody").append(`
+                                <tr>
+                                    <td>${item.days_processed}</td>
+                                    <td>${item.date_received}</td>
+                                    <td>${item.created_by}</td>
+                                    <td>${item.forwarded_to}</td>
+                                    <td>${item.notes}</td>
+                                    <td>${item.remarks}</td>
+                                    <td>${item.status}</td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        $("#historyTable tbody").append(`
+                            <tr><td colspan="7" class="text-center">No history available</td></tr>
+                        `);
+                    }
+                    $("#historyModal").modal("show");
+                }
+            });
+
+
+
+
+            $('#historyModal').modal('show');
         });
 
         $(document).on('click', '.process-btn', function () {

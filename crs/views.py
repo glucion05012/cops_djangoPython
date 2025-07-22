@@ -2253,3 +2253,34 @@ def save_ir(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+
+def transaction_history(request):
+    reference_no = request.GET.get("reference_no")
+    if not reference_no:
+        return JsonResponse({"data": []})
+
+    # Example: Fetch from database
+    with connections['default'].cursor() as cursor:
+        cursor.execute("""
+            SELECT days_pending, date_created, forwarded_by_id, forwarded_to_id, notes, remarks, status
+            FROM ch_application
+            WHERE reference_no = %s
+            ORDER BY date_created DESC
+        """, [reference_no])
+        rows = cursor.fetchall()
+
+    data = [
+        {
+            "days_processed": r[0],
+            "date_received": r[1].strftime("%Y-%m-%d"),
+            "created_by": r[2],
+            "forwarded_to": r[3],
+            "notes": r[4],
+            "remarks": r[5],
+            "status": r[6].capitalize() if r[6] else "",
+        }
+        for r in rows
+    ]
+
+    return JsonResponse({"data": data})
