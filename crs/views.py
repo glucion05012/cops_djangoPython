@@ -1828,7 +1828,15 @@ def upload_proof(request):
 
 @csrf_exempt
 def confirm_payment_action(request):
+    
+    app_id = request.POST.get('app_id')
+    try:
+        decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+    except Exception:
+        return HttpResponseBadRequest("Invalid or tampered ID")
+
     if request.method == 'POST':
+        
         try:
             with transaction.atomic():
                 payment_id = request.POST.get('payment_id')
@@ -1841,7 +1849,6 @@ def confirm_payment_action(request):
                 )
                 
                 #ch_application
-                app_id = request.POST.get('app_id')
                 reference_no = request.POST.get('reference_no')
                 forwarded_to = request.POST.get('forwarded_to')
                 action = request.POST.get('action')
@@ -1855,7 +1862,7 @@ def confirm_payment_action(request):
                 # ✅ Create CHApplication record
                 CHApplication.objects.create(
                     date_created=timezone.now(),
-                    app_id=app_id,
+                    app_id=decrypted_id,
                     reference_no=reference_no,
                     forwarded_by_id=request.session.get('user_id'),
                     forwarded_to_id = forwarded_to,
@@ -1867,7 +1874,7 @@ def confirm_payment_action(request):
                 )
                 
                 #chimport
-                CHImport.objects.filter(id=int(app_id)).update(
+                CHImport.objects.filter(id=int(decrypted_id)).update(
                     remarks=chi_remarks,
                     status=chi_status
                 )
@@ -1986,11 +1993,16 @@ def get_action_officer(request):
     
     
 def assign_action_officer(request):
+    app_id = request.POST.get('app_id')
+    try:
+        decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+    except Exception:
+        return HttpResponseBadRequest("Invalid or tampered ID")
+    
     if request.method == 'POST':
         try:
             with transaction.atomic():
                 
-                app_id = request.POST.get('app_id')
                 reference_no = request.POST.get('reference_no')
                 action_officer_id = request.POST.get('officer_id')
                 action = request.POST.get('action')
@@ -2002,7 +2014,7 @@ def assign_action_officer(request):
                 # ✅ Create CHApplication record
                 CHApplication.objects.create(
                     date_created=timezone.now(),
-                    app_id=app_id,
+                    app_id=decrypted_id,
                     reference_no=reference_no,
                     forwarded_by_id=request.session.get('user_id'),
                     forwarded_to_id = action_officer_id,
@@ -2013,7 +2025,7 @@ def assign_action_officer(request):
                     days_pending=0
                 )
                 
-                CHImport.objects.filter(id=int(app_id)).update(
+                CHImport.objects.filter(id=int(decrypted_id)).update(
                     remarks=chi_remarks,
                     status=chi_status,
                     action_officer_id=action_officer_id
