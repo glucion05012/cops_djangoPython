@@ -1924,10 +1924,17 @@ def process_application_action_emp(request):
                 )
                 
                 #chimport
-                CHImport.objects.filter(id=int(decrypted_id)).update(
-                    remarks=chi_remarks,
-                    status=chi_status
-                )
+                update_fields = {
+                    'remarks': chi_remarks,
+                    'status': chi_status
+                }
+
+                # If status is 'approved', also update date_approved
+                if chi_status.lower() == 'approved':
+                    update_fields['date_approved'] = timezone.now()
+
+                # Perform update
+                CHImport.objects.filter(id=int(decrypted_id)).update(**update_fields)
 
             return JsonResponse({'success': True, 'message': 'Transaction processed successfully.'})
         except Exception as e:
