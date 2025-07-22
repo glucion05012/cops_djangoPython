@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.db import connections
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 import os
@@ -31,7 +31,7 @@ from cps.models import (
     InspectionAttachment
 )
 
-from .utils.encryption import encrypt_id
+from .utils.encryption import encrypt_id, decrypt_id
 
 def test(request):
     password = 'your_password'
@@ -609,6 +609,12 @@ def get_application_details(request):
     reference_no = request.GET.get('reference_no')
     permit_type_short = request.GET.get('permit_type_short', '').lower()  # Normalize
 
+    app_id = request.GET.get('appid')
+    try:
+        decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+    except Exception:
+        return HttpResponseBadRequest("Invalid or tampered ID")
+        
     data = {}
 
     if permit_type_short == 'pic':
@@ -744,14 +750,13 @@ def get_application_details(request):
         
 
     if data is not None:
-        appid = request.GET.get('appid')
-        data['app_id'] = appid
+        data['app_id'] = decrypted_id
         
         if permit_type_short == 'pic':
             with connections['default'].cursor() as cursor:
                 cursor.execute("""
                     SELECT crs_id FROM cps_chimport WHERE id = %s LIMIT 1
-                """, [appid])
+                """, [decrypted_id])
                 result = cursor.fetchone()
                 if result:
                     user_id = result[0]
@@ -761,7 +766,7 @@ def get_application_details(request):
             with connections['tcp_db'].cursor() as cursor:
                 cursor.execute("""
                     SELECT crs_id FROM app_tcp WHERE id = %s LIMIT 1
-                """, [appid])
+                """, [decrypted_id])
                 result = cursor.fetchone()
                 if result:
                     user_id = result[0]
@@ -938,7 +943,7 @@ def application_list_json_emp(request):
             for row in cursor.fetchall():
                 app_id, crs_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row
                 data.append({
-                    'app_id': app_id,
+                    'app_id': encrypt_id(app_id),
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly used
                     'permit_type': {
@@ -1020,7 +1025,7 @@ def application_list_json_emp(request):
             for row in cursor.fetchall():
                 app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign = row
                 data.append({
-                    'app_id': app_id,
+                    'app_id': encrypt_id(app_id),
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
                     'permit_type': permit_type,
@@ -1113,7 +1118,7 @@ def application_list_json_emp(request):
             for row in cursor.fetchall():
                 app_id, crs_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row
                 data.append({
-                    'app_id': app_id,
+                    'app_id': encrypt_id(app_id),
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly used
                     'permit_type': {
@@ -1215,7 +1220,7 @@ def application_list_json_emp(request):
             for row in cursor.fetchall():
                 app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, inspection_exists = row
                 data.append({
-                    'app_id': app_id,
+                    'app_id': encrypt_id(app_id),
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
                     'permit_type': permit_type,
@@ -1305,7 +1310,7 @@ def application_list_json_emp(request):
                 app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, payment_id = row
                 data.append({
                     'user_type': ch_user_type,
-                    'app_id': app_id,
+                    'app_id': encrypt_id(app_id),
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
                     'permit_type': permit_type,
@@ -1393,7 +1398,7 @@ def application_list_json_emp(request):
             for row in cursor.fetchall():
                 app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, curr_action = row
                 data.append({
-                    'app_id': app_id,
+                    'app_id': encrypt_id(app_id),
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
                     'permit_type': permit_type,
@@ -1481,7 +1486,7 @@ def application_list_json_emp(request):
             for row in cursor.fetchall():
                 app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, curr_action = row
                 data.append({
-                    'app_id': app_id,
+                    'app_id': encrypt_id(app_id),
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
                     'permit_type': permit_type,
@@ -1569,7 +1574,7 @@ def application_list_json_emp(request):
             for row in cursor.fetchall():
                 app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, curr_action = row
                 data.append({
-                    'app_id': app_id,
+                    'app_id': encrypt_id(app_id),
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
                     'permit_type': permit_type,
@@ -1657,7 +1662,7 @@ def application_list_json_emp(request):
             for row in cursor.fetchall():
                 app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, curr_action = row
                 data.append({
-                    'app_id': app_id,
+                    'app_id': encrypt_id(app_id),
                     'crs_id': crs_id,
                     'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
                     'permit_type': permit_type,
@@ -1695,6 +1700,11 @@ def process_application_action(request):
             with transaction.atomic():
                 
                 app_id = request.POST.get('app_id')
+                try:
+                    decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+                except Exception:
+                    return HttpResponseBadRequest("Invalid or tampered ID")
+                
                 crs_id = request.POST.get('crsid')
                 reference_no = request.POST.get('reference_no')
                 remarks = request.POST.get('remarks', '').strip()
@@ -1705,7 +1715,7 @@ def process_application_action(request):
                 chi_remarks = request.POST.get('chi_remarks')
                 chi_status = request.POST.get('chi_status')
 
-                if not all([app_id, reference_no, remarks, permit_type_short]):
+                if not all([decrypted_id, reference_no, remarks, permit_type_short]):
                     return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
 
                 user_id = request.session.get('user_id')
@@ -1713,7 +1723,7 @@ def process_application_action(request):
                 # ✅ Create CHApplication record
                 CHApplication.objects.create(
                     date_created=timezone.now(),
-                    app_id=app_id,
+                    app_id=decrypted_id,
                     reference_no=reference_no,
                     forwarded_by_id=request.session.get('user_id'),
                     forwarded_to_id = crs_id,
@@ -1724,7 +1734,7 @@ def process_application_action(request):
                     days_pending=0
                 )
                 
-                CHImport.objects.filter(id=int(app_id)).update(
+                CHImport.objects.filter(id=int(decrypted_id)).update(
                     remarks=chi_remarks,
                     status=chi_status
                 )
@@ -1732,11 +1742,11 @@ def process_application_action(request):
                 if permit_type_short == 'PIC' and notes == 'For Payment':
                     # Generate OP number
                     today = datetime.now().strftime('%Y-%m-%d')
-                    op_number = f"{today}-OP-{permit_type_short}-{app_id}"
+                    op_number = f"{today}-OP-{permit_type_short}-{decrypted_id}"
                 
                     # Create Order of Payment
                     ChPayment.objects.create(
-                        app_id=app_id,
+                        app_id=decrypted_id,
                         op_id=op_number,
                         date_paid=None,  # Set to None initially
                         or_no=None,  # Set to None initially

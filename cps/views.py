@@ -19,7 +19,7 @@ from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 
-from .utils.encryption import decrypt_id
+from .utils.encryption import encrypt_id, decrypt_id
 
 def index(request):
     brands = ChainsawBrand.objects.all()
@@ -158,13 +158,18 @@ def submit_import(request):
 def edit_application(request, permitType, app_id):
     # Validate permit type
     if permitType == 'PIC':
-
+ 
+        try:
+            decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+        except Exception:
+            return HttpResponseBadRequest("Invalid or tampered ID")
+        
         if request.method == 'POST':
             try:
                 with transaction.atomic():
                     brand_name = request.POST.get('brand')
-                    
-                    chimport = get_object_or_404(CHImport, id=app_id)
+                   
+                    chimport = get_object_or_404(CHImport, id=decrypted_id)
                     brand, _ = ChainsawBrand.objects.get_or_create(name=brand_name)
                 
                     chimport.brand_id = brand.id
@@ -182,14 +187,14 @@ def edit_application(request, permitType, app_id):
                     chimport.save()
 
                     # Chainsaw Details
-                    CHImportModelDetail.objects.filter(application_id=app_id).delete()
+                    CHImportModelDetail.objects.filter(application_id=decrypted_id).delete()
                     model_list = request.POST.getlist('model[]')
                     quantity_list = request.POST.getlist('quantity[]')
                     # Save model/quantity details
                     for model, quantity in zip(model_list, quantity_list):
                         if model.strip() and quantity.isdigit():
                             CHImportModelDetail.objects.create(
-                                application_id=app_id,
+                                application_id=decrypted_id,
                                 model=model.strip(),
                                 quantity=int(quantity)
                             )
@@ -217,11 +222,11 @@ def edit_application(request, permitType, app_id):
                         fs = FileSystemStorage(location=folder_path)
 
                         for file in files:
-                            formatted_filename = f"{app_id}-{file.name}"
+                            formatted_filename = f"{decrypted_id}-{file.name}"
                             filename = fs.save(formatted_filename, file)
                             file_path = os.path.join('attachments', subfolder, filename)
                             CHImportAttachment.objects.create(
-                                application_id=app_id,
+                                application_id=decrypted_id,
                                 name=file.name,
                                 file_location=file_path,
                                 type=type_key,
@@ -238,7 +243,7 @@ def edit_application(request, permitType, app_id):
                     user_id = request.session.get('user_id')
                     
                     #prev_transaction
-                    ch_application = CHApplication.objects.filter(app_id=app_id).order_by('-id').first()
+                    ch_application = CHApplication.objects.filter(app_id=decrypted_id).order_by('-id').first()
                     
                     reference_no = ch_application.reference_no
                     last_forwarded_by_id = ch_application.forwarded_by_id
@@ -251,7 +256,7 @@ def edit_application(request, permitType, app_id):
                     # ✅ Create CHApplication record
                     CHApplication.objects.create(
                         date_created=timezone.now(),
-                        app_id=app_id,
+                        app_id=decrypted_id,
                         reference_no=reference_no,
                         forwarded_by_id = user_id,
                         forwarded_to_id = last_forwarded_by_id,
@@ -262,7 +267,7 @@ def edit_application(request, permitType, app_id):
                         days_pending=0
                     )
                     
-                    CHImport.objects.filter(id=int(app_id)).update(
+                    CHImport.objects.filter(id=int(decrypted_id)).update(
                         remarks='fus_evaluator',
                         status='pending'
                     )
@@ -275,12 +280,6 @@ def edit_application(request, permitType, app_id):
                 return JsonResponse({'success': False, 'message': str(e)}, status=500)
             
         else:
-            
-            try:
-                decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
-            except Exception:
-                return HttpResponseBadRequest("Invalid or tampered ID")
-
             # Get main application
             ch_import = get_object_or_404(CHImport, id=decrypted_id)
             app_ch_details = CHImportModelDetail.objects.filter(application_id=decrypted_id)
