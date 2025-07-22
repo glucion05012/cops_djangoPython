@@ -143,7 +143,7 @@
 
                     <div class="hr-sect">Transaction History</div>
 
-                    <table id="historyTable" class="table table-striped table-bordered table-sm align">
+                    <table id="historyTable" class="table table-responsive table-striped table-bordered table-sm" cellspacing="0" width="100%" >
                         <thead>
                                 <th>No of Days Processed</th>
                                 <th>Date Received</th>
@@ -559,6 +559,23 @@
                     }
                 ]
             });
+
+            // Initialize DataTable once
+            historyTable = $('#historyTable').DataTable({
+                paging: true,
+                ordering: true,
+                pageLength: 10,
+                columns: [
+                    { data: 'days_processed' },
+                    { data: 'date_received' },
+                    { data: 'created_by' },
+                    { data: 'forwarded_to' },
+                    { data: 'notes' },
+                    { data: 'remarks' },
+                    { data: 'status' }
+                ]
+            });
+
         });
 
 
@@ -980,48 +997,38 @@
         });
 
         $(document).on('click', '.history-btn', function () {
-            const appid = $(this).data('appid');
-            const permit_type_short = $(this).data('permit_type_short');
             const referenceNo = $(this).data('reference');
-            
+            const permit_type_short = $(this).data('permit_type_short');
+
             $('#application_for_h').html(permit_type_short);
             $('#reference_no_h').html(referenceNo);
 
-            $("#historyTable tbody").empty();
             // AJAX call to get history data
             $.ajax({
-                url: "/transaction-history/",  // URL to Django view
+                url: "/transaction-history/",
                 data: { reference_no: referenceNo },
                 method: "GET",
                 dataType: "json",
                 success: function(response) {
+                    historyTable.clear(); // Clear old data
+
                     if (response.data.length > 0) {
-                        response.data.forEach(function(item) {
-                            $("#historyTable tbody").append(`
-                                <tr>
-                                    <td>${item.days_processed}</td>
-                                    <td>${item.date_received}</td>
-                                    <td>${item.created_by}</td>
-                                    <td>${item.forwarded_to}</td>
-                                    <td>${item.notes}</td>
-                                    <td>${item.remarks}</td>
-                                    <td>${item.status}</td>
-                                </tr>
-                            `);
-                        });
+                        historyTable.rows.add(response.data).draw();
                     } else {
-                        $("#historyTable tbody").append(`
-                            <tr><td colspan="7" class="text-center">No history available</td></tr>
-                        `);
+                        historyTable.rows.add([{
+                            days_processed: '',
+                            date_received: '',
+                            created_by: '',
+                            forwarded_to: '',
+                            notes: 'No history available',
+                            remarks: '',
+                            status: ''
+                        }]).draw();
                     }
-                    $("#historyModal").modal("show");
+
+                    $('#historyModal').modal('show');
                 }
             });
-
-
-
-
-            $('#historyModal').modal('show');
         });
 
         $(document).on('click', '.process-btn', function () {
