@@ -1888,12 +1888,17 @@ def confirm_payment_action(request):
 
 @csrf_exempt
 def process_application_action_emp(request):
+    app_id = request.POST.get('app_id')
+    try:
+        decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+    except Exception:
+        return HttpResponseBadRequest("Invalid or tampered ID")
+    
     if request.method == 'POST':
         try:
             with transaction.atomic():
                 
                 #ch_application
-                app_id = request.POST.get('app_id')
                 reference_no = request.POST.get('reference_no')
                 forwarded_to = request.POST.get('forwarded_to')
                 action = request.POST.get('action')
@@ -1907,7 +1912,7 @@ def process_application_action_emp(request):
                 # ✅ Create CHApplication record
                 CHApplication.objects.create(
                     date_created=timezone.now(),
-                    app_id=app_id,
+                    app_id=decrypted_id,
                     reference_no=reference_no,
                     forwarded_by_id=request.session.get('user_id'),
                     forwarded_to_id = forwarded_to,
@@ -1919,7 +1924,7 @@ def process_application_action_emp(request):
                 )
                 
                 #chimport
-                CHImport.objects.filter(id=int(app_id)).update(
+                CHImport.objects.filter(id=int(decrypted_id)).update(
                     remarks=chi_remarks,
                     status=chi_status
                 )
@@ -2050,19 +2055,25 @@ def submit_inspection_report(request):
         print("FILES IN REQUEST:", request.FILES)
         print("FILES RECEIVED:", len(request.FILES.getlist('ir_attachments')))
         
+        app_id = request.POST.get('app_id_ir')
+        
+        try:
+            decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+        except Exception:
+            return HttpResponseBadRequest("Invalid or tampered ID")
+        
         try:
             with transaction.atomic():
-                app_id = request.POST.get('app_id_ir')
                 reference_no = request.POST.get('reference_no_ir')
                 inspection_report_text = request.POST.get('inspection_report_text', '').strip()
                 ir_attachments = request.FILES.getlist('ir_attachments')
 
                 print("FILES RECEIVED:", len(ir_attachments))
 
-                if not all([app_id, reference_no, inspection_report_text]):
+                if not all([decrypted_id, reference_no, inspection_report_text]):
                     return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
 
-                application = CHImport.objects.get(id=int(app_id))
+                application = CHImport.objects.get(id=int(decrypted_id))
 
                 report = InspectionReport.objects.create(
                     application_id=application.id,
@@ -2075,12 +2086,12 @@ def submit_inspection_report(request):
                     extension = os.path.splitext(original_name)[1]
                     timestamp = int(time.time() * 1000)
 
-                    new_file_name = f"{app_id}_IR_{timestamp}{extension}"
+                    new_file_name = f"{decrypted_id}_IR_{timestamp}{extension}"
                     file_path = os.path.join(upload_dir, new_file_name)
 
                     while os.path.exists(file_path):
                         timestamp += 1
-                        new_file_name = f"{app_id}_IR_{timestamp}{extension}"
+                        new_file_name = f"{decrypted_id}_IR_{timestamp}{extension}"
                         file_path = os.path.join(upload_dir, new_file_name)
 
                     with open(file_path, 'wb+') as destination:
@@ -2108,10 +2119,15 @@ def get_ir_details(request):
     appid = request.GET.get('appid')
     permit_type_short = request.GET.get('permit_type_short', '').lower()
 
+    try:
+        decrypted_id = decrypt_id(appid)  # Decrypt the encrypted ID
+    except Exception:
+        return HttpResponseBadRequest("Invalid or tampered ID")
+        
     if not appid or permit_type_short != 'pic':
         return JsonResponse({'error': 'Invalid parameters'}, status=400)
 
-    data = {'app_id': appid}
+    data = {'app_id': decrypted_id}
 
     # Step 1: Fetch inspection report
     with connections['default'].cursor() as cursor:
@@ -2120,7 +2136,7 @@ def get_ir_details(request):
             FROM cps_inspectionreport
             WHERE application_id = %s
             LIMIT 1
-        """, [appid])
+        """, [decrypted_id])
         report = cursor.fetchone()
 
     if not report:
@@ -2160,15 +2176,20 @@ def get_ir_details(request):
 
 @csrf_exempt
 def save_ir(request):
+    app_id = request.POST.get('app_id')
+    try:
+        decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+    except Exception:
+        return HttpResponseBadRequest("Invalid or tampered ID")
+        
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                app_id = request.POST.get('app_id')
                 report_content = request.POST.get('report_content', '').strip()
                 removed_attachments = request.POST.getlist('removed_attachments[]')
                 ir_attachments = request.FILES.getlist('new_attachments[]')
 
-                if not app_id or not report_content:
+                if not decrypted_id or not report_content:
                     return JsonResponse({'status': 'error', 'message': 'Missing required fields'}, status=400)
 
                 # Ensure upload directory exists
@@ -2176,7 +2197,7 @@ def save_ir(request):
                 os.makedirs(upload_dir, exist_ok=True)
 
                 # Get or create the InspectionReport instance
-                report, created = InspectionReport.objects.get_or_create(application_id=app_id)
+                report, created = InspectionReport.objects.get_or_create(application_id=decrypted_id)
 
                 # Optional: Update inspector if not yet assigned
                 if created and request.session.get('user_id'):
@@ -2199,12 +2220,12 @@ def save_ir(request):
                     extension = os.path.splitext(original_name)[1]
                     timestamp = int(time.time() * 1000)
 
-                    new_file_name = f"{app_id}_IR_{timestamp}{extension}"
+                    new_file_name = f"{decrypted_id}_IR_{timestamp}{extension}"
                     file_path = os.path.join(upload_dir, new_file_name)
 
                     while os.path.exists(file_path):
                         timestamp += 1
-                        new_file_name = f"{app_id}_IR_{timestamp}{extension}"
+                        new_file_name = f"{decrypted_id}_IR_{timestamp}{extension}"
                         file_path = os.path.join(upload_dir, new_file_name)
 
                     with open(file_path, 'wb+') as destination:
