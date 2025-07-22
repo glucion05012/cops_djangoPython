@@ -31,6 +31,8 @@ from cps.models import (
     InspectionAttachment
 )
 
+from datetime import date, timedelta
+
 from .utils.encryption import encrypt_id, decrypt_id
 
 def test(request):
@@ -2254,33 +2256,63 @@ def save_ir(request):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
+def weekdays_between(start_date, end_date):
+    """
+    Count business days between two dates.
+    - Excludes start_date
+    - Includes end_date
+    - Skips Saturday/Sunday
+    Automatically handles reversed dates.
+    """
+    if start_date > end_date:
+        start_date, end_date = end_date, start_date
+
+    day_count = 0
+    current_date = start_date + timedelta(days=1)  # start counting *after* start_date
+    while current_date <= end_date:
+        if current_date.weekday() < 5:  # 0=Mon ... 4=Fri
+            day_count += 1
+        current_date += timedelta(days=1)
+    return day_count
+
 
 def transaction_history(request):
     reference_no = request.GET.get("reference_no")
     if not reference_no:
         return JsonResponse({"data": []})
 
-    # Example: Fetch from database
+    # Latest to oldest (DESC) so newest shows first in the table
     with connections['default'].cursor() as cursor:
         cursor.execute("""
-            SELECT days_pending, date_created, forwarded_by_id, forwarded_to_id, notes, remarks, status
+            SELECT date_created, forwarded_by_id, forwarded_to_id, notes, remarks, status
             FROM ch_application
             WHERE reference_no = %s
             ORDER BY date_created DESC
         """, [reference_no])
         rows = cursor.fetchall()
 
-    data = [
-        {
-            "days_processed": r[0],
-            "date_received": r[1].strftime("%Y-%m-%d"),
-            "created_by": r[2],
-            "forwarded_to": r[3],
-            "notes": r[4],
-            "remarks": r[5],
-            "status": r[6].capitalize() if r[6] else "",
-        }
-        for r in rows
-    ]
+    data = []
+    prev_date = None  # holds the date_created from the *previous (newer)* row in the DESC loop
+
+    for date_created, forwarded_by_id, forwarded_to_id, notes, remarks, status in rows:
+        if prev_date and date_created:
+            # prev_date is newer; date_created is older (because we're in DESC order)
+            days_processed = weekdays_between(date_created.date(), prev_date.date())
+        else:
+            days_processed = 0  # newest record (top row) has no “time since previous” yet
+
+        # update for next iteration
+        if date_created:
+            prev_date = date_created
+
+        data.append({
+            "days_processed": days_processed,
+            "date_received": date_created.strftime("%Y-%m-%d") if date_created else "",
+            "created_by": forwarded_by_id or "",
+            "forwarded_to": forwarded_to_id or "",
+            "notes": notes or "",
+            "remarks": remarks or "",
+            "status": status.capitalize() if status else "",
+        })
 
     return JsonResponse({"data": data})
