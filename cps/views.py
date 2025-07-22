@@ -1,5 +1,5 @@
 import os
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render, redirect, get_object_or_404
@@ -19,6 +19,7 @@ from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 
+from .utils.encryption import decrypt_id
 
 def index(request):
     brands = ChainsawBrand.objects.all()
@@ -275,10 +276,15 @@ def edit_application(request, permitType, app_id):
             
         else:
             
+            try:
+                decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+            except Exception:
+                return HttpResponseBadRequest("Invalid or tampered ID")
+
             # Get main application
-            ch_import = get_object_or_404(CHImport, id=app_id)
-            app_ch_details = CHImportModelDetail.objects.filter(application_id=app_id)
-            app_attachments = CHImportAttachment.objects.filter(application_id=app_id)
+            ch_import = get_object_or_404(CHImport, id=decrypted_id)
+            app_ch_details = CHImportModelDetail.objects.filter(application_id=decrypted_id)
+            app_attachments = CHImportAttachment.objects.filter(application_id=decrypted_id)
             brands = ChainsawBrand.objects.all()
             business_list = []
 

@@ -31,6 +31,7 @@ from cps.models import (
     InspectionAttachment
 )
 
+from .utils.encryption import encrypt_id
 
 def test(request):
     password = 'your_password'
@@ -570,7 +571,7 @@ def application_list_json(request):
         for row in cursor.fetchall():
             app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, client_notes, paid_status, survey = row
             data.append({
-                'app_id': app_id,
+                'app_id': encrypt_id(app_id),  # Encrypt here
                 'permit_type_short': permit_type_short,
                 'permit_type': permit_type,
                 'estab_name': estab_name,
