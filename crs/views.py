@@ -2321,3 +2321,46 @@ def transaction_history(request):
         })
 
     return JsonResponse({"data": data})
+
+def css(request, permitType, app_id):
+    try:
+        decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+    except Exception:
+        return HttpResponseBadRequest("Invalid or tampered ID")
+
+    if permitType.lower() != 'pic':
+        return HttpResponseBadRequest("Invalid permit type for CSS")
+
+    # Fetch application details
+    try:
+        application = CHImport.objects.get(id=decrypted_id)
+    except CHImport.DoesNotExist:
+        return HttpResponseBadRequest("Application not found")
+
+    # Fetch user name from core_users using crs_id
+    user_name = ""
+    with connections['dniis_db'].cursor() as cursor:
+        cursor.execute("SELECT fullname, business_type FROM systems_clients WHERE user_id = %s", [application.crs_id])
+        row = cursor.fetchone()
+        if row:
+            user_name = row[0]
+            if row[1]:
+                code = row[1]
+                if code == '1':
+                    app_type = 'Individual'
+                elif code == '2':
+                    app_type = 'Government'
+                elif code == '3':
+                    app_type = 'Corporation'
+
+    context = {
+        'reference_no': application.reference_no,
+        'date_now': datetime.now().strftime('%B %d, %Y'),
+        'app_id': decrypted_id,
+        'crs_name': user_name,
+        'date_applied': application.date_applied.strftime('%B %d, %Y'),
+        'app_type': app_type if 'app_type' in locals() else 'Unknown',
+        'date_approved': application.date_approved.strftime('%B %d, %Y'),
+    }
+
+    return render(request, 'css.html', context)

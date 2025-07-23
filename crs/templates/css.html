@@ -1,0 +1,512 @@
+{% extends 'includes/base.html' %}
+{% load static %}
+
+{% block title %}Client Satisfaction Survey{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/survey.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<form id="create_css" action="<?= base_url('Applicationcontroller/submit_survey/'.$application_edit['id']); ?>" method="post" accept-charset="utf-8" enctype="multipart/form-data">
+    
+    <div class="row" style='margin: 0 auto; width:90%; border: 2px black solid;padding-left: 3rem; padding-right: 3rem;'>
+
+        <div class="col-sm-2" style='text-align:center; margin-top:3rem; margin-left:-2rem;margin-right:2rem;'>    
+            <img src="{% static 'images/denr-logo.png' %}" width='150px' height='150px' alt="Logo" class="brand-image " />
+        </div>
+        <div class="col-sm-10" style='text-align:center; margin-top:4rem'>
+            <div><h4><b>DEPARTMENT OF ENVIRONMENT AND NATURAL RESOURCES - NCR</b></h4></div>
+            <div><h3><b>PREFORMATTED APPLICATION FOR CHAINSAW PERMIT</b></h3></div>
+        </div>
+        
+        <div class="col-sm-12" style='text-align:center;'>
+            <div><h3 style="color:red"><b>CLIENT SATISFACTION SURVEY</b></h3></div>
+            <div><h4><b>Permit No: <span style="color:blue">{{ reference_no }}</span></b></h3></div>
+        </div>
+
+        <div class="col-sm-12" style='margin-top:2rem;'>
+            <div style='float:right;'>
+                <div class="row" style="float:right;">
+                    <div class="col-sm-3">
+                        <b>Date:</b>
+                    </div>
+                    <div class="col-sm-9">
+                        {{ date_now }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-12" style='margin-top:.5rem;'>
+            <input type="hidden" name="app_id" value="{{ app_id }}">
+            <input type="hidden" name="crs_id" value="{{ crs_id }}">
+        <p>
+            <b>This Client Satisfaction Measurement (CSM)</b> tracks the customer experience of government offices. Your feedback on your recently
+            concluded transaction will help DENR provide a better service. Personal information shared will be kept confidential and you always
+            have the option to not answer this form. <span style='color:green; font-style: oblique'>(Ang Client Satisfaction Measurement ay isang paraan upang subaybayan ng mga opisina ng
+            gobyerno ang karanasan sa serbisyo ng kanilang mga kliyente. Ang iyong papuri, puna o, suhestiyon sa iyong katatapos pa lamang na
+            transaksyon sa DENR ay makakatuling upang mapabuti pa ang serbisyo ng DENR. Ang iyong personal na impormasyon ay
+            sisiguraduhing pribado at mayroon kang opsyon na hindi sagutin ang form na ito.)</span>
+        </p>
+        </div>
+        
+        <div class="co-sm-12" style='margin:2rem 0 2rem 0; padding: 0 3rem 3rem 3rem; border:2px black solid; width: 100%;'>
+            <div class="row">
+                
+                <div class="hr-sect" style="margin: 8px 0px 15px 0px; !important">Client Profile</div>
+
+                <div class="col-sm-6" style="margin-bottom: 15px;">
+                    <table style="width:100%" id='applicant_type_table'>
+                        <tr>
+                            <td ><b>Name</b></td>
+                            <td class="separators" style='text-align:center'>:</td>
+                            <td style='text-align:center'>{{ crs_name }}</td>
+                        </tr>
+                        <tr>
+                            <td ><b>Date Applied</b></td>
+                            <td class="separators" style='text-align:center'>:</td>
+                            <td style='text-align:center'>{{ date_applied }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="col-sm-6" style="margin-bottom: 15px;">
+                    <table style="width:100%" id='applicant_type_table'>
+                        <tr>
+                            <td ><b>Type of Client</b></td>
+                            <td class="separators" style='text-align:center'>:</td>
+                            <td style='text-align:center'>{{ app_type }}</td>
+                        </tr>
+                        <tr>
+                            <td ><b>Date Approved</b></td>
+                            <td class="separators" style='text-align:center'>:</td>
+                            <td style='text-align:center'>{{ date_approved }}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="hr-sect" style="margin: 8px 0px 15px 0px; !important">Information</div>
+
+                <div class="col-sm-12" >
+                    <p>
+                        INSTRUCTIONS: Choose the answer to the Citizen's Charter (CC) questions. The Citizen's Charter is an official
+                        document that reflects the services of a government agency/ office including its requirements, fees, and processing times
+                        among others <span style='color:green; font-style: oblique'>(PANUTO: Piliin ang iyong sagot sa mga tanong tungkol sa Citizen's Charter (CC). Ang Citizen's
+                        Charter ay isang opisyal na dokumento na sumasalamin sa mga serbisyo ng isang ahensya/opisina ng gobyerno kasama ang
+                        mga kinakailangang dokumento, bayad, at oras ng pagproseso nito bukod sa iba pa.)</span>
+                    </p>
+                </div>
+
+                <div class="col-sm-12" >
+                    <table style="width:100%" id="cc1">
+                        <colgroup>
+                            <col style="width: 30px;">
+                            <col style="width: auto;">
+                        </colgroup>
+                        <tr>
+                            <th colspan=2 >
+                                <p style='color:green;' ><b>CC1</b></p> Which of the following best describes your awareness of a Citizen's Charter? (Choose only one)
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Alin sa mga sumusunod ang makapaglalarawan ng iyong kaalaman tungkol sa Citizen's Charter? (Pumili lamang ng isa))
+                                </span>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td class="separators"><input type="radio" style="margin: 0px; !important" name="cc1" value="1" required></td>
+                            <td>
+                                I know what a Citizen's Charter is and I saw this in this office.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Mayroon akong kaalaman sa Citizen's Charter at nakita ko ito opisinang ito.)
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc1" value="2"></td>
+                            <td>
+                                I learned of the Citizen's Charter only when I saw this in this office.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Ngayon ko lamang nalaman ang Citizen's Charter nang makita ko ito sa opisinang ito.)
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc1" value="3"></td>
+                            <td>
+                                I know what a Citizen's Charter is but I did NOT see it in this office.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Mayroon akong kaalaman sa Citizen's Charter ngunit HINDI ko ito nakita sa opisinang ito.)
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc1" value="4"></td>
+                            <td>
+                                I do not know what a Citizen's Charter is and I did NOT see one in this office.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Hindi ko alam ang Citizen's Charter at hindi ko ito nakita sa opisinang ito.)
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="col-sm-12" >
+                    <p>
+                    <i style='color:green;' class="fa-solid fa-circle-info fa-2xl"></i> Proceed only to CC2 and CC3 if your answer in CC1 is 1 or 2 <br>
+                        <span style='color:green; font-style: oblique'>(Sagutan lamang ang CC2 at CC3 kung ang iyong sagot sa CC1 ay 1 o 2.)</span>
+                    </p>
+                </div>
+
+                <div class="col-sm-12" >
+                    <table style="width:100%" id="cc2">
+                        <colgroup>
+                            <col style="width: 30px;">
+                            <col style="width: auto;">
+                        </colgroup>
+                        <tr>
+                            <th colspan=4 >
+                                <p style='color:green;' ><b>CC2</b></p> How would you describe the posting of the Citizen's Charter in this office? (Choose only one)
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Paano mo mailalarawan ang pagkakalagay o pagkakapaskil ng Citizen's Charter sa opisinang ito? (Pumili lamang ng isa))
+                                </span>
+                            </th>
+                        </tr>
+                        <colgroup>
+                            <col style="width: 30px;">
+                            <col style="width: auto;">
+                        </colgroup>
+                        <tr>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc2" value="1" required></td>
+                            <td>
+                                Easy to see
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Madaling makita)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc2" value="3"></td>
+                            <td>
+                                Difficult to see
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Mahirap makita)
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc2" value="2"></td>
+                            <td>
+                                Somewhat easy to see
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Medyo madaling makita)
+                                </span>
+                            </td>
+                            
+
+                            <td><input type="radio" style="margin: 0px; !important" name="cc2" value="4"></td>
+                            <td>
+                                Not visible at all
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Hindi talaga makita)
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="col-sm-12" >
+                    <table style="width:100%" id="cc3">
+                        <colgroup>
+                            <col style="width: 30px;"> <!-- Radio button column -->
+                            <col style="width: 30%;">  <!-- Text column -->
+                            <col style="width: 30px;"> <!-- Radio button column -->
+                            <col style="width: 30%;">  <!-- Text column -->
+                            <col style="width: 30px;"> <!-- Radio button column -->
+                            <col style="width: 30%;">  <!-- Text column -->
+                        </colgroup>
+                        
+                        <tr>
+                            <th colspan=6>
+                                <p style='color:green;' ><b>CC3</b></p> How helpful is the Citizen's Charter in your transaction? (Choose only one)
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Gaano nakatulong ang Citizen's Charter sa iyong transaksyon? (Pumili lamang ng isa))
+                                </span>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc3" value="1" required></td>
+                            <td>
+                                Very Helpful
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Sobrang nakatulong)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc3" value="2"></td>
+                            <td>
+                                Somewhat Helpful
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Medyo nakatulong)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc3" value="3"></td>
+                            <td>
+                                Not helpful
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Hindi talaga makita)
+                                </span>
+                            </td>
+                            
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="col-sm-12" >
+                    <table style="width:100%; table-layout: fixed; border-collapse: collapse;" id="cc4" border="1">
+                        <colgroup>
+                            <col style="width: 50%;">  <!-- Question column -->
+                            <col style="width: 10%;">  <!-- Strongly Disagree -->
+                            <col style="width: 10%;">  <!-- Disagree -->
+                            <col style="width: 10%;">  <!-- Neither -->
+                            <col style="width: 10%;">  <!-- Agree -->
+                            <col style="width: 10%;">  <!-- Strongly Agree -->
+                        </colgroup>
+                        
+                        <tr>
+                            <th>
+                                <i style='color:green;' class="fa-solid fa-circle-info fa-2xl"></i>
+                                INSTRUCTIONS:
+                                Please indicate how strongly you agree or
+                                disagree with all the
+                                following statements by choosing the corresponding circle from
+                                'strongly disagree' to 'strongly agree'.
+                            </th>
+                            <th style="font-size: 8px">
+                                STRONGLY DISAGREE<br>
+                                <span style='color:green; font-style: oblique'>
+                                (LUBHANG HINDI SUMASANG-AYON)
+                                </span>
+                            </th>
+                            <th style="font-size: 8px">
+                                DISAGREE
+                                <span style='color:green; font-style: oblique'>
+                                (HINDI SUMASANG-AYON)
+                                </span>
+                            </th>
+                            <th style="font-size: 8px">
+                                NEITHER AGREE NOR DISAGREE
+                                <span style='color:green; font-style: oblique'>
+                                (HINDI TIYAK)
+                                </span>
+                            </th>
+                            <th style="font-size: 8px">
+                                AGREE
+                                <span style='color:green; font-style: oblique'>
+                                (SUMASANG-AYON)
+                                </span>
+                            </th>
+                            <th style="font-size: 8px">
+                                STRONGLY AGREE
+                                <span style='color:green; font-style: oblique'>
+                                (LUBHANG SUMASANG-AYON)
+                                </span>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td>
+                                I spent a reasonable amount of time for my transaction.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Naglaan ako ng resonableng oras para sa aking transaksyon)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc41" value="5" required></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc41" value="4" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc41" value="3" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc41" value="2" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc41" value="1" ></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                The office followed the transaction's requirements and steps based on the information provided.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Ang opisina ay sumunod sa mga itinakdang pangangailangan at hakbang para sa aking transaksyon .)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc42" value="5" required></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc42" value="4" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc42" value="3" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc42" value="2" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc42" value="1" ></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                The steps (including payment) I needed to do for my transaction were easy and simple.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Ang mga hakbang (kasama ang pagbabayad) para sa aking transakyon ay madali at simple.)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc43" value="5" required></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc43" value="4" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc43" value="3" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc43" value="2" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc43" value="1" ></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                I easily found information about my transaction from the office or its website.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Madali kong nakita sa opisina o sa website ang mga impormasyon na kinakailangan ko para sa aking transakyon.)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc44" value="5" required></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc44" value="4" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc44" value="3" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc44" value="2" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc44" value="1" ></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                Answer only this statement if service/transaction availed has cost/fee
+                                <br>
+                                    <span style='color:green; font-style: oblique'>
+                                    (Sagutan lamang ito kung ang kinuhang serbisyo ay may kaukulang bayad)
+                                    </span>
+                                <br>
+                                <br>
+                                I paid a reasonable amount of fees for my transaction.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                ( Makatwiran ang ibinayad ko para sa aking transaksyon .)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc45" value="5" required></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc45" value="4" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc45" value="3" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc45" value="2" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc45" value="1" ></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                I felt that the office was fair to everyone, or "walang palakasan", during my transaction.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Naramdaman kong naging patas sa lahat o "walang palakasan"ang opisina sa panahon ng aking pakikipagtransaksyon)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc46" value="5" required></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc46" value="4" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc46" value="3" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc46" value="2" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc46" value="1" ></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                I was treated courteously by the staff.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Ako ay pinakitunguhan nang may paggalang ng mga kawani.)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc47" value="5" required></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc47" value="4" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc47" value="3" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc47" value="2" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc47" value="1" ></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                I got what I needed from the office.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Natanggap ko nang naaayon ang serbisyo o produktong kinakailangan.)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc48" value="5" required></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc48" value="4" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc48" value="3" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc48" value="2" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc48" value="1" ></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                I am satisfied with the service that I availed.
+                                <br>
+                                <span style='color:green; font-style: oblique'>
+                                (Ako ay nasiyahan sa natanggap kong serbisyo.)
+                                </span>
+                            </td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc49" value="5" required></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc49" value="4" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc49" value="3" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc49" value="2" ></td>
+                            <td><input type="radio" style="margin: 0px; !important" name="cc49" value="1" ></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="hr-sect" style="margin: 8px 0px 15px 0px; !important">Suggestions/Comments</div>
+
+                <div class="col-sm-12" >
+                    <table style="width:100%" id="cc4">
+                        <tr>
+                            <th>
+                                <b>
+                                To further improve our services, please provide any
+                                suggestions, comments or concerns regarding the
+                                service received. 
+                                </b>
+                                <span style='color:green; font-style: oblique'>(Upang mas mapabuti pa ang aming
+                                serbisyo, maaaring magbigay ng mungkahi, komento o
+                                puna sa serbisyong natanggap.)</span>
+                            </th>
+                            <td><textarea rows="4" cols="200" class="form-control" id="suggestions" name="suggestions" required></textarea></td>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-sm-12" style='margin-top:1rem;'>
+            <p><b>By Clicking `Submit`, I hereby consent DENR to collect, process, transmit and store the data provided
+            herein subject to the rules and regulations set by Republic Act No. 10173, otherwise known as the Data
+            Privacy Act of 2012.</b></p>
+            <span style='color:green; font-style: oblique'>
+            (Sa pamamagitan ng pagpindot ng `Submit`, pinahihintulutan ko ang DENR na kolektahin, iproseso,
+            ipadala at itago ang mga impormasyon na nakasaad sa papel na ito alinsunod sa Batas Republika Blg.
+            10173 o ang Data Privacy Act of 2012.)</span>
+        </div>
+        <div class="col-sm-12" style='margin-top:1rem; text-align: center;'>
+            <input onclick="return confirm('Press OK to submit form.')"  style="width:15%" type="submit" value="Submit" class="btn btn-success" name="submit">
+        </div>
+
+    </div>
+    
+</form>
+
+
+{% endblock %}
