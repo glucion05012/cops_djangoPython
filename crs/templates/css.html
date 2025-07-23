@@ -9,7 +9,8 @@
 
 {% block content %}
 
-<form id="create_css" action="<?= base_url('Applicationcontroller/submit_survey/'.$application_edit['id']); ?>" method="post" accept-charset="utf-8" enctype="multipart/form-data">
+<form id="surveyForm" method="POST" action="{% url 'save_survey' app_id=app_id %}">
+    {% csrf_token %}
     
     <div class="row" style='margin: 0 auto; width:90%; border: 2px black solid;padding-left: 3rem; padding-right: 3rem;'>
 
@@ -508,5 +509,30 @@
     
 </form>
 
+
+<script>
+$("#surveyForm").submit(function(e){
+    e.preventDefault();
+    $.ajax({
+        url: $(this).attr("action"),
+        type: "POST",
+        data: $(this).serialize(),
+        success: function(response){
+            if(response.status === "success"){
+                Swal.fire({
+                    title: "Thank you!",
+                    text: "Your survey has been submitted.",
+                    icon: "success",
+                    confirmButtonText: "OK"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "{% url 'myApplications' %}";
+                    }
+                });
+            }
+        }
+    });
+});
+</script>
 
 {% endblock %}

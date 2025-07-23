@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.db import connections
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.utils import timezone
@@ -28,7 +28,8 @@ from cps.models import (
     ProofOfPayment,
     ChPayment,
     InspectionReport,
-    InspectionAttachment
+    InspectionAttachment,
+    Survey
 )
 
 from datetime import date, timedelta
@@ -2356,11 +2357,57 @@ def css(request, permitType, app_id):
     context = {
         'reference_no': application.reference_no,
         'date_now': datetime.now().strftime('%B %d, %Y'),
-        'app_id': decrypted_id,
+        'app_id': app_id,
         'crs_name': user_name,
+        'crs_id': application.crs_id,
         'date_applied': application.date_applied.strftime('%B %d, %Y'),
         'app_type': app_type if 'app_type' in locals() else 'Unknown',
         'date_approved': application.date_approved.strftime('%B %d, %Y'),
     }
 
     return render(request, 'css.html', context)
+
+
+def save_survey(request, app_id):
+    try:
+        with transaction.atomic():
+                
+            try:
+                decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+            except Exception:
+                return HttpResponseBadRequest("Invalid or tampered ID")
+            
+            if request.method == "POST":
+                application = get_object_or_404(CHImport, id=decrypted_id)
+
+                # Create a new survey entry
+                survey = Survey.objects.create(
+                    application=application,
+                    client_id=request.POST.get('crs_id'),
+                    cc1=request.POST.get('cc1'),
+                    cc2=request.POST.get('cc2'),
+                    cc3=request.POST.get('cc3'),
+                    cc41=request.POST.get('cc41'),
+                    cc42=request.POST.get('cc42'),
+                    cc43=request.POST.get('cc43'),
+                    cc44=request.POST.get('cc44'),
+                    cc45=request.POST.get('cc45'),
+                    cc46=request.POST.get('cc46'),
+                    cc47=request.POST.get('cc47'),
+                    cc48=request.POST.get('cc48'),
+                    cc49=request.POST.get('cc49'),
+                    suggestions=request.POST.get('suggestions'),
+                )
+                
+                CHImport.objects.filter(id=int(decrypted_id)).update(
+                    survey = 1
+                )
+
+                # You can return a success response
+                return JsonResponse({"status": "success", "survey_id": survey.id})
+
+            return JsonResponse({"status": "error", "message": "Invalid request"})
+        
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
