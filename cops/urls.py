@@ -46,6 +46,7 @@ urlpatterns = [
     path('transaction-history/', views.transaction_history, name='transaction_history'), 
     
     path('css/<str:permitType>/<str:app_id>/', views.css, name='css'),
+    path('view_css/<str:permitType>/<str:app_id>/', views.view_css, name='view_css'),
     path('survey/save/<str:app_id>/', views.save_survey, name='save_survey'),
     
     # permittee enrollment

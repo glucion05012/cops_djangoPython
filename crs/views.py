@@ -2411,3 +2411,82 @@ def save_survey(request, app_id):
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+    
+def view_css(request, permitType, app_id):
+    try:
+        decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+    except Exception:
+        return HttpResponseBadRequest("Invalid or tampered ID")
+
+    if permitType.lower() != 'pic':
+        return HttpResponseBadRequest("Invalid permit type for CSS")
+
+    # Fetch application details
+    try:
+        application = CHImport.objects.get(id=decrypted_id)
+    except CHImport.DoesNotExist:
+        return HttpResponseBadRequest("Application not found")
+
+    # Fetch user name and app type
+    user_name = ""
+    app_type = "Unknown"
+    with connections['dniis_db'].cursor() as cursor:
+        cursor.execute("SELECT fullname, business_type FROM systems_clients WHERE user_id = %s", [application.crs_id])
+        row = cursor.fetchone()
+        if row:
+            user_name = row[0]
+            code = row[1]
+            if code == '1':
+                app_type = 'Individual'
+            elif code == '2':
+                app_type = 'Government'
+            elif code == '3':
+                app_type = 'Corporation'
+
+    data = {
+        'reference_no': application.reference_no,
+        'date_now': datetime.now().strftime('%B %d, %Y'),
+        'app_id': app_id,
+        'crs_name': user_name,
+        'crs_id': application.crs_id,
+        'date_applied': application.date_applied.strftime('%B %d, %Y'),
+        'app_type': app_type,
+        'date_approved': application.date_approved.strftime('%B %d, %Y'),
+    }
+
+    # Fetch survey data
+    with connections['default'].cursor() as cursor:
+        cursor.execute("""
+            SELECT cc1, cc2, cc3, cc41, cc42, cc43, cc44, cc45, cc46, cc47, cc48, cc49, suggestions
+            FROM cps_survey
+            WHERE application_id = %s
+        """, [decrypted_id])
+        res = cursor.fetchone()
+
+        if res:
+            data.update({
+                'cc1': res[0],
+                'cc2': res[1],
+                'cc3': res[2],
+                'cc41': res[3],
+                'cc42': res[4],
+                'cc43': res[5],
+                'cc44': res[6],
+                'cc45': res[7],
+                'cc46': res[8],
+                'cc47': res[9],
+                'cc48': res[10],
+                'cc49': res[11],
+                'suggestions': res[12],
+            })
+        else:
+            # Default values if no survey found
+            data.update({
+                'cc1': None, 'cc2': None, 'cc3': None,
+                'cc41': None, 'cc42': None, 'cc43': None, 'cc44': None, 'cc45': None,
+                'cc46': None, 'cc47': None, 'cc48': None, 'cc49': None,
+                'suggestions': "",
+            })
+
+    return render(request, 'view_css.html', data)

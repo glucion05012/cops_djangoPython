@@ -465,7 +465,21 @@
                                 <button class="btn btn-sm btn-info history-btn" title="View History" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                     <i class="fas fa-list"></i>
                                 </button>
+                                <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="view_only" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                    <i class="fa-solid fa-file"></i>
+                                </button>
                             `;
+
+                        if (row.status === 'approved') {
+                            viewBtn += `
+                                <button class="btn btn-sm btn-warning view-css-btn" title="View Survey" 
+                                    data-appid="${row.app_id}" 
+                                    data-reference="${row.reference_no}""
+                                    data-permit_type_short="${row.permit_type_short}">
+                                    <i class="fa-solid fa-poll"></i>
+                                </button>
+                            `;
+                            }
 
                             let processBtn = '';
                             if(row.permit_type_short === 'PIC'){
@@ -1178,6 +1192,8 @@
                         buttonHTML = '<button type="submit" class="btnApproveREDIR btn btn-success">Approved</button>';
                         $('#inspectionReportRemarks').prop('hidden', true);
                         $('#crs_id_vir').val(crsID);
+                    }else if (btnType === 'view_only') {
+                        $('#inspectionReportRemarks').prop('hidden', true);
                     }
                     document.getElementById('buttonIRContainer').innerHTML = buttonHTML;
                     
@@ -1969,6 +1985,15 @@
                     });
                 }
             });
+        });
+
+        $(document).on('click', '.view-css-btn', function () {
+            const app_id = $(this).data('appid');
+            const permitType = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            
+            window.location.href = `/view_css/${permitType}/${app_id}/`;
+            
         });
 
     </script>
