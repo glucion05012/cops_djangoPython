@@ -2281,7 +2281,7 @@ def transaction_history(request):
     if not reference_no:
         return JsonResponse({"data": []})
 
-    # Latest to oldest (DESC) so newest shows first in the table
+    # 1. Get all rows from ch_application
     with connections['default'].cursor() as cursor:
         cursor.execute("""
             SELECT date_created, forwarded_by_id, forwarded_to_id, notes, remarks, status
@@ -2291,25 +2291,30 @@ def transaction_history(request):
         """, [reference_no])
         rows = cursor.fetchall()
 
+    # 2. Collect user IDs
+    user_ids = {f_by for _, f_by, f_to, _, _, _ in rows if f_by} | \
+               {f_to for _, f_by, f_to, _, _, _ in rows if f_to}
+
+    # 3. Get user names in one query
+    user_map = {}
+    if user_ids:
+        with connections['dniis_db'].cursor() as cursor:
+            sql = "SELECT id, name FROM core_users WHERE id IN (%s)" % \
+                  ",".join(["%s"] * len(user_ids))
+            cursor.execute(sql, list(user_ids))
+            user_map = {u: n for u, n in cursor.fetchall()}
+
+    # 4. Prepare data
     data = []
-    prev_date = None  # holds the date_created from the *previous (newer)* row in the DESC loop
-
-    for date_created, forwarded_by_id, forwarded_to_id, notes, remarks, status in rows:
-        if prev_date and date_created:
-            # prev_date is newer; date_created is older (because we're in DESC order)
-            days_processed = weekdays_between(date_created.date(), prev_date.date())
-        else:
-            days_processed = 0  # newest record (top row) has no “time since previous” yet
-
-        # update for next iteration
-        if date_created:
-            prev_date = date_created
-
+    prev_date = None
+    for date_created, f_by, f_to, notes, remarks, status in rows:
+        days_processed = weekdays_between(date_created.date(), prev_date.date()) if prev_date and date_created else 0
+        prev_date = date_created or prev_date
         data.append({
             "days_processed": days_processed,
             "date_received": date_created.strftime("%Y-%m-%d") if date_created else "",
-            "created_by": forwarded_by_id or "",
-            "forwarded_to": forwarded_to_id or "",
+            "created_by": user_map.get(f_by, f_by or ""),
+            "forwarded_to": user_map.get(f_to, f_to or ""),
             "notes": notes or "",
             "remarks": remarks or "",
             "status": status.capitalize() if status else "",
