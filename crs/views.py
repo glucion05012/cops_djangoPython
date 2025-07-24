@@ -21,7 +21,9 @@ from operator import itemgetter
 from django.db import transaction
 import traceback
 from datetime import datetime
-
+from django.db.models import Sum
+from num2words import num2words
+import base64
 from cps.models import (
     CHImport,
     CHApplication,
@@ -29,7 +31,9 @@ from cps.models import (
     ChPayment,
     InspectionReport,
     InspectionAttachment,
-    Survey
+    Survey,
+    CHImportModelDetail,
+    ChainsawBrand
 )
 
 from django.template.loader import render_to_string
@@ -2370,7 +2374,43 @@ def css(request, permitType, app_id):
 
     return render(request, 'css.html', context)
 
-
+def preview_survey_pdf(request, app_id):
+    chimport = get_object_or_404(CHImport, id=app_id)
+    
+    image_path = os.path.join(settings.BASE_DIR, 'crs', 'static', 'images', 'denr_header.png')
+    with open(image_path, 'rb') as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+        logo_data_url = f"data:image/png;base64,{encoded_image}"
+                
+    # Sum total quantity from related CPS_CHImportModelDetail
+    total_quantity = CHImportModelDetail.objects.filter(application_id=chimport.id).aggregate(
+        total=Sum('quantity')
+    )['total'] or 0  # Fallback to 0 if None
+    quantity_in_words = num2words(total_quantity, to='cardinal', lang='en').capitalize()
+    
+    brand = ChainsawBrand.objects.filter(id=chimport.brand_id).first()
+    brand_name = brand.name.upper() if brand else "N/A"
+    
+    model_details = CHImportModelDetail.objects.filter(application_id=chimport.id)
+    
+    date_approved = chimport.date_approved
+    date_expired = date_approved.replace(year=date_approved.year + 1) if date_approved else None
+    
+    return render(request, 'permit_pdf/permit_to_import.html', {
+        'reference_no': chimport.reference_no,
+        'estab_name': chimport.estab_name.upper(),
+        'estab_address': chimport.estab_address,
+        'total_quantity': total_quantity,
+        'quantity_in_words': quantity_in_words,
+        'brand_name': brand_name,
+        'model_details': model_details,
+        'source': chimport.origin,
+        'purpose': chimport.purpose,
+        'date_approved': date_approved,
+        'date_expired': date_expired,
+        'logo_url': logo_data_url,
+    })
+    
 def save_survey(request, app_id):
     try:
         with transaction.atomic():
@@ -2380,11 +2420,11 @@ def save_survey(request, app_id):
                 return HttpResponseBadRequest("Invalid or tampered ID")
 
             if request.method == "POST":
-                application = get_object_or_404(CHImport, id=decrypted_id)
+                chimport = get_object_or_404(CHImport, id=decrypted_id)
 
-                # Save survey
-                survey = Survey.objects.create(
-                    application=application,
+                # Save survey data
+                Survey.objects.create(
+                    application=chimport,
                     client_id=request.POST.get('crs_id'),
                     cc1=request.POST.get('cc1'),
                     cc2=request.POST.get('cc2'),
@@ -2401,30 +2441,55 @@ def save_survey(request, app_id):
                     suggestions=request.POST.get('suggestions'),
                 )
 
-                CHImport.objects.filter(id=int(decrypted_id)).update(survey=1)
+                CHImport.objects.filter(id=chimport.id).update(survey=1)
 
-                # Render HTML for PDF
+                # Data preparation for PDF
+                image_path = os.path.join(settings.BASE_DIR, 'crs', 'static', 'images', 'denr_header.png')
+                with open(image_path, 'rb') as image_file:
+                    encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+                    logo_data_url = f"data:image/png;base64,{encoded_image}"
+
+                total_quantity = CHImportModelDetail.objects.filter(application_id=chimport.id).aggregate(
+                    total=Sum('quantity')
+                )['total'] or 0
+                quantity_in_words = num2words(total_quantity, to='cardinal', lang='en').capitalize()
+
+                brand = ChainsawBrand.objects.filter(id=chimport.brand_id).first()
+                brand_name = brand.name.upper() if brand else "N/A"
+
+                model_details = CHImportModelDetail.objects.filter(application_id=chimport.id)
+
+                date_approved = chimport.date_approved
+                date_expired = date_approved.replace(year=date_approved.year + 1) if date_approved else None
+
+                # Render PDF HTML
                 html_string = render_to_string('permit_pdf/permit_to_import.html', {
-                    'survey': survey,
-                    'application': application,
+                    'reference_no': chimport.reference_no,
+                    'estab_name': chimport.estab_name.upper(),
+                    'estab_address': chimport.estab_address,
+                    'total_quantity': total_quantity,
+                    'quantity_in_words': quantity_in_words,
+                    'brand_name': brand_name,
+                    'model_details': model_details,
+                    'source': chimport.origin,
+                    'purpose': chimport.purpose,
+                    'date_approved': date_approved,
+                    'date_expired': date_expired,
+                    'logo_url': logo_data_url,
                 })
 
-                # Ensure output directory exists
+                # Create output folder
                 output_dir = os.path.join(settings.MEDIA_ROOT, 'chainsaw/pic')
                 os.makedirs(output_dir, exist_ok=True)
 
-                # Define filename and path
-                pdf_filename = f"survey_{survey.id}.pdf"
+                # Generate and save PDF
+                pdf_filename = f"DENR-NCR-{chimport.reference_no}.pdf"
                 pdf_path = os.path.join(output_dir, pdf_filename)
-
-                # Generate PDF
                 HTML(string=html_string).write_pdf(pdf_path)
 
-                # Return JSON with link to PDF
                 return JsonResponse({
                     "status": "success",
-                    "survey_id": survey.id,
-                    "pdf_url": f"{settings.MEDIA_URL}surveys/{pdf_filename}"
+                    "pdf_url": f"{settings.MEDIA_URL}chainsaw/pic/{pdf_filename}"
                 })
 
             return JsonResponse({"status": "error", "message": "Invalid request"})

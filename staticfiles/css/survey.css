@@ -1,0 +1,85 @@
+body {
+    font-family: Arial;
+  }
+
+.separators{
+    width: 5%;
+  }
+/* Style the tab */
+.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #03A9F5;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.2);
+    text-align:center;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+    background-color: inherit;
+    /*float: left;*/
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    width: 24%;
+     border-bottom: 3px solid transparent;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: green;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: lightgreen;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+body {
+    font-size: 15px;
+}
+input, select, textarea {
+  width: 100%;
+  display: block;/*optionnal*/
+  margin-bottom: 1rem;
+}
+.form-rounded {
+border-radius: 1rem;
+}
+.hr-sect {
+    display: flex;
+    flex-basis: 100%;
+    align-items: center;
+    color: green;
+    font-weight: bold;
+    margin: 8px 0px;
+}
+.hr-sect:before,
+.hr-sect:after {
+    content: "";
+    flex-grow: 1;
+    background: rgba(0, 0, 0, 0.35);
+    height: 1px;
+    font-size: 0px;
+    line-height: 0px;
+    margin: 8px 0px;
+}
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  padding: 5px;
+}
+input[type="checkbox"]:enabled:checked {
+        accent-color: lightgreen !important;
+        color: white;
+    }

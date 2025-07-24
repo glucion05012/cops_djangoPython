@@ -78,6 +78,9 @@ urlpatterns = [
     path('get-ir-details/', views.get_ir_details, name='get_ir_details'),
     path('save-ir/', views.save_ir, name='save_ir'),
     
+    
+    path('permit/<str:app_id>/preview/', views.preview_survey_pdf, name='preview_survey_pdf'),
+
 ]
 
 if settings.DEBUG:
