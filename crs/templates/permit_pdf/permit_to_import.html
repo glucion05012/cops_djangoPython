@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <title>Permit to Import Chainsaw - Preview</title>
   <style>
+
     body {
       font-family: "Times New Roman", serif;
-      font-size: 12pt;
+      font-size: 10pt;
       margin: 40px 50px;
       justify-self: center;
     }
@@ -25,13 +26,14 @@
       text-align: center;
       font-weight: bold;
       font-size: 13pt;
-      margin: 20px 0 10px;
+      margin: 20px 0 20px;
       text-decoration: underline;
     }
 
     .sub-title {
       font-size: 10pt;
       margin-bottom: 20px;
+      text-align: justify;
     }
 
     .section {
@@ -86,8 +88,7 @@
   </div>
 
   <div class="section">
-    <p><strong>Chainsaw</strong><br>
-    Permit No: <span>{{ reference_no }}</span></p>
+    <p><strong>Chainsaw Permit No: <span><u>{{ reference_no }}</u></span></strong></p>
   </div>
 
   <div class="title">PERMIT TO IMPORT CHAINSAW</div>
@@ -100,17 +101,21 @@
     is hereby issued to:
   </div>
 
-  <div class="section">
-    <div><span class="label">Name:</span><span class="content">{{ estab_name }}</span></div>
-    <div><span class="label">Office Address:</span><span class="content">{{ estab_address }}</span></div>
+  <div class="section conditions">
+    <div><span class="label">Name:</span><span class="content"><b><u>{{ estab_name }}</u></b></span></div>
+    <div><span class="label">Office Address:</span><span class="content"><u>{{ estab_address }}</u></span></div>
   </div>
 
   <div class="section conditions">
     <p>The information and descriptions of the chainsasws subject of this permit are hereunder enumerated:</p>
     <table class="table-info">
+        <colgroup>
+            <col style="width: 200px;">
+            <col style="width: auto;">
+        </colgroup>
       <tr><th>Quantity</th><td>{{ quantity_in_words }} ({{ total_quantity }}) units</td></tr>
       <tr><th>Brand</th><td>{{ brand_name }}</td></tr>
-      <tr><th>Model and Price</th>
+      <tr><th>Model</th>
           <td>
             {% for item in model_details %}
                 {{ item.model }} = {{ item.quantity }} unit{{ item.quantity|pluralize }}<br>
@@ -129,9 +134,9 @@
     </table>
   </div>
 
-  <div class="section">
-    <p>Issued on: <strong>{{ date_approved }}</strong> at <strong>Quezon Citdate_expiredy</strong></p>
-    <p>Expiry Date: <strong>{{ date_expired }}</strong></p>
+  <div class="section conditions">
+    <p>Issued on <strong><u>{{ date_approved }}</u></strong> at <u>Quezon City</u></p>
+    <p>Expiry Date: <strong><u>{{ date_expired }}</u></strong></p>
   </div>
 
   <div class="signature">
