@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Permit to Import Chainsaw</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 40px;
+            color: #333;
+        }
+
+        h1 {
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section h2 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        .info p {
+            margin: 4px 0;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            margin-bottom: 5px;
+        }
+
+        .suggestions {
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Client Satisfaction Survey</h1>
+
+    <div class="section info">
+        <h2>Application Information</h2>
+        <p><strong>Establishment Name:</strong> {{ application.estab_name }}</p>
+        <p><strong>Reference No:</strong> {{ application.reference_no }}</p>
+        <p><strong>Date Applied:</strong> {{ application.date_applied }}</p>
+        <p><strong>Client ID:</strong> {{ survey.client_id }}</p>
+    </div>
+
+    <div class="section">
+        <h2>Survey Ratings</h2>
+        <ul>
+            <li><strong>CC1:</strong> {{ survey.cc1 }}</li>
+            <li><strong>CC2:</strong> {{ survey.cc2 }}</li>
+            <li><strong>CC3:</strong> {{ survey.cc3 }}</li>
+            <li><strong>CC41:</strong> {{ survey.cc41 }}</li>
+            <li><strong>CC42:</strong> {{ survey.cc42 }}</li>
+            <li><strong>CC43:</strong> {{ survey.cc43 }}</li>
+            <li><strong>CC44:</strong> {{ survey.cc44 }}</li>
+            <li><strong>CC45:</strong> {{ survey.cc45 }}</li>
+            <li><strong>CC46:</strong> {{ survey.cc46 }}</li>
+            <li><strong>CC47:</strong> {{ survey.cc47 }}</li>
+            <li><strong>CC48:</strong> {{ survey.cc48 }}</li>
+            <li><strong>CC49:</strong> {{ survey.cc49 }}</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Suggestions / Comments</h2>
+        <div class="suggestions">
+            {{ survey.suggestions|default:"No suggestions provided." }}
+        </div>
+    </div>
+
+</body>
+</html>

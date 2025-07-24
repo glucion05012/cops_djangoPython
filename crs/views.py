@@ -32,6 +32,9 @@ from cps.models import (
     Survey
 )
 
+from django.template.loader import render_to_string
+from weasyprint import HTML
+
 from datetime import date, timedelta
 
 from .utils.encryption import encrypt_id, decrypt_id
@@ -2371,16 +2374,15 @@ def css(request, permitType, app_id):
 def save_survey(request, app_id):
     try:
         with transaction.atomic():
-                
             try:
-                decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+                decrypted_id = decrypt_id(app_id)
             except Exception:
                 return HttpResponseBadRequest("Invalid or tampered ID")
-            
+
             if request.method == "POST":
                 application = get_object_or_404(CHImport, id=decrypted_id)
 
-                # Create a new survey entry
+                # Save survey
                 survey = Survey.objects.create(
                     application=application,
                     client_id=request.POST.get('crs_id'),
@@ -2398,20 +2400,39 @@ def save_survey(request, app_id):
                     cc49=request.POST.get('cc49'),
                     suggestions=request.POST.get('suggestions'),
                 )
-                
-                CHImport.objects.filter(id=int(decrypted_id)).update(
-                    survey = 1
-                )
 
-                # You can return a success response
-                return JsonResponse({"status": "success", "survey_id": survey.id})
+                CHImport.objects.filter(id=int(decrypted_id)).update(survey=1)
+
+                # Render HTML for PDF
+                html_string = render_to_string('permit_pdf/permit_to_import.html', {
+                    'survey': survey,
+                    'application': application,
+                })
+
+                # Ensure output directory exists
+                output_dir = os.path.join(settings.MEDIA_ROOT, 'chainsaw/pic')
+                os.makedirs(output_dir, exist_ok=True)
+
+                # Define filename and path
+                pdf_filename = f"survey_{survey.id}.pdf"
+                pdf_path = os.path.join(output_dir, pdf_filename)
+
+                # Generate PDF
+                HTML(string=html_string).write_pdf(pdf_path)
+
+                # Return JSON with link to PDF
+                return JsonResponse({
+                    "status": "success",
+                    "survey_id": survey.id,
+                    "pdf_url": f"{settings.MEDIA_URL}surveys/{pdf_filename}"
+                })
 
             return JsonResponse({"status": "error", "message": "Invalid request"})
-        
+
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    
+     
     
 def view_css(request, permitType, app_id):
     try:
