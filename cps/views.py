@@ -177,7 +177,6 @@ def edit_application(request, permitType, app_id):
                     brand_id = request.POST.get('brand')
                    
                     chimport = get_object_or_404(CHImport, id=decrypted_id)
-                    brand_name = request.POST.get('brand')
                     brand = ChainsawBrand.objects.get(id=brand_id)
                 
                     chimport.brand = brand
