@@ -26,7 +26,7 @@
       text-align: center;
       font-weight: bold;
       font-size: 13pt;
-      margin: 20px 0 20px;
+      margin-bottom: 20px;
       text-decoration: underline;
     }
 
@@ -78,6 +78,25 @@
     .conditions {
       font-size: 8pt;
     }
+
+    .permit-info-table {
+      float: right;
+      font-size: 10pt;
+      text-align: left;
+      border-collapse: collapse;
+      line-height: 1.1;
+      margin-left: 20px;
+      margin-bottom: 20px;
+    }
+
+    .permit-info-table td {
+      padding: 0;
+      vertical-align: top;
+    }
+
+    .permit-info-table td:first-child {
+      padding-right: 15px; /* Add spacing between label and data */
+    }
   </style>
 </head>
 {% load static %}
@@ -87,9 +106,22 @@
     <img src="{{ logo_url }}" width="150" height="150" alt="Logo">
   </div>
 
-  <div class="section">
-    <p><strong>Chainsaw Permit No: <span><u>{{ reference_no }}</u></span></strong></p>
-  </div>
+  <table class="permit-info-table">
+    <tr>
+      <td><strong>Permit No:</strong></td>
+      <td><b>{{ reference_no }}</b></td>
+    </tr>
+    <tr>
+      <td><strong>Issued on:</strong></td>
+      <td>{{ date_approved }}</td>
+    </tr>
+    <tr>
+      <td><strong>Expiry Date:</strong></td>
+      <td>{{ date_expired }}</td>
+    </tr>
+  </table>
+  
+  <div style="clear: both;"></div>
 
   <div class="title">PERMIT TO IMPORT CHAINSAW</div>
 
@@ -132,11 +164,6 @@
       </tr>
       
     </table>
-  </div>
-
-  <div class="section conditions">
-    <p>Issued on <strong><u>{{ date_approved }}</u></strong> at <u>Quezon City</u></p>
-    <p>Expiry Date: <strong><u>{{ date_expired }}</u></strong></p>
   </div>
 
   <div class="signature">
