@@ -174,12 +174,13 @@ def edit_application(request, permitType, app_id):
         if request.method == 'POST':
             try:
                 with transaction.atomic():
-                    brand_name = request.POST.get('brand')
+                    brand_id = request.POST.get('brand')
                    
                     chimport = get_object_or_404(CHImport, id=decrypted_id)
-                    brand, _ = ChainsawBrand.objects.get_or_create(name=brand_name)
+                    brand_name = request.POST.get('brand')
+                    brand = ChainsawBrand.objects.get(id=brand_id)
                 
-                    chimport.brand_id = brand.id
+                    chimport.brand = brand
                     chimport.origin = request.POST.get('origin')
                     chimport.purpose = request.POST.get('purpose')
                     chimport.estab_id_dniis = request.POST.get('estab_id_dniis')
