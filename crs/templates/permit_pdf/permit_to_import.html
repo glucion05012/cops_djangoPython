@@ -103,6 +103,28 @@
     .permit-info-table td:first-child {
       padding-right: 15px; /* Add spacing between label and data */
     }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 30px;
+      font-size: 10pt;
+    }
+
+    .footer-text {
+      flex: 1;
+      text-align: center;
+    }
+
+    .footer-text p {
+      margin: 0; /* removes spacing between lines */
+      line-height: 1.2; /* optional: tighter line spacing */
+    }
+
+    .footer-logo img {
+      display: block;
+    }
   </style>
 </head>
 {% load static %}
@@ -208,10 +230,15 @@
     </ol>
   </div>
 
-  <div class="footer">
-    <p><em>Nurturing Cities for a Sustainable Future</em></p>
-    <p>National Ecology Center, East Ave., Diliman, Quezon City</p>
-    <p>Contact: 09399253269 • Email: denrncrcord@gmail.com • @DENR.NCR.Official</p>
+  <div class="footer-row">
+    <div class="footer-text">
+      <p><em>Nurturing Cities for a Sustainable Future</em></p>
+      <p>National Ecology Center, East Ave., Diliman, Quezon City</p>
+      <p>Contact: 09399253269 • Email: denrncrcord@gmail.com • @DENR.NCR.Official</p>
+    </div>
+    <div class="footer-logo">
+      <img src="{{ iso_url }}" alt="ISO Logo" style="width: 70px; height: 90px;">
+    </div>
   </div>
 
 </body>

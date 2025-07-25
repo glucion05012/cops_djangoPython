@@ -2381,7 +2381,13 @@ def preview_survey_pdf(request, app_id):
     with open(image_path, 'rb') as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
         logo_data_url = f"data:image/png;base64,{encoded_image}"
-                
+      
+    # ISO image
+    iso_path = os.path.join(settings.BASE_DIR, 'crs', 'static', 'images', 'iso.png')
+    with open(iso_path, 'rb') as iso_file:
+        iso_encoded = base64.b64encode(iso_file.read()).decode('utf-8')
+        iso_logo_url = f"data:image/png;base64,{iso_encoded}"
+              
     # Sum total quantity from related CPS_CHImportModelDetail
     total_quantity = CHImportModelDetail.objects.filter(application_id=chimport.id).aggregate(
         total=Sum('quantity')
@@ -2409,6 +2415,7 @@ def preview_survey_pdf(request, app_id):
         'date_approved': date_approved,
         'date_expired': date_expired,
         'logo_url': logo_data_url,
+        'iso_url': iso_logo_url,
     })
     
 def save_survey(request, app_id):
@@ -2449,6 +2456,12 @@ def save_survey(request, app_id):
                     encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
                     logo_data_url = f"data:image/png;base64,{encoded_image}"
 
+                # ISO image
+                iso_path = os.path.join(settings.BASE_DIR, 'crs', 'static', 'images', 'iso.png')
+                with open(iso_path, 'rb') as iso_file:
+                    iso_encoded = base64.b64encode(iso_file.read()).decode('utf-8')
+                    iso_logo_url = f"data:image/png;base64,{iso_encoded}"
+                    
                 total_quantity = CHImportModelDetail.objects.filter(application_id=chimport.id).aggregate(
                     total=Sum('quantity')
                 )['total'] or 0
@@ -2476,6 +2489,7 @@ def save_survey(request, app_id):
                     'date_approved': date_approved,
                     'date_expired': date_expired,
                     'logo_url': logo_data_url,
+                    'iso_url': iso_logo_url,
                 })
 
                 # Create output folder
