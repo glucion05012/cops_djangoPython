@@ -10,7 +10,8 @@ from .models import (
     CHImport,
     CHImportModelDetail,
     CHImportAttachment,
-    CHApplication
+    CHApplication,
+    ChainsawModel
 )
 import traceback
 from django.utils import timezone
@@ -46,6 +47,12 @@ def index(request):
         'brands': brands,
         'business_list': business_list,
     })
+    
+def get_chainsaw_models(request):
+    brand_id = request.GET.get('brand_id')
+    models_qs = ChainsawModel.objects.filter(brand_id=brand_id).order_by('model_name')
+    models = [{'id': m.id, 'name': m.model_name} for m in models_qs]
+    return JsonResponse({'models': models})
 
 
 def submit_import(request):
@@ -55,10 +62,10 @@ def submit_import(request):
                 # Extract form data
                 model_list = request.POST.getlist('model[]')
                 quantity_list = request.POST.getlist('quantity[]')
-                brand_name = request.POST.get('brand')
+                brand_id = request.POST.get('brand')
 
-                # Create or get brand
-                brand, _ = ChainsawBrand.objects.get_or_create(name=brand_name)
+                # get brand
+                brand = ChainsawBrand.objects.get(id=brand_id)
 
                 # Create CHImport record
                 with connections['default'].cursor() as cursor:

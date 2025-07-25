@@ -62,6 +62,7 @@ urlpatterns = [
     #import
     path('cps/apply', cps_views.index, name='import_apply'),
     path('submit-import/', cps_views.submit_import, name='submit_import'),
+    path('ajax/get-chainsaw-models/', cps_views.get_chainsaw_models, name='get_chainsaw_models'),
     #upload poof of payment
     path('upload_proof/', views.upload_proof, name='upload_proof'),
     path('confirm_payment_action/', views.confirm_payment_action, name='confirm_payment_action'),

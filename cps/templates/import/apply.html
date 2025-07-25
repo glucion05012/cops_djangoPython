@@ -132,10 +132,10 @@
                         <!-- Brand -->
                         <div class="mb-4">
                             <label for="brand" class="form-label">Brand <span class="text-danger">*</span></label>
-                            <select id="brand" name="brand" class="form-select">
+                            <select id="brand" name="brand" class="form-select" required>
                                 <option value="" disabled selected>-- Select Brand --</option>
                                 {% for brand in brands %}
-                                    <option value="{{ brand.name }}">{{ brand.name }}</option>
+                                    <option value="{{ brand.id }}">{{ brand.name }}</option>
                                 {% endfor %}
                             </select>
                             <div class="invalid-feedback">Please select a brand.</div>
@@ -148,10 +148,12 @@
                             <div id="model-quantity-list">
                                 <div class="row g-2 mb-2 model-quantity-item">
                                     <div class="col-md-6">
-                                        <input type="text" name="model[]" class="form-control" placeholder="Model">
+                                        <select name="model[]" class="form-select model-dropdown form-control" required>
+                                            <option value="" disabled selected>-- Select Model --</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-4">
-                                        <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1">
+                                        <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1" required>
                                     </div>
                                     <div class="col-md-2">
                                         <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
@@ -160,6 +162,7 @@
                             </div>
                             <button type="button" id="add-row" class="btn btn-outline-secondary btn-sm mt-2">+ Add More</button>
                         </div>
+
 
                         <!-- Origin/Supplier -->
                         <div class="mb-4">
@@ -219,7 +222,56 @@
 
 <!-- JavaScript for dynamic Model/Quantity rows -->
 <script>
-document.getElementById('add-row').addEventListener('click', function () {
+$(document).ready(function () {
+    function loadModels(brandId, dropdown) {
+        if (!brandId) return;
+
+        $.ajax({
+            url: '{% url "get_chainsaw_models" %}',
+            data: { brand_id: brandId },
+            success: function (data) {
+                dropdown.empty().append('<option disabled selected>-- Select Model --</option>');
+                data.models.forEach(function (model) {
+                    dropdown.append('<option value="' + model.name + '">' + model.name + '</option>');
+                });
+            }
+        });
+    }
+
+    $('#brand').on('change', function () {
+        const brandId = $(this).val();
+        $('#model-quantity-list .model-dropdown').each(function () {
+            loadModels(brandId, $(this));
+        });
+    });
+
+    $('#add-row').on('click', function () {
+        const newRow = `
+            <div class="row g-2 mb-2 model-quantity-item">
+                <div class="col-md-6">
+                    <select name="model[]" class="form-select model-dropdown form-control" required>
+                        <option value="" disabled selected>-- Select Model --</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
+                </div>
+            </div>`;
+        $('#model-quantity-list').append(newRow);
+
+        const brandId = $('#brand').val();
+        loadModels(brandId, $('#model-quantity-list .model-dropdown').last());
+    });
+
+    $(document).on('click', '.remove-row', function () {
+        $(this).closest('.model-quantity-item').remove();
+    });
+});
+
+{% comment %} document.getElementById('add-row').addEventListener('click', function () {
     const container = document.getElementById('model-quantity-list');
     const newRow = document.createElement('div');
     newRow.className = 'row g-2 mb-2 model-quantity-item';
@@ -235,13 +287,13 @@ document.getElementById('add-row').addEventListener('click', function () {
         </div>
     `;
     container.appendChild(newRow);
-});
+}); {% endcomment %}
 
-document.addEventListener('click', function (e) {
+{% comment %} document.addEventListener('click', function (e) {
     if (e.target.classList.contains('remove-row')) {
         e.target.closest('.model-quantity-item').remove();
     }
-});
+}); {% endcomment %}
 
 $(document).on('submit', '#chainsawImportForm', function (e) {
     e.preventDefault();
@@ -309,21 +361,26 @@ $(document).on('submit', '#chainsawImportForm', function (e) {
 
     // Validate Model and Quantity rows
     $('#model-quantity-list .model-quantity-item').each(function () {
-        const model = $(this).find('input[name="model[]"]');
+        const model = $(this).find('select[name="model[]"]'); // changed from input to select
         const qty = $(this).find('input[name="quantity[]"]');
 
-        if (!model.val().trim()) {
+        if (!model.val()) {
             model.addClass('is-invalid');
             hasError = true;
             firstErrorTab = 'form-section';
+        } else {
+            model.removeClass('is-invalid');
         }
 
         if (!qty.val() || parseInt(qty.val()) < 1) {
             qty.addClass('is-invalid');
             hasError = true;
             firstErrorTab = 'form-section';
+        } else {
+            qty.removeClass('is-invalid');
         }
     });
+
 
     // Validate file inputs
     $('#attachments-section input[type="file"]').each(function () {

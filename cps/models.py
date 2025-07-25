@@ -7,6 +7,16 @@ class ChainsawBrand(models.Model):
     def __str__(self):
         return self.name
 
+class ChainsawModel(models.Model):
+    brand = models.ForeignKey(ChainsawBrand, on_delete=models.CASCADE, related_name='models')
+    model_name = models.CharField(max_length=100)
+    description = models.CharField(max_length=500)
+
+    class Meta:
+        unique_together = ('brand', 'model_name')  # optional: to prevent duplicate model names for the same brand
+
+    def __str__(self):
+        return f"{self.brand.name} - {self.model_name}"
 
 class CHImport(models.Model):
     PURPOSE_CHOICES = [

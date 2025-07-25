@@ -465,10 +465,38 @@
                                 <button class="btn btn-sm btn-info history-btn" title="View History" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                     <i class="fas fa-list"></i>
                                 </button>
-                                <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="view_only" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                    <i class="fa-solid fa-file"></i>
-                                </button>
                             `;
+
+                            if (row.permit_type_short === "PIC" && row.inspection_exists) {
+                                viewBtn += `
+                                    <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report"
+                                            data-btntype="view_only" data-appid="${row.app_id}" data-crsid="${row.crs_id}"
+                                            data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fa-solid fa-file"></i>
+                                    </button>
+                                `;
+                            }
+
+                            if (row.permit_type_short === "PIC" && row.curr_assign === 'fus_evaluator') {
+                                viewBtn += `
+                                    <button class="btn btn-sm btn-warning process-btn" title="Process Application" 
+                                        data-appid="${row.app_id}" data-crsid="${row.crs_id}" 
+                                        data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-file-circle-check"></i>
+                                    </button>
+                                `;
+                            }
+
+                            if (row.permit_type_short === "PIC" && row.curr_assign === 'fus_sc') {
+                                viewBtn += `
+                                    <button class="btn btn-sm btn-warning assign-btn" title="Assign Evaluator" 
+                                        data-appid="${row.app_id}" data-paymentid="${row.payment_id}" 
+                                        data-crsid="${row.crs_id}" data-reference="${row.reference_no}" 
+                                        data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-users"></i>
+                                    </button>
+                                `;
+                            }
 
                         if (row.status === 'approved') {
                             viewBtn += `
@@ -502,12 +530,6 @@
                                             </button>
                                         `;
                                         }
-                                    } else {
-                                        processBtn = `
-                                            <button class="btn btn-sm btn-success process-btn" title="Process Application" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                                <i class="fas fa-file-circle-check"></i>
-                                            </button>
-                                        `;
                                     }
                                     
                                 }
