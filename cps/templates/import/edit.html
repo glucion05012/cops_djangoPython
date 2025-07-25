@@ -188,7 +188,7 @@
                             <select id="brand" name="brand" class="form-select">
                                 <option value="" disabled>-- Select Brand --</option>
                                 {% for brand in brands %}
-                                    <option value="{{ brand.name }}" {% if application.brand_id == brand.id %}selected{% endif %}>{{ brand.name }}</option>
+                                    <option value="{{ brand.id }}" {% if application.brand_id == brand.id %}selected{% endif %}>{{ brand.name }}</option>
                                 {% endfor %}
                             </select>
                             <div class="invalid-feedback">Please select a brand.</div>
@@ -352,6 +352,67 @@
 </div>
 
 <script>
+    $(document).ready(function () {
+        function loadModels(brandId, dropdown) {
+            if (!brandId) return;
+
+            $.ajax({
+                url: '{% url "get_chainsaw_models" %}',
+                data: { brand_id: brandId },
+                success: function (data) {
+                    dropdown.empty().append('<option disabled selected>-- Select Model --</option>');
+                    data.models.forEach(function (model) {
+                        dropdown.append('<option value="' + model.name + '">' + model.name + '</option>');
+                    });
+                }
+            });
+        }
+
+        // On brand change
+        $('#brand').on('change', function () {
+            const brandName = $(this).val();
+            $('#model-quantity-list .model-dropdown').each(function () {
+                loadModels(brandName, $(this)
+                );
+            });
+        });
+
+        // On add new row
+        $('#add-row').on('click', function () {
+            const newRow = `
+                <div class="row g-2 mb-2 model-quantity-item">
+                    <div class="col-md-6">
+                        <select name="model[]" class="form-select model-dropdown" required>
+                            <option value="" disabled selected>-- Select Model --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="number" name="quantity[]" class="form-control" placeholder="Quantity" min="1" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-danger w-100 remove-row">Remove</button>
+                    </div>
+                </div>`;
+            $('#model-quantity-list').append(newRow);
+
+            const brandName = $('#brand').val();
+            const newDropdown = $('#model-quantity-list .model-dropdown').last();
+            loadModels(brandName, newDropdown, '');
+        });
+
+        // Remove row
+        $(document).on('click', '.remove-row', function () {
+            $(this).closest('.model-quantity-item').remove();
+        });
+
+        // ✅ Initial load (edit page): load models into each dropdown
+        const initialBrand = $('#brand').val();
+        $('#model-quantity-list .model-quantity-item').each(function () {
+            const dropdown = $(this).find('.model-dropdown');
+            const selectedModel = dropdown.data('selected'); // from data-selected="{{ item.model }}"
+            loadModels(initialBrand, dropdown, selectedModel);
+        });
+    });
 
     document.getElementById('add-row').addEventListener('click', function () {
         const container = document.getElementById('model-quantity-list');
