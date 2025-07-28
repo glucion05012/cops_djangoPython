@@ -2374,7 +2374,7 @@ def css(request, permitType, app_id):
 
     return render(request, 'css.html', context)
 
-def preview_survey_pdf(request, app_id):
+def permit_checker(request, app_id):
     chimport = get_object_or_404(CHImport, id=app_id)
     
     image_path = os.path.join(settings.BASE_DIR, 'crs', 'static', 'images', 'denr_header.png')
@@ -2402,7 +2402,7 @@ def preview_survey_pdf(request, app_id):
     date_approved = chimport.date_approved
     date_expired = date_approved.replace(year=date_approved.year + 1) if date_approved else None
     
-    return render(request, 'permit_pdf/permit_to_import.html', {
+    return render(request, 'permit_checker.html', {
         'reference_no': chimport.reference_no,
         'estab_name': chimport.estab_name.upper(),
         'estab_address': chimport.estab_address,

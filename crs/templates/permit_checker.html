@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Permit to Import Chainsaw - Preview</title>
+  <style>
+
+    body {
+        font-family: "Times New Roman", serif;
+        font-size: 10pt;
+        margin: 0;
+        padding: 30px;
+        background-color: #f0f0f0; /* Light gray background to simulate paper around the permit */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .permit-box {
+        width: 700px;
+        background-color: white;
+        border: 2px solid black;
+        padding: 40px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        box-sizing: border-box;
+    }
+
+    .header {
+      text-align: center;
+      padding-bottom: 10px;
+    }
+
+    .header img {
+      height: 130px;
+      width: 100%;
+    }
+
+    .title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 13pt;
+      margin-bottom: 20px;
+      text-decoration: underline;
+    }
+
+    .sub-title {
+      font-size: 10pt;
+      margin-bottom: 20px;
+      text-align: justify;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .label {
+      font-weight: bold;
+      width: 160px;
+      display: inline-block;
+      vertical-align: top;
+    }
+
+    .content {
+      display: inline-block;
+      width: calc(100% - 180px);
+    }
+
+    .table-info {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .table-info th, .table-info td {
+      border: 1px solid #444;
+      padding: 6px;
+      text-align: left;
+    }
+
+    .signature {
+      margin-top: 40px;
+      width: 250px;
+      float: right;
+      text-align: center;
+    }
+
+    .signature .approved-label {
+      text-align: left;
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 10pt;
+      text-align: center;
+    }
+
+    .conditions {
+      font-size: 8pt;
+    }
+
+    .permit-info-table {
+      float: right;
+      font-size: 10pt;
+      text-align: left;
+      border-collapse: collapse;
+      line-height: 1.1;
+      margin-left: 20px;
+      margin-bottom: 20px;
+    }
+
+    .permit-info-table td {
+      padding: 0;
+      vertical-align: top;
+    }
+
+    .permit-info-table td:first-child {
+      padding-right: 15px; /* Add spacing between label and data */
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 30px;
+      font-size: 10pt;
+    }
+
+    .footer-text {
+      flex: 1;
+      text-align: center;
+    }
+
+    .footer-text p {
+      margin: 0; /* removes spacing between lines */
+      line-height: 1.2; /* optional: tighter line spacing */
+    }
+
+    .footer-logo img {
+      display: block;
+    }
+  </style>
+</head>
+{% load static %}
+<body>
+    <div class="permit-box">    
+        <div class="header">
+            {% comment %} <img src="{% static 'images/denr_header.png' %}" width='150px' height='150px' alt="Logo" class="brand-image " /> {% endcomment %}
+            <img src="{{ logo_url }}" width="150" height="150" alt="Logo">
+        </div>
+
+        <table class="permit-info-table">
+            <tr>
+            <td><strong>Permit No:</strong></td>
+            <td><b>{{ reference_no }}</b></td>
+            </tr>
+            <tr>
+            <td><strong>Issued on:</strong></td>
+            <td>{{ date_approved }}</td>
+            </tr>
+            <tr>
+            <td><strong>Expiry Date:</strong></td>
+            <td>{{ date_expired }}</td>
+            </tr>
+        </table>
+        
+        <div style="clear: both;"></div>
+
+        <div class="title">PERMIT TO IMPORT CHAINSAW</div>
+
+        <div class="sub-title">
+            Pursuant to the provisions of DENR Administrative Order No. 2003-24, Series of 2003 
+            which provides the “The Implementing Guidelines of the Chainsaw Act of 2002 (R.A No. 9175)” 
+            entitled <strong>“AN ACT REGULATING THE POSSESSION OWNERSHIP, SALE, 
+            IMPORTATION AND USE OF CHAINSAWS PENALIZING VIOLATIONS THEREOF AND FOR OTHER RELATED PURPOSES”</strong> this <strong><u>PERMIT TO IMPORT</u></strong> 
+            is hereby issued to:
+        </div>
+
+        <div class="section conditions">
+            <div><span class="label">Name:</span><span class="content"><b><u>{{ estab_name }}</u></b></span></div>
+            <div><span class="label">Office Address:</span><span class="content"><u>{{ estab_address }}</u></span></div>
+        </div>
+
+        <div class="section conditions">
+            <p>The information and descriptions of the chainsasws subject of this permit are hereunder enumerated:</p>
+            <table class="table-info">
+                <colgroup>
+                    <col style="width: 200px;">
+                    <col style="width: auto;">
+                </colgroup>
+            <tr><th>Quantity</th><td>{{ quantity_in_words }} ({{ total_quantity }}) units</td></tr>
+            <tr><th>Brand</th><td>{{ brand_name }}</td></tr>
+            <tr><th>Model</th>
+                <td>
+                    {% for item in model_details %}
+                        {{ item.model }} = {{ item.quantity }} unit{{ item.quantity|pluralize }}<br>
+                    {% endfor %}
+                </td>
+            </tr>
+            <tr><th>Source of Chainsaw / Supplier</th>
+                <td>
+                {{ source }}<br>
+                </td>
+            </tr>
+            <tr><th>Purpose</th>
+                <td>{{ purpose }}</td>
+            </tr>
+            
+            </table>
+        </div>
+
+        <div class="signature">
+            <p class="approved-label">APPROVED:</p>
+            <br>
+            <p><strong>ATTY. MICHAEL DRAKE P. MATIAS</strong><br>
+            Regional Executive Director</p>
+        </div>
+
+        <div style="clear: both;"></div>
+        
+        <div class="section conditions">
+            <p><strong>Condition/s:</strong></p>
+            <ol>
+                <li>
+                    To submit the following:
+                    <ul>
+                    <li>
+                        Copy of corresponding Import Entry Declaration (IED) of the shipments within five (5) days after delivery/arrival;
+                    </li>
+                    <li>
+                        List of the chainsaws with engine serial nos. within five (5) days upon arrival/release from the Bureau of Custom;
+                    </li>
+                    </ul>
+                </li>
+                <li>
+                    The imported chainsaws shall only be sold/disposed to buyers/purchasers with “Permit to Purchase” issued by DENR and/or shall be applied for Certificate of Registration;
+                </li>
+                <li>
+                    Prior to sale/disposition of the imported chainsaw, a Permit to Sell shall be secured from the nearest DENR Office;
+                </li>
+                <li>
+                    To submit quarterly report on the number of chainsaws purchased/imported with complete specification such as engine serial number and model.
+                </li>
+            </ol>
+        </div>
+
+        <div class="footer-row">
+            <div class="footer-text">
+            <p><em>Nurturing Cities for a Sustainable Future</em></p>
+            <p>National Ecology Center, East Ave., Diliman, Quezon City</p>
+            <p>Contact: 09399253269 • Email: denrncrrecords@gmail.com • @DENR.NCR.Official</p>
+            </div>
+            <div class="footer-logo">
+            <img src="{{ iso_url }}" alt="ISO Logo" style="width: 70px; height: 90px;">
+            </div>
+        </div>
+</div>
+</body>
+</html>
