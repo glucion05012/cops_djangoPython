@@ -2395,6 +2395,12 @@ def permit_checker(request, app_id):
     with open(iso_path, 'rb') as iso_file:
         iso_encoded = base64.b64encode(iso_file.read()).decode('utf-8')
         iso_logo_url = f"data:image/png;base64,{iso_encoded}"
+        
+    # RED image
+    red_path = os.path.join(settings.BASE_DIR, 'crs', 'static', 'images', 'red.png')
+    with open(red_path, 'rb') as red_file:
+        red_encoded = base64.b64encode(red_file.read()).decode('utf-8')
+        red_logo_url = f"data:image/png;base64,{red_encoded}"
               
     # Sum total quantity from related CPS_CHImportModelDetail
     total_quantity = CHImportModelDetail.objects.filter(application_id=chimport.id).aggregate(
@@ -2433,6 +2439,7 @@ def permit_checker(request, app_id):
         'logo_url': logo_data_url,
         'iso_url': iso_logo_url,
         "qr_code_base64": qr_b64,
+        'red_logo_url': red_logo_url,
     })
     
 def save_survey(request, app_id):
@@ -2479,6 +2486,12 @@ def save_survey(request, app_id):
                     iso_encoded = base64.b64encode(iso_file.read()).decode('utf-8')
                     iso_logo_url = f"data:image/png;base64,{iso_encoded}"
                     
+                # RED image
+                red_path = os.path.join(settings.BASE_DIR, 'crs', 'static', 'images', 'red.png')
+                with open(red_path, 'rb') as red_file:
+                    red_encoded = base64.b64encode(red_file.read()).decode('utf-8')
+                    red_logo_url = f"data:image/png;base64,{red_encoded}"
+                    
                 total_quantity = CHImportModelDetail.objects.filter(application_id=chimport.id).aggregate(
                     total=Sum('quantity')
                 )['total'] or 0
@@ -2516,6 +2529,7 @@ def save_survey(request, app_id):
                     'logo_url': logo_data_url,
                     'iso_url': iso_logo_url,
                     "qr_code_base64": qr_b64,
+                    'red_logo_url': red_logo_url,
                 })
 
                 # Create output folder
