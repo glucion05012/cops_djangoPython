@@ -131,6 +131,27 @@
     .footer-logo img {
       display: block;
     }
+
+    .approval-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-top: 40px;
+    }
+
+    .qr img {
+        width: 120px;
+    }
+
+    .signature {
+        text-align: left;
+        font-size: 10pt;
+    }
+
+    .approved-label {
+        font-weight: bold;
+        text-decoration: underline;
+    }
   </style>
 </head>
 {% load static %}
@@ -200,11 +221,17 @@
     </table>
   </div>
 
-  <div class="signature">
-    <p class="approved-label">APPROVED:</p>
-    <br>
-    <p><strong>ATTY. MICHAEL DRAKE P. MATIAS</strong><br>
-    Regional Executive Director</p>
+  <div class="approval-section">
+      <div class="qr">
+          <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR Code">
+      </div>
+
+      <div class="signature">
+          <p class="approved-label">APPROVED:</p>
+          <br>
+          <p><strong>ATTY. MICHAEL DRAKE P. MATIAS</strong><br>
+          Regional Executive Director</p>
+      </div>
   </div>
 
   <div style="clear: both;"></div>

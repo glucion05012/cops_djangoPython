@@ -36,6 +36,9 @@ from cps.models import (
     ChainsawBrand
 )
 
+import qrcode
+from io import BytesIO
+
 from django.template.loader import render_to_string
 from weasyprint import HTML
 
@@ -2407,6 +2410,14 @@ def permit_checker(request, app_id):
     date_approved = chimport.date_approved
     date_expired = date_approved.replace(year=date_approved.year + 1) if date_approved else None
     
+    # QR Code
+    relative_url = f"/permit/{app_id}/checker/"
+    full_url = request.build_absolute_uri(relative_url)
+    qr = qrcode.make(full_url)
+    buffered = BytesIO()
+    qr.save(buffered, format="PNG")
+    qr_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    
     return render(request, 'permit_checker.html', {
         'reference_no': chimport.reference_no,
         'estab_name': chimport.estab_name.upper(),
@@ -2421,6 +2432,7 @@ def permit_checker(request, app_id):
         'date_expired': date_expired,
         'logo_url': logo_data_url,
         'iso_url': iso_logo_url,
+        "qr_code_base64": qr_b64,
     })
     
 def save_survey(request, app_id):
@@ -2480,6 +2492,14 @@ def save_survey(request, app_id):
                 date_approved = chimport.date_approved
                 date_expired = date_approved.replace(year=date_approved.year + 1) if date_approved else None
 
+                # QR Code
+                relative_url = f"/permit/{app_id}/checker/"
+                full_url = request.build_absolute_uri(relative_url)
+                qr = qrcode.make(full_url)
+                buffered = BytesIO()
+                qr.save(buffered, format="PNG")
+                qr_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+                
                 # Render PDF HTML
                 html_string = render_to_string('permit_pdf/permit_to_import.html', {
                     'reference_no': chimport.reference_no,
@@ -2495,6 +2515,7 @@ def save_survey(request, app_id):
                     'date_expired': date_expired,
                     'logo_url': logo_data_url,
                     'iso_url': iso_logo_url,
+                    "qr_code_base64": qr_b64,
                 })
 
                 # Create output folder
