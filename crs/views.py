@@ -2381,7 +2381,7 @@ def permit_checker(request, app_id):
     try:
         decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
     except Exception:
-        return HttpResponseBadRequest("Invalid or tampered ID")
+        return HttpResponseBadRequest("No Permit Found!")
     
     chimport = get_object_or_404(CHImport, id=decrypted_id)
     
