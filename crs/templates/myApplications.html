@@ -314,6 +314,8 @@
                         "render": function(data, type, row) {
                             if (row.survey != 1 && row.status === 'approved') {
                                 return 'Please Complete Client Satisfaction Survey';
+                            }else if (row.survey == 1 && row.status === 'approved') {
+                                return 'Download your permit.';
                             }else{
                                 if (!data) return '';
                                 return data.charAt(0).toUpperCase() + data.slice(1);
@@ -349,6 +351,19 @@
                                 <button class="btn btn-sm btn-warning css-btn" data-appid="${row.app_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                         <i class="fa-solid fa-square-poll-vertical"></i>
                                     </button>
+                                `;
+                            }else if (row.survey == 1 && row.status === 'approved') {
+                                const filename = `DENR-NCR-${row.reference_no}.pdf`;
+                                const filePath = `/media/chainsaw/pic/${filename}`;
+
+                                buttons += `
+                                <a href="${filePath}" 
+                                    download="${filename}" 
+                                    class="btn btn-sm btn-success css-btn" 
+                                    title="Download Permit"
+                                    onclick="event.stopPropagation();">
+                                        <i class="fa-solid fa-file-arrow-down"></i>
+                                </a>
                                 `;
                             }
 
