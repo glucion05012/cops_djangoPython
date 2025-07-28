@@ -2375,7 +2375,12 @@ def css(request, permitType, app_id):
     return render(request, 'css.html', context)
 
 def permit_checker(request, app_id):
-    chimport = get_object_or_404(CHImport, id=app_id)
+    try:
+        decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
+    except Exception:
+        return HttpResponseBadRequest("Invalid or tampered ID")
+    
+    chimport = get_object_or_404(CHImport, id=decrypted_id)
     
     image_path = os.path.join(settings.BASE_DIR, 'crs', 'static', 'images', 'denr_header.png')
     with open(image_path, 'rb') as image_file:

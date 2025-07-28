@@ -80,7 +80,7 @@ urlpatterns = [
     path('save-ir/', views.save_ir, name='save_ir'),
     
     
-    path('permit/<str:app_id>/preview/', views.permit_checker, name='permit_checker'),
+    path('permit/<str:app_id>/checker/', views.permit_checker, name='permit_checker'),
 
 ]
 
