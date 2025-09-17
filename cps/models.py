@@ -51,13 +51,17 @@ class CHImport(models.Model):
     survey = models.TextField(blank=True, null=True)
     arrival_date = models.DateField(blank=True, null=True)
     is_existing_permittee = models.BooleanField(default=False)
-    warehouse_city = models.TextField(blank=True, null=True)
-    warehouse_address = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Import #{self.id} - {self.brand.name}"
 
+class CHImportWarehouse(models.Model):
+    application = models.ForeignKey(CHImport, on_delete=models.CASCADE, related_name='warehouses')
+    city = models.CharField(max_length=100)
+    address = models.TextField()
 
+    def __str__(self):
+        return f"{self.city} - {self.address}"
 
 class CHImportModelDetail(models.Model):
     application = models.ForeignKey(CHImport, on_delete=models.CASCADE, related_name='model_details')
@@ -80,6 +84,7 @@ class CHImportAttachment(models.Model):
     name = models.CharField(max_length=255)
     file_location = models.CharField(max_length=500)
     date_uploaded = models.DateTimeField(default=timezone.now)
+    is_old = models.BooleanField(default=False)
     type = models.CharField(max_length=20, choices=ATTACHMENT_TYPES)
 
     def __str__(self):
@@ -129,6 +134,8 @@ class ChPayment(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     fund_cluster = models.CharField(max_length=100)
     type = models.CharField(max_length=50)
+    remarks = models.TextField(blank=True, null=True)
+    is_old = models.BooleanField(default=False)
     status = models.CharField(max_length=50, help_text="0 = Unpaid, 1 = Paid, 2 = Validated")
 
     class Meta:
@@ -143,6 +150,7 @@ class ProofOfPayment(models.Model):
     payment = models.ForeignKey(ChPayment, on_delete=models.CASCADE, related_name='proofs')
     file_name = models.CharField(max_length=255)
     file_location = models.CharField(max_length=500)
+    is_old = models.BooleanField(default=False)
     date_uploaded = models.DateTimeField(auto_now_add=True)
 
     class Meta:

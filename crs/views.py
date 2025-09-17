@@ -33,7 +33,8 @@ from cps.models import (
     InspectionAttachment,
     Survey,
     CHImportModelDetail,
-    ChainsawBrand
+    ChainsawBrand,
+    CHImportWarehouse
 )
 
 import qrcode
@@ -156,7 +157,7 @@ def create_account(request):
     if id_front:
         random_digits = generate_random_digits()
         new_file_name = timezone.now().strftime('%Y%m%d_%H%M%S') + random_digits + '.' + id_front.name.split('.')[-1]
-        upload_dir = os.path.join(settings.BASE_DIR, 'media', 'attachments')
+        upload_dir = os.path.join(settings.MEDIA_ROOT, 'crs', 'client_photos')
         os.makedirs(upload_dir, exist_ok=True)
         target_file_path_front = os.path.join(upload_dir, new_file_name)
         
@@ -177,7 +178,7 @@ def create_account(request):
     if id_back:
         random_digits = generate_random_digits()
         new_file_name = timezone.now().strftime('%Y%m%d_%H%M%S') + random_digits + '.' + id_back.name.split('.')[-1]
-        upload_dir = os.path.join(settings.BASE_DIR, 'media', 'attachments')
+        upload_dir = os.path.join(settings.MEDIA_ROOT, 'crs', 'client_photos')
         os.makedirs(upload_dir, exist_ok=True)
         target_file_path_back = os.path.join(upload_dir, new_file_name)
         
@@ -289,6 +290,7 @@ def login(request):
                     request.session['lpdd_dc_id'] = 550
                     request.session['ts_id'] = 1400
                     request.session['red_id'] = 1465
+                    request.session['cashier'] = 1291
                     
                 
                     if not user:
@@ -509,7 +511,7 @@ def application_list_json(request):
         for row in cursor.fetchall():
             app_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, client_notes, permit_type, paid_status = row
             data.append({
-                'app_id' : app_id,
+                'app_id' : encrypt_id(app_id),
                 'permit_type_short': permit_type_short,
                 'permit_type': {
                     'tcp': 'Tree Cutting Permit',
@@ -565,24 +567,25 @@ def application_list_json(request):
                     ELSE 'Pending'
                 END AS client_remarks,
                 c.client_notes,
+                c.client_status,
                 p.status AS paid_status,
                 a.survey
             FROM cps_chimport a
             LEFT JOIN (
-                SELECT app_id, remarks, forwarded_to_id, notes AS client_notes
+                SELECT app_id, remarks, forwarded_to_id, notes AS client_notes, status as client_status
                 FROM ch_application
                 WHERE id IN (
                     SELECT MAX(id) FROM ch_application GROUP BY app_id
                 )
             ) c ON a.id = c.app_id
-            LEFT JOIN ch_payment p ON a.id = p.app_id
+            LEFT JOIN ch_payment p ON a.id = p.app_id AND p.is_old = 0
             WHERE a.crs_id = %s
             {sql_filter}
             LIMIT %s OFFSET %s
         """, params + [length, start])
 
         for row in cursor.fetchall():
-            app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, client_notes, paid_status, survey = row
+            app_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, client_notes, client_status, paid_status, survey = row
             data.append({
                 'app_id': encrypt_id(app_id),  # Encrypt here
                 'permit_type_short': permit_type_short,
@@ -593,6 +596,7 @@ def application_list_json(request):
                 'status': status,
                 'client_remarks': client_remarks,
                 'client_notes': client_notes,
+                'client_status': client_status,
                 'paid_status': paid_status,
                 'survey': survey
             })
@@ -634,28 +638,30 @@ def get_application_details(request):
         # Query CHIMPORT table (default DB)
         with connections['default'].cursor() as cursor:
             cursor.execute("""
-                SELECT 
-                    'PIC' AS permit_type_short,
-                    'PIC' AS permit_type,
-                    a.*,
-                    b.name as brand_name,
-                    a.remarks AS client_remarks,
-                    c.op_id,
-                    c.id AS payment_id,
-                    c.amount,
-                    c.date_created AS op_date
-                FROM cps_chimport a
-                LEFT JOIN cps_chainsawbrand b ON a.brand_id = b.id
-                LEFT JOIN ch_payment c ON a.id = c.app_id
-                WHERE a.reference_no = %s
-            """, [reference_no])
+                            SELECT 
+                                'PIC' AS permit_type_short,
+                                'PIC' AS permit_type,
+                                a.*,
+                                b.name AS brand_name,
+                                a.remarks AS client_remarks,
+                                c.op_id,
+                                c.or_no,
+                                c.id AS payment_id,
+                                c.amount,
+                                c.date_created AS op_date,
+                                c.remarks AS payment_remarks
+                            FROM cps_chimport a
+                            LEFT JOIN cps_chainsawbrand b ON a.brand_id = b.id
+                            LEFT JOIN ch_payment c ON a.id = c.app_id AND c.is_old = 0
+                            WHERE a.reference_no = %s;
+                        """, [reference_no])
             row = cursor.fetchone()
             if row:
                 columns = [col[0] for col in cursor.description]
                 data = dict(zip(columns, row))
                 data['permit_type'] = 'Permit to Import Chainsaw'
-                
-                # 🔽 ADD: fetch model details
+
+                # 🔽 Model details
                 cursor.execute("""
                     SELECT model, quantity 
                     FROM cps_chimportmodeldetail 
@@ -664,13 +670,27 @@ def get_application_details(request):
                 model_rows = cursor.fetchall()
                 data['models'] = [{'model': r[0], 'quantity': r[1]} for r in model_rows]
                 
-        # Attachments
+                # Warehouses details
+                cursor.execute("""
+                    SELECT city, address
+                    FROM cps_chimportwarehouse
+                    WHERE application_id = %s
+                """, [data['id']])
+                warehouse_rows = cursor.fetchall()
+                data['warehouses'] = [{'city': r[0], 'address': r[1]} for r in warehouse_rows]
+
+        # Attachments from cps_chimportattachment
         with connections['default'].cursor() as cursor:
             cursor.execute("""
-                SELECT a.*
+                SELECT 
+                    a.name,             -- att[0]
+                    a.file_location,    -- att[1]
+                    a.type,             -- att[2]
+                    a.application_id,   -- att[3]
+                    a.is_old            -- att[4]
                 FROM cps_chimportattachment a
                 LEFT JOIN cps_chimport b ON a.application_id = b.id
-                WHERE reference_no = %s
+                WHERE b.reference_no = %s
             """, [reference_no])
             attachments = cursor.fetchall()
 
@@ -679,16 +699,39 @@ def get_application_details(request):
             'purchase_order': 'Purchase Order',
             'affidavit': 'Affidavit for Legal Purpose',
             'geotag_photo': 'Geotagged Photo',
-            # Add other mappings as needed
+            'proof_of_payment': 'Proof of Payment',
         }
-        
+    
+        # Convert to list of attachment dicts
         data['attachments'] = [
             {
-                'file_type': file_type_map.get(att[4], att[4]),
-                'file_name': att[1],
-                'file_url': settings.MEDIA_URL + att[2] + att[1],
+                'file_type': file_type_map.get(att[2], att[2]),
+                'file_name': (
+                    f"{att[0]} <span style='color:red;'>(old)</span>" if att[4] == 1 else att[0]
+                ),
+                'file_url': settings.MEDIA_URL + 'cps/media/' + os.path.join(att[1], att[0]).replace('\\', '/')
             } for att in attachments
         ]
+
+        # Proof of Payment from separate table — multiple files
+        application_id = attachments[0][3] if attachments else None
+        if application_id:
+            with connections['default'].cursor() as cursor:
+                cursor.execute("""
+                    SELECT file_name, file_location
+                    FROM ch_proof_of_payment
+                    WHERE app_id = %s
+                    ORDER BY id DESC
+                """, [application_id])
+                pop_rows = cursor.fetchall()
+                for pop_row in pop_rows:
+                    proof_attachment = {
+                        'file_type': f"Proof of Payment ({data.get('payment_remarks', '')})",
+                        'file_name': pop_row[0],
+                        'file_url': settings.MEDIA_URL + os.path.join(pop_row[1]).replace('\\', '/')
+                    }
+                    data['attachments'].append(proof_attachment)
+
         
     elif permit_type_short == 'tcp':
         # Default to TCP
@@ -757,13 +800,12 @@ def get_application_details(request):
             {
                 'file_type': file_type_map.get(att[5], att[5]),
                 'file_name': att[2],
-                'file_url': settings.MEDIA_URL + att[3] + att[2],
+                'file_url': settings.MEDIA_URL + 'tcp/attachments/' + f"{att[5]}/{att[1]}-{att[2]}"
             } for att in attachments
         ]
         
 
     if data is not None:
-        data['app_id'] = decrypted_id
         
         if permit_type_short == 'pic':
             with connections['default'].cursor() as cursor:
@@ -804,7 +846,7 @@ def get_application_details(request):
                 data['client_email'] = ''
                 data['client_name'] = ''
                 data['app_type'] = ''
-                    
+        
         return JsonResponse(data)
     else:
         return JsonResponse({'error': 'Application not found'}, status=404)
@@ -1279,7 +1321,7 @@ def application_list_json_emp(request):
 
             if search_value:
                 ch_filter = """
-                    WHERE
+                    AND
                         p.status = '1' AND (
                             LOWER(a.estab_name) LIKE %s OR
                             LOWER(a.reference_no) LIKE %s OR
@@ -1290,7 +1332,7 @@ def application_list_json_emp(request):
                 ch_params = [like_term, like_term, like_term]
             else:
                 ch_filter = """
-                    WHERE
+                    AND
                         p.status = '1'
                 """
                 
@@ -1305,22 +1347,25 @@ def application_list_json_emp(request):
                     a.date_applied,
                     a.status,
                     c.remarks AS client_remarks,
+                    c.notes AS client_notes,
                     a.remarks AS curr_assign,
-                    p.id AS payment_id
+                    p.id AS payment_id,
+                    a.action_officer_id
                 FROM cps_chimport a
                 LEFT JOIN (
-                    SELECT app_id, remarks, forwarded_to_id
+                    SELECT app_id, remarks, notes, forwarded_to_id
                     FROM ch_application
                     WHERE id IN (
                         SELECT MAX(id) FROM ch_application GROUP BY app_id
                     )
                 ) c ON a.id = c.app_id
                 LEFT JOIN ch_payment p ON a.id = p.app_id
+                where p.is_old = 0
                 {ch_filter}
             """, ch_params)
 
             for row in cursor.fetchall():
-                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, payment_id = row
+                app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, client_notes, curr_assign, payment_id, action_officer_id  = row
                 data.append({
                     'user_type': ch_user_type,
                     'app_id': encrypt_id(app_id),
@@ -1332,8 +1377,10 @@ def application_list_json_emp(request):
                     'date_applied': date_applied,
                     'status': status,
                     'client_remarks': client_remarks,
+                    'client_notes': client_notes,
                     'curr_assign': curr_assign,
                     'payment_id': payment_id,
+                    'action_officer_id': action_officer_id,
                 })            
 
     if(ch_user_type == 'fus_sc'):
@@ -1707,6 +1754,271 @@ def application_list_json_emp(request):
     })
     
 @csrf_exempt
+def application_list_json_all(request):
+    user_id = request.session.get('user_id')
+
+    ch_user_type = None
+    tcp_user_type = None
+    tcp_total = 0
+    ch_total = 0
+    tcp_filtered  = 0
+    ch_filtered = 0
+
+    # Check ch_access_level
+    with connections['default'].cursor() as cursor:
+        cursor.execute("""
+            SELECT type
+            FROM ch_access_level
+            WHERE userid = %s
+            LIMIT 1
+        """, [user_id])
+        result = cursor.fetchone()
+        if result:
+            ch_user_type = result[0]
+
+    # Check tcp_db user_access
+    with connections['tcp_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT type
+            FROM user_access
+            WHERE userid = %s
+            LIMIT 1
+        """, [user_id])
+        result = cursor.fetchone()
+        if result:
+            tcp_user_type = result[0]
+
+    # If no access found in both databases
+    if ch_user_type is None and tcp_user_type is None:
+        return JsonResponse({
+            'draw': 1,
+            'recordsTotal': 0,
+            'recordsFiltered': 0,
+            'data': [],
+            'error': 'You do not have an access to this system.'
+        }, status=403)
+
+
+    draw = int(request.POST.get('draw', 1))
+    start = int(request.POST.get('start', 0))
+    length = int(request.POST.get('length', 10))
+    search_value = request.POST.get('search[value]', '').strip().lower()
+    order_column = int(request.POST.get('order[0][column]', 0))
+    order_dir = request.POST.get('order[0][dir]', 'asc')
+
+    column_names = [
+        'permit_type',
+        'estab_name',
+        'reference_no',
+        'date_applied',
+        'status',
+        'client_remarks',
+    ]
+    sort_column = column_names[order_column] if order_column < len(column_names) else 'date_applied'
+    reverse = order_dir == 'desc'
+
+    data = []
+
+    # --- TCP COUNT ---
+    with connections['tcp_db'].cursor() as cursor:
+        if search_value:
+            like_term = f'%{search_value}%'
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM app_tcp a
+                LEFT JOIN (
+                    SELECT app_id, remarks, forwarded_to_id
+                    FROM app_application
+                    WHERE id IN (SELECT MAX(id) FROM app_application GROUP BY app_id)
+                ) c ON a.id = c.app_id
+                WHERE
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(COALESCE(a.reference_no_new, a.reference_no)) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+            """, [like_term, like_term, like_term])
+        else:
+            cursor.execute("SELECT COUNT(*) FROM app_tcp")
+        tcp_filtered = cursor.fetchone()[0]
+        tcp_total = tcp_filtered
+        
+        
+    # --- TCP DATA ---
+    with connections['tcp_db'].cursor() as cursor:
+        tcp_filter = ""
+        tcp_params = []
+
+        if search_value:
+            tcp_filter = """
+                WHERE
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(COALESCE(a.reference_no_new, a.reference_no)) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+            """
+            like_term = f"%{search_value}%"
+            tcp_params = [like_term, like_term, like_term]
+
+        cursor.execute(f"""
+            SELECT 
+                a.id as app_id,
+                a.crs_id,
+                'TCP' AS permit_type_short,
+                a.estab_name,
+                COALESCE(a.reference_no_new, a.reference_no) AS reference_no,
+                a.date_applied,
+                CONCAT(
+                    UPPER(SUBSTRING(a.status FROM 1 FOR 1)),
+                    LOWER(SUBSTRING(a.status FROM 2)),
+                    ' - ',
+                    c.notes
+                ) AS status,
+                c.remarks AS client_remarks,
+                a.permit_type,
+                a.remarks AS curr_assign
+            FROM app_tcp a
+            LEFT JOIN (
+                SELECT app_id, remarks, forwarded_to_id, notes
+                FROM app_application
+                WHERE id IN (
+                    SELECT MAX(id) FROM app_application GROUP BY app_id
+                )
+            ) c ON a.id = c.app_id
+            {tcp_filter}
+        """, tcp_params)
+
+        for row in cursor.fetchall():
+            app_id, crs_id, permit_type_short, estab_name, reference_no, date_applied, status, client_remarks, permit_type, curr_assign = row
+            data.append({
+                'app_id': encrypt_id(app_id),
+                'crs_id': crs_id,
+                'permit_type_short': permit_type_short,  # Now correctly used
+                'permit_type': {
+                    'tcp': 'Tree Cutting Permit',
+                    'stcp': 'Special Tree Cutting Permit',
+                    'tebp': 'Tree-Earth-Balling Permit',
+                    'stebp': 'Special Tree-Earth-Balling Permit',
+                    'tpp': 'Tree-Pruning Permit',
+                }.get(permit_type, (permit_type or 'UNKNOWN').upper()),
+                'estab_name': estab_name,
+                'reference_no': reference_no,
+                'date_applied': date_applied,
+                'status': status,
+                'client_remarks': client_remarks,
+                'curr_assign': curr_assign,
+            })
+
+    
+    # --- CHIMPORT COUNT ---
+    with connections['default'].cursor() as cursor:
+        if search_value:
+            like_term = f'%{search_value}%'
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM cps_chimport a
+                LEFT JOIN (
+                    SELECT app_id, remarks, forwarded_to_id
+                    FROM ch_application
+                    WHERE id IN (SELECT MAX(id) FROM ch_application GROUP BY app_id)
+                ) c ON a.id = c.app_id
+                WHERE
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(a.reference_no) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+            """, [like_term, like_term, like_term])
+        else:
+            cursor.execute("SELECT COUNT(*) FROM cps_chimport")
+        ch_filtered = cursor.fetchone()[0]
+        ch_total = ch_filtered
+        
+    # --- CHIMPORT DATA ---
+    with connections['default'].cursor() as cursor:
+        ch_filter = ""
+        ch_params = []
+
+        if search_value:
+            ch_filter = """
+                WHERE
+                    LOWER(a.estab_name) LIKE %s OR
+                    LOWER(a.reference_no) LIKE %s OR
+                    LOWER(a.status) LIKE %s
+            """
+            like_term = f"%{search_value}%"
+            ch_params = [like_term, like_term, like_term]
+
+        cursor.execute(f"""
+            SELECT 
+                a.id as app_id,
+                a.crs_id,
+                'PIC' AS permit_type_short,
+                'Permit to Import Chainsaw' AS permit_type,
+                a.estab_name,
+                a.reference_no,
+                a.date_applied,
+                a.status,
+                c.remarks AS client_remarks,
+                a.remarks AS curr_assign,
+                CASE 
+                    WHEN ir.id IS NOT NULL THEN 1
+                    ELSE 0
+                END AS inspection_exists,
+                CASE 
+                    WHEN py.id IS NOT NULL THEN 1
+                    ELSE 0
+                END AS payment_exists,
+                CASE 
+                    WHEN sy.id IS NOT NULL THEN 1
+                    ELSE 0
+                END AS survey_exists
+            FROM cps_chimport a
+            LEFT JOIN (
+                SELECT app_id, remarks, forwarded_to_id
+                FROM ch_application
+                WHERE id IN (
+                    SELECT MAX(id) FROM ch_application GROUP BY app_id
+                )
+            ) c ON a.id = c.app_id
+            LEFT JOIN cps_inspectionreport ir ON a.id = ir.application_id
+            LEFT JOIN ch_payment py ON a.id = py.app_id
+            LEFT JOIN cps_survey sy ON a.id = sy.application_id
+            {ch_filter}
+        """, ch_params)
+
+        for row in cursor.fetchall():
+            app_id, crs_id, permit_type_short, permit_type, estab_name, reference_no, date_applied, status, client_remarks, curr_assign, inspection_exists, payment_exists, survey_exists = row
+            data.append({
+                'app_id': encrypt_id(app_id),
+                'crs_id': crs_id,
+                'permit_type_short': permit_type_short,  # Now correctly taken from SELECT
+                'permit_type': permit_type,
+                'estab_name': estab_name,
+                'reference_no': reference_no,
+                'date_applied': date_applied,
+                'status': status,
+                'client_remarks': client_remarks,
+                'curr_assign': curr_assign,
+                'inspection_exists': inspection_exists,
+                'payment_exists': payment_exists,
+                'survey_exists': survey_exists,
+            })
+             
+    # --- SORT + PAGINATE ---
+    def safe_key(item):
+        value = item.get(sort_column)
+        if hasattr(value, 'isoformat'):
+            return value.isoformat()
+        return str(value or '').lower()
+
+    data.sort(key=safe_key, reverse=reverse)
+    paginated_data = data[start:start + length]
+    
+
+    return JsonResponse({
+        'draw': draw,
+        'recordsTotal': tcp_total + ch_total,
+        'recordsFiltered': tcp_filtered + ch_filtered,
+        'data': paginated_data,
+    })
+    
+@csrf_exempt
 def process_application_action(request):
     if request.method == 'POST':
         try:
@@ -1718,7 +2030,7 @@ def process_application_action(request):
                 except Exception:
                     return HttpResponseBadRequest("Invalid or tampered ID")
                 
-                crs_id = request.POST.get('crsid')
+                forwarded_to = request.POST.get('forwarded_to')
                 reference_no = request.POST.get('reference_no')
                 remarks = request.POST.get('remarks', '').strip()
                 action = request.POST.get('action')
@@ -1739,7 +2051,7 @@ def process_application_action(request):
                     app_id=decrypted_id,
                     reference_no=reference_no,
                     forwarded_by_id=request.session.get('user_id'),
-                    forwarded_to_id = crs_id,
+                    forwarded_to_id = forwarded_to,
                     action=action,
                     notes=notes,
                     remarks=remarks,
@@ -1751,25 +2063,13 @@ def process_application_action(request):
                     remarks=chi_remarks,
                     status=chi_status
                 )
-                
-                if permit_type_short == 'PIC' and notes == 'For Payment':
-                    # Generate OP number
-                    today = datetime.now().strftime('%Y-%m-%d')
-                    op_number = f"{today}-OP-{permit_type_short}-{decrypted_id}"
-                
-                    # Create Order of Payment
-                    ChPayment.objects.create(
-                        app_id=decrypted_id,
-                        op_id=op_number,
-                        date_paid=None,  # Set to None initially
-                        or_no=None,  # Set to None initially
-                        amount=500,  # Default amount, can be updated later
-                        fund_cluster='01101101',
-                        type=permit_type_short,
-                        status=0
-                    )
 
-            return JsonResponse({'success': True, 'message': 'Application returned to client successfully.'})
+            if chi_remarks == 'fus_evaluator':
+                message = "Application has been returned to the evaluator successfully."
+            else:
+                message = "Application returned to client successfully."
+                    
+            return JsonResponse({'success': True, 'title': 'Returned', 'message': message})
 
         except Exception as e:
             # No need to call transaction.set_rollback(True); it happens automatically in an atomic block
@@ -1781,9 +2081,17 @@ def process_application_action(request):
 def upload_proof(request):
     if request.method == 'POST':
         app_id = request.POST.get('app_id')
+        remarks = request.POST.get('remarks')
         payment_id = request.POST.get('payment_id')
         uploaded_files = request.FILES.getlist('proof_file')
         or_no = request.POST.get('or_no')
+        btn_type = request.POST.get('btn_type')
+        reference_no = request.POST.get('reference_no')
+        action = request.POST.get('action')
+        notes = request.POST.get('notes')
+        status = request.POST.get('status')
+        chi_remarks = request.POST.get('chi_remarks')
+        chi_status = request.POST.get('chi_status')
 
         if not uploaded_files:
             return JsonResponse({'success': False, 'message': 'No files received'})
@@ -1791,52 +2099,153 @@ def upload_proof(request):
         upload_dir = os.path.join(settings.MEDIA_ROOT, 'proof_of_payment')
         os.makedirs(upload_dir, exist_ok=True)
 
-        try:
-            with transaction.atomic():
-                for file in uploaded_files:
-                    original_name = file.name
-                    extension = os.path.splitext(original_name)[1]
-                    timestamp = int(time.time() * 1000)
+        if btn_type == 'upload':
+            try:
+                with transaction.atomic():
+                    for file in uploaded_files:
+                        original_name = file.name
+                        extension = os.path.splitext(original_name)[1]
+                        timestamp = int(time.time() * 1000)
 
-                    new_file_name = f"{payment_id}_proof_{timestamp}{extension}"
-                    file_path = os.path.join(upload_dir, new_file_name)
-
-                    while os.path.exists(file_path):
-                        timestamp += 1
                         new_file_name = f"{payment_id}_proof_{timestamp}{extension}"
                         file_path = os.path.join(upload_dir, new_file_name)
 
-                    with open(file_path, 'wb+') as destination:
-                        for chunk in file.chunks():
-                            destination.write(chunk)
+                        while os.path.exists(file_path):
+                            timestamp += 1
+                            new_file_name = f"{payment_id}_proof_{timestamp}{extension}"
+                            file_path = os.path.join(upload_dir, new_file_name)
 
-                    # Save proof record
-                    ProofOfPayment.objects.create(
+                        with open(file_path, 'wb+') as destination:
+                            for chunk in file.chunks():
+                                destination.write(chunk)
+
+                        # Save proof record
+                        ProofOfPayment.objects.create(
+                            app_id=app_id,
+                            payment_id=payment_id,
+                            file_name=new_file_name,
+                            file_location=os.path.join('proof_of_payment', new_file_name),
+                            date_uploaded=timezone.now()
+                        )
+
+                    # Update payment record (assumed to be the current one)
+                    ChPayment.objects.filter(id=int(payment_id)).update(
+                        date_paid=timezone.now().date(),
+                        or_no=or_no,
+                        status=1,  # 1 = Paid
+                        remarks=remarks,
+                        is_old=0
+                    )
+                    
+                    # ✅ Create CHApplication record
+                    CHApplication.objects.create(
+                        date_created=timezone.now(),
                         app_id=app_id,
-                        payment_id=payment_id,
-                        file_name=new_file_name,
-                        file_location=os.path.join('proof_of_payment', new_file_name),
-                        date_uploaded=timezone.now()
+                        reference_no=reference_no,
+                        forwarded_by_id=request.session.get('user_id'),
+                        forwarded_to_id = request.session.get('cashier'),
+                        action=action,
+                        notes=notes,
+                        remarks=remarks,
+                        status=status,
+                        days_pending=0
+                    )
+                    
+                    CHImport.objects.filter(id=int(app_id)).update(
+                        remarks=chi_remarks,
+                        status=chi_status
                     )
 
-                # ✅ Update ChPayment after all files are processed
-                try:
-                    payment = ChPayment.objects.get(id=payment_id)
-                    payment.or_no = or_no
-                    payment.date_paid = timezone.now().date()
-                    payment.status = 1  # Paid
-                    payment.save()
-                except ChPayment.DoesNotExist:
-                    return JsonResponse({'success': False, 'message': 'Payment record not found'})
-                
-                
+            except Exception as e:
+                traceback.print_exc()
+                return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
-        except Exception as e:
-            traceback.print_exc()
-            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+            return JsonResponse({'success': True})
 
-        return JsonResponse({'success': True})
+        elif btn_type == 'reupload':
+            try:
+                with transaction.atomic():
+                    if uploaded_files:
+                        # Mark all old proofs as is_old
+                        ProofOfPayment.objects.filter(app_id=app_id).update(is_old=1)
 
+                        for file in uploaded_files:
+                            original_name = file.name
+                            extension = os.path.splitext(original_name)[1]
+                            timestamp = int(time.time() * 1000)
+
+                            new_file_name = f"{payment_id}_proof_{timestamp}{extension}"
+                            file_path = os.path.join(upload_dir, new_file_name)
+
+                            while os.path.exists(file_path):
+                                timestamp += 1
+                                new_file_name = f"{payment_id}_proof_{timestamp}{extension}"
+                                file_path = os.path.join(upload_dir, new_file_name)
+
+                            with open(file_path, 'wb+') as destination:
+                                for chunk in file.chunks():
+                                    destination.write(chunk)
+
+                            # Save new proof record
+                            ProofOfPayment.objects.create(
+                                app_id=app_id,
+                                payment_id=payment_id,  # Keep old payment_id for linkage
+                                file_name=new_file_name,
+                                file_location=os.path.join('proof_of_payment', new_file_name),
+                                date_uploaded=timezone.now(),
+                                is_old=0
+                            )
+
+                    # Archive the old payment
+                    old_payment = ChPayment.objects.get(id=payment_id)
+                    old_payment.is_old = 1
+                    old_payment.save()
+
+                    # Create a new payment record
+                    ChPayment.objects.create(
+                        app_id=old_payment.app_id,
+                        op_id=old_payment.op_id,
+                        date_paid=timezone.now().date(),
+                        or_no=or_no,
+                        amount=old_payment.amount,
+                        fund_cluster=old_payment.fund_cluster,
+                        type=old_payment.type,
+                        status=old_payment.status,
+                        lbp_ref_no=old_payment.lbp_ref_no,
+                        date_confirmed=old_payment.date_confirmed,
+                        remarks=remarks,
+                        is_old=0
+                    )
+                    
+                    ch_import = CHImport.objects.get(id=app_id)
+                    
+                    # ✅ Create CHApplication record
+                    CHApplication.objects.create(
+                        date_created=timezone.now(),
+                        app_id=app_id,
+                        reference_no=reference_no,
+                        forwarded_by_id=request.session.get('user_id'),
+                        forwarded_to_id = request.session.get('cashier'),
+                        action=action,
+                        notes=notes,
+                        remarks=remarks,
+                        status=status,
+                        days_pending=0
+                    )
+                    
+                    CHImport.objects.filter(id=int(app_id)).update(
+                        remarks=chi_remarks,
+                        status=chi_status
+                    )
+                    
+
+            except Exception as e:
+                traceback.print_exc()
+                return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+            return JsonResponse({'success': True})
+
+        
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 @csrf_exempt
@@ -1958,6 +2367,7 @@ def process_application_action_emp(request):
 
 
 def get_action_officer(request):
+    
     try:
         # Step 1: Get access records from default DB (ch_access_level)
         with connections['default'].cursor() as cursor:
@@ -2011,13 +2421,14 @@ def get_action_officer(request):
                 
         return JsonResponse({'success': True, 
                              'officers': officers,
+                             'evaluator_id': evaluator_id,
                              'current_handler': current_handler_name})
 
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
     
     
-def assign_action_officer(request):
+def for_payment(request):
     app_id = request.POST.get('app_id')
     try:
         decrypted_id = decrypt_id(app_id)  # Decrypt the encrypted ID
@@ -2029,12 +2440,14 @@ def assign_action_officer(request):
             with transaction.atomic():
                 
                 reference_no = request.POST.get('reference_no')
-                action_officer_id = request.POST.get('officer_id')
+                forwarded_to = request.POST.get('forwarded_to')
                 action = request.POST.get('action')
                 notes = request.POST.get('notes')
+                remarks = request.POST.get('remarks')
                 status = request.POST.get('status')
                 chi_remarks = request.POST.get('chi_remarks')
                 chi_status = request.POST.get('chi_status')
+                permit_type_short = request.POST.get('permit_type_short')
                 
                 # ✅ Create CHApplication record
                 CHApplication.objects.create(
@@ -2042,22 +2455,37 @@ def assign_action_officer(request):
                     app_id=decrypted_id,
                     reference_no=reference_no,
                     forwarded_by_id=request.session.get('user_id'),
-                    forwarded_to_id = action_officer_id,
+                    forwarded_to_id = forwarded_to,
                     action=action,
                     notes=notes,
-                    remarks=action,
+                    remarks=remarks,
                     status=status,
                     days_pending=0
                 )
                 
+                # Generate OP number
+                today = datetime.now().strftime('%Y-%m-%d')
+                op_number = f"{today}-OP-{permit_type_short}-{decrypted_id}"
+            
+                # Create Order of Payment
+                ChPayment.objects.create(
+                    app_id=decrypted_id,
+                    op_id=op_number,
+                    date_paid=None,  # Set to None initially
+                    or_no=None,  # Set to None initially
+                    amount=500,  # Default amount, can be updated later
+                    fund_cluster='01101101',
+                    type=permit_type_short,
+                    status=0
+                )
+                
                 CHImport.objects.filter(id=int(decrypted_id)).update(
                     remarks=chi_remarks,
-                    status=chi_status,
-                    action_officer_id=action_officer_id
+                    status=chi_status
                 )
                 
 
-            return JsonResponse({'success': True, 'message': 'Application assigned to Action Officer successfully.'})
+            return JsonResponse({'success': True, 'title': 'Success', 'message': 'Application has been approved. Client can now proceed to payment.'})
 
         except Exception as e:
             # No need to call transaction.set_rollback(True); it happens automatically in an atomic block
@@ -2227,12 +2655,29 @@ def save_ir(request):
                 report.report_content = report_content
                 report.save()
 
-                # Delete removed attachments (from DB and disk)
+                # # Delete removed attachments (from DB and disk)
+                failed_deletions = []
+
                 for rel_path in removed_attachments:
-                    abs_path = os.path.join(settings.MEDIA_ROOT, rel_path)
-                    if os.path.exists(abs_path):
-                        os.remove(abs_path)
-                    InspectionAttachment.objects.filter(report=report, file_path=rel_path).delete()
+                    try:
+                        rel_path = rel_path.replace('\\', '/')
+                        
+                        # Remove leading "media/" if present
+                        if rel_path.startswith('media/'):
+                            rel_path = rel_path[len('media/'):]
+                        
+                        att = InspectionAttachment.objects.get(file_path=rel_path)
+                        
+                        full_path = os.path.join(settings.MEDIA_ROOT, rel_path)
+                        if os.path.exists(full_path):
+                            os.remove(full_path)
+                        
+                        att.delete()
+
+                    except InspectionAttachment.DoesNotExist:
+                        failed_deletions.append(f"Attachment not found in DB: {rel_path}")
+                    except Exception as e:
+                        failed_deletions.append(f"Error deleting {rel_path}: {str(e)}")
 
                 # Save new uploaded files
                 for file in ir_attachments:
@@ -2413,6 +2858,8 @@ def permit_checker(request, app_id):
     
     model_details = CHImportModelDetail.objects.filter(application_id=chimport.id)
     
+    warehouse_details = CHImportWarehouse.objects.filter(application_id=chimport.id)
+    
     date_approved = chimport.date_approved
     date_expired = date_approved.replace(year=date_approved.year + 1) if date_approved else None
     
@@ -2432,6 +2879,7 @@ def permit_checker(request, app_id):
         'quantity_in_words': quantity_in_words,
         'brand_name': brand_name,
         'model_details': model_details,
+        'warehouse_details': warehouse_details,
         'source': chimport.origin,
         'purpose': chimport.purpose,
         'date_approved': date_approved,
@@ -2501,6 +2949,8 @@ def save_survey(request, app_id):
                 brand_name = brand.name.upper() if brand else "N/A"
 
                 model_details = CHImportModelDetail.objects.filter(application_id=chimport.id)
+    
+                warehouse_details = CHImportWarehouse.objects.filter(application_id=chimport.id)
 
                 date_approved = chimport.date_approved
                 date_expired = date_approved.replace(year=date_approved.year + 1) if date_approved else None
@@ -2512,6 +2962,9 @@ def save_survey(request, app_id):
                 buffered = BytesIO()
                 qr.save(buffered, format="PNG")
                 qr_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+                # Encode as base64
+                qr_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
                 
                 # Render PDF HTML
                 html_string = render_to_string('permit_pdf/permit_to_import.html', {
@@ -2522,6 +2975,7 @@ def save_survey(request, app_id):
                     'quantity_in_words': quantity_in_words,
                     'brand_name': brand_name,
                     'model_details': model_details,
+                    'warehouse_details': warehouse_details,
                     'source': chimport.origin,
                     'purpose': chimport.purpose,
                     'date_approved': date_approved,
@@ -2630,3 +3084,24 @@ def view_css(request, permitType, app_id):
             })
 
     return render(request, 'view_css.html', data)
+
+def upload_video(request):
+    if request.method == 'POST' and request.FILES.get('video'):
+        video_file = request.FILES['video']
+        save_path = os.path.join(settings.MEDIA_ROOT, 'videos', video_file.name)
+
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+        with open(save_path, 'wb+') as destination:
+            for chunk in video_file.chunks():
+                destination.write(chunk)
+
+        return JsonResponse({'message': 'Video uploaded', 'path': save_path})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+def all_applications(request):
+    # Check if the user is authenticated (you can implement your own authentication logic here)
+    if request.session.get('authenticated'):
+        return render(request, 'all_applications.html')
+    else:
+        return render(request, 'login.html', {'error': 'You need to log in first.'})

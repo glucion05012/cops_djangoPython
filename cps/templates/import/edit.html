@@ -165,22 +165,32 @@
                             </div>
                         </div>
 
-                        <div class="hr-sect">Warehouse Address Information</div>
-                        <span class="text-danger"><i>* address must be within NCR</i></span>
-                        <div class="row mb-3">
-                            <div class="col-md-2">
-                                <select id="warehouse_city" name="warehouse_city" class="form-control">
-                                    <option value="" disabled>-- Select City --</option>
-                                    {% for city in ncr_cities %}
-                                        <option value="{{ city }}" {% if application.warehouse_city == city %}selected{% endif %}>{{ city }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="invalid-feedback">Please select a City or Municipality.</div> 
+                        <label class="form-label">Office / Warehouse Address <span class="text-danger">*</span></label>
+                        <small class="text-muted d-block mb-2">Click "Add More" to list multiple warehouses. <i class="text-danger">*</i> Address must be within NCR.</small>
+
+                        <div id="warehouse-address-list">
+                            {% for warehouse in application.warehouses.all %}
+                            <div class="row mb-3 warehouse-address-item">
+                                <div class="col-md-2">
+                                    <select name="warehouse_city[]" class="form-control" required>
+                                        <option value="" disabled>-- Select City --</option>
+                                        {% for city in ncr_cities %}
+                                            <option value="{{ city }}" {% if warehouse.city == city %}selected{% endif %}>{{ city }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">Please select a City or Municipality.</div>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" name="warehouse_address[]" class="form-control" placeholder="Office / Warehouse Address" value="{{ warehouse.address }}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-outline-danger w-100 remove-warehouse-row">Remove</button>
+                                </div>
                             </div>
-                            <div class="col-md-10">
-                                <input type="text" id="warehouse_address" name="warehouse_address" class="form-control" placeholder="Warehouse Address" value="{{ application.warehouse_address }}">
-                            </div>
+                            {% endfor %}
                         </div>
+
+                        <button type="button" id="add-warehouse-row" class="btn btn-outline-secondary btn-sm mt-2">+ Add More</button>
 
                         <div class="hr-sect">Chainsaw Details</div>
                         <div class="mb-4">
@@ -220,7 +230,7 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="origin" class="form-label">Country of Origin / Supplier <span class="text-danger">*</span></label>
+                            <label for="origin" class="form-label">Country of Origin / Supplier and Address<span class="text-danger">*</span></label>
                             <input type="text" id="origin" name="origin" class="form-control" value="{{ application.origin }}">
                         </div>
 
@@ -254,9 +264,9 @@
                                 </thead>
                                 <tbody>
                                     {% for att in attachments %}
-                                        {% if att.type == "purchase_order" %}
+                                        {% if att.file_type  == "purchase_order" %}
                                             <tr>
-                                                <td><a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a></td>
+                                                <td><a href="{{ att.file_url  }}" target="_blank">{{ att.file_name }}</a></td>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-2">
                                                         <span class="text-danger medium">Remove</span>
@@ -269,7 +279,7 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                            <input type="file" name="purchase_order" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            <input type="file" name="purchase_order" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
                             <small class="text-muted">Leave blank to keep existing file.</small>
                         </div>
 
@@ -286,9 +296,9 @@
                                 </thead>
                                 <tbody>
                                     {% for att in attachments %}
-                                        {% if att.type == "affidavit" %}
+                                        {% if att.file_type  == "affidavit" %}
                                             <tr>
-                                                <td><a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a></td>
+                                                <td><a href="{{ att.file_url  }}" target="_blank">{{ att.file_name }}</a></td>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-2">
                                                         <span class="text-danger medium">Remove</span>
@@ -301,7 +311,7 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                            <input type="file" name="affidavit" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            <input type="file" name="affidavit" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
                             <small class="text-muted">Leave blank to keep existing file.</small>
                         </div>
                         {% endif %}
@@ -319,9 +329,9 @@
                                 </thead>
                                 <tbody>
                                     {% for att in attachments %}
-                                        {% if att.type == "dti_sec" %}
+                                        {% if att.file_type  == "dti_sec" %}
                                             <tr>
-                                                <td><a href="{{ att.file_location.url }}" target="_blank">{{ att.name }}</a></td>
+                                                <td><a href="{{ att.file_url  }}" target="_blank">{{ att.file_name }}</a></td>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-2">
                                                         <span class="text-danger medium">Remove</span>
@@ -334,7 +344,7 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                            <input type="file" name="dti_sec" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            <input type="file" name="dti_sec" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
                             <small class="text-muted">Leave blank to keep existing file.</small>
                         </div>
                         {% endif %}
@@ -366,7 +376,7 @@
                 success: function (data) {
                     dropdown.empty().append('<option value="">-- Select Model --</option>');
                     data.models.forEach(function (model) {
-                        const isSelected = model.name === selectedModel ? 'selected' : '';
+                        const isSelected = String(model.name) === String(selectedModel) ? 'selected' : '';
                         dropdown.append(`<option value="${model.name}" ${isSelected}>${model.name}</option>`);
                     });
                 }
@@ -376,9 +386,15 @@
         const currentBrand = $('#brand').val();
 
         // Populate dropdowns on page load (edit)
+        // $('#model-quantity-list .model-dropdown').each(function () {
+        //     const selectedModel = $(this).data('selected');
+        //     loadModels(currentBrand, $(this), selectedModel);
+        // });
+
         $('#model-quantity-list .model-dropdown').each(function () {
             const selectedModel = $(this).data('selected');
-            loadModels(currentBrand, $(this), selectedModel);
+            const brandId = $('#brand').val(); // or $(this).closest('.row').find('.brand-dropdown').val()
+            loadModels(brandId, $(this), selectedModel);
         });
 
         // Handle brand change
@@ -389,7 +405,7 @@
             });
         });
 
-        // Add new row
+        // Add new row model
         $('#add-row').on('click', function () {
             const newRow = `
                 <div class="row g-2 mb-2 model-quantity-item">
@@ -409,9 +425,36 @@
             loadModels($('#brand').val(), $('#model-quantity-list .model-dropdown').last());
         });
 
-        // Remove row
+        // Remove row model
         $(document).on('click', '.remove-row', function () {
             $(this).closest('.model-quantity-item').remove();
+        });
+
+        // Add new row warehouse
+        $('#add-warehouse-row').on('click', function () {
+            const newWarehouseRow = `
+                <div class="row mb-3 warehouse-address-item">
+                    <div class="col-md-2">
+                        <select name="warehouse_city[]" class="form-control" required>
+                            <option value="" disabled selected>-- Select City --</option>
+                            {% for city in ncr_cities %}
+                                <option value="{{ city }}">{{ city }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a City or Municipality.</div>
+                    </div>
+                    <div class="col-md-8">
+                        <input type="text" name="warehouse_address[]" class="form-control" placeholder="Office / Warehouse Address" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-danger w-100 remove-warehouse-row">Remove</button>
+                    </div>
+                </div>`;
+            $('#warehouse-address-list').append(newWarehouseRow);
+        });
+
+        $(document).on('click', '.remove-warehouse-row', function () {
+            $(this).closest('.warehouse-address-item').remove();
         });
     });
 
@@ -488,12 +531,6 @@
             firstErrorTab = 'form-section';
         }
 
-        if (!$('#warehouse_city').val()) {
-            $('#warehouse_city').addClass('is-invalid');
-            hasError = true;
-            firstErrorTab = 'form-section';
-        }
-
         // Validate Brand dropdown
         if (!$('#brand').val()) {
             $('#brand').addClass('is-invalid');
@@ -523,12 +560,26 @@
             firstErrorTab = 'form-section';
         }
 
-        const warehouse_address = $('#warehouse_address');
-        if (!warehouse_address.val().trim()) {
-            warehouse_address.addClass('is-invalid');
-            hasError = true;
-            firstErrorTab = 'form-section';
-        }
+        $('#warehouse-address-list .warehouse-address-item').each(function () {
+            const city = $(this).find('select[name="warehouse_city[]"]');
+            const address = $(this).find('input[name="warehouse_address[]"]');
+
+            if (!city.val()) {
+                city.addClass('is-invalid');
+                hasError = true;
+                firstErrorTab = 'form-section'; // or the tab id where warehouse address is located
+            } else {
+                city.removeClass('is-invalid');
+            }
+
+            if (!address.val().trim()) {
+                address.addClass('is-invalid');
+                hasError = true;
+                firstErrorTab = 'form-section'; // or the tab id where warehouse address is located
+            } else {
+                address.removeClass('is-invalid');
+            }
+        });
         
 
         // Validate Model and Quantity rows

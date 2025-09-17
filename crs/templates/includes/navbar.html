@@ -135,7 +135,16 @@
                   
                 </li>
 
-                {% elif request.session.user_type == "Employee" %}
+              {% elif request.session.user_type == "Employee" %}
+
+                {% if request.session.user_id == request.session.fus_sc_id or request.session.user_id == request.session.lpdd_dc_id or request.session.user_id == request.session.ts_id or request.session.user_id == request.session.red_id %}
+                  <li class="nav-item">
+                    <a href="{% url 'allApplications' %}" class="nav-link">
+                    <i class="nav-icon fa fa-file"></i>
+                      <p>All Applications</p>
+                    </a>
+                  </li>
+                {% endif %}
 
                 <li class="nav-item">
                   <a href="{% url 'processApplications' %}" class="nav-link">
@@ -144,7 +153,7 @@
                   </a>
                 </li>
 
-                {% endif %}
+              {% endif %}
             
               
           </ul>

@@ -182,7 +182,7 @@
 
   <div class="sub-title">
     Pursuant to the provisions of DENR Administrative Order No. 2003-24, Series of 2003 
-    which provides the “The Implementing Guidelines of the Chainsaw Act of 2002 (R.A No. 9175)” 
+    which provides the “The Implementing Guidelines of the Chainsaw Act of 2002" (R.A No. 9175)
     entitled <strong>“AN ACT REGULATING THE POSSESSION OWNERSHIP, SALE, 
     IMPORTATION AND USE OF CHAINSAWS PENALIZING VIOLATIONS THEREOF AND FOR OTHER RELATED PURPOSES”</strong> this <strong><u>PERMIT TO IMPORT</u></strong> 
     is hereby issued to:
@@ -191,6 +191,13 @@
   <div class="section conditions">
     <div><span class="label">Name:</span><span class="content"><b><u>{{ estab_name }}</u></b></span></div>
     <div><span class="label">Office Address:</span><span class="content"><u>{{ estab_address }}</u></span></div>
+    <div>
+      <span class="label">Warehouse Address:</span><span class="content">
+            {% for warehouse in warehouse_details %}
+                {{ warehouse.address }} {{ warehouse.city }}<br>
+            {% endfor %}
+      </span>
+    </div>
   </div>
 
   <div class="section conditions">
@@ -264,7 +271,7 @@
     <div class="footer-text">
       <p><em>Nurturing Cities for a Sustainable Future</em></p>
       <p>National Ecology Center, East Ave., Diliman, Quezon City</p>
-      <p>Contact: 09399253269 • Email: denrncrrecords@gmail.com • @DENR.NCR.Official</p>
+      <p>Contact: 09399253269 • Email: denrncrrecords@denr.gov.ph • @DENR.NCR.Official</p>
     </div>
     <div class="footer-logo">
       <img src="{{ iso_url }}" alt="ISO Logo" style="width: 70px; height: 90px;">

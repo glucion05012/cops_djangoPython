@@ -5,35 +5,168 @@
 
 {% block content %}
 <style>
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
     .dashboard-wrapper {
         padding: 20px;
         background-color: #f4f6f8;
         border-radius: 8px;
         max-width: 100%;
     }
-
-    .full-width-image {
-        width: 100%;
-        height: auto;
-        display: block;
+    .magnify-box {
+        width: 40%;
+        margin: 0px auto;
+        position: relative;
+        overflow: hidden;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
+        cursor: crosshair;
+        background-image: url("{% static 'images/inst.jpg' %}");
+        background-size: cover;
+        background-position: center;
     }
-
-    .full-width-image:hover {
-        transform: scale(1.01);
+    .magnify-box img {
+        opacity: 0;
+        width: 100%;
+        display: block;
+    }
+    .magnify-lens {
+        position: absolute;
+        width: 250px;          /* ← increase size here */
+        height: 250px;         /* ← increase size here */
+        border-radius: 0;      /* ← make it square (remove rounding) */
+        border: 2px solid #ffffff;
+        box-shadow: 0 0 8px rgba(0,0,0,0.3);
+        display: none;
+        pointer-events: none;
+        background-image: inherit;
+        background-repeat: no-repeat;
+        z-index: 10;
+    }
+    .magnify-box:hover .magnify-lens {
+        display: block;
+    }
+    /* Rounded scrollbar for the popup */
+    #privacyPopup div::-webkit-scrollbar {
+        width: 8px;
+    }
+    #privacyPopup div::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    #privacyPopup div::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    #privacyPopup div::-webkit-scrollbar-thumb:hover {
+        background: #555;
     }
 </style>
 
 <div class="dashboard-wrapper">
-    <!-- Full-width Image Only -->
-    <img src="{% static 'images/inst.jpg' %}" alt="DENR NCR Online Permitting System" class="full-width-image">
+    <input type="hidden" id="user_type" value="{{ request.session.user_type }}">
+    <div class="magnify-box" id="magnifyBox">
+        <img src="{% static 'images/inst.jpg' %}" alt="DENR NCR Online Permitting System">
+        <div class="magnify-lens" id="lens"></div>
+    </div>
+
+    <!-- Data Privacy Popup -->
+    <div id="privacyPopup" style="
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.6);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:999999;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+    ">
+        <div style="
+            background:#ffffff;
+            max-width:600px;
+            max-height:80vh;
+            padding:35px 40px;
+            border-radius:12px;
+            box-shadow:0 8px 30px rgba(0,0,0,0.25);
+            overflow-y:auto;
+            text-align:justify;
+            line-height:1.5;
+        ">
+            <h3 style="
+                text-align:center;
+                margin-bottom:20px;
+                font-weight:600;
+                color:#004a1f;
+            ">
+                DENR–NCR DATA PRIVACY NOTICE
+            </h3>
+                <p style="margin-bottom:25px; text-align:justify;">
+                    &nbsp;&nbsp;&nbsp;&nbsp;The Department of Environment and Natural Resources – National Capital Region (DENR-NCR) is committed to protect your privacy to ensure that all Personal Data collected from you are processed in accordance with the data privacy principles of transparency, legitimate purpose, and proportionality embodied in Republic Act (R.A.) No. 10173 (Data Privacy Act of 2012), its Implementing Rules and Regulations (IRR), and any other government-issued data privacy regulations and issuances, and the DENR-NCR Data Privacy Manual. Our goal is to secure your personal data on the channels you interact with us – through our website, in our platforms and offices, at electronic mails, on the phone, and our various electronic communication channels.
+                    <br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Please be informed that in the processing of permits through this platform, we are going to collect your personal information upon submission of your application, which includes but not limited to full name, home or office address, email address, birth date, birth place, face/photo, telephone number, place of work, gender, location at a particular time, IP address, and other information relative to the application.
+                    <br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Rest assured that all information collected shall be kept private and confidential by this Office and be used solely for the purpose of processing applications, and monitoring of the issued permits in accordance with the provisions of Data Privacy Act and other pertinent laws. However, matters of public interests may be disclosed to the public subject to provisions of Data Privacy Act, and applicable laws, rules, and regulations on the matters. DENR-NCR limits access to and use of the protected personal data of individuals in conformity with its legal mandate and/or contractual agreements with third parties.
+                    <br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Also, this service does not use cookies and data generated herewith will not be shared with any other party not authorized by this Office. Only authorized personnel of the DENR-NCR have access and allowed to process Personal Data collected for the purposed of this application. The Personal Data collected and further processed herein shall be accessed and stored in the Information and Communication System/s and relevant Filing System/s of DENR-NCR. The DENR-NCR also uses a secured server behind a firewall for digital records and restrict access to qualified and authorized personnel only who hold personal data with strict confidentiality. Paper-based records, if any, shall be stored and maintained in our secured records room that allows access by authorized personnel only as needed and shall be protected from loss, damage or destruction. Storage of data collected shall be within the period prescribed by law, and all paper-based and electronic files of personal information shall be disposed and destroyed through secured means. Rest assured that DENR-NCR has physical, organizational and technical security measures to safeguard against any accidental or unlawful destruction, loss, alteration, unauthorized disclosure of, or access to, personal data transmitted, stored, or otherwise processed.
+                    <br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Further, you have the right to reasonable access to your personal data being processed; the right to dispute the inaccuracy or error in the personal data; to request the suspension, withdrawal, blocking, removal or destruction of personal data, and; the right to complain and be indemnified for any damages sustained due to inaccurate, incomplete, outdated, false, unlawfully obtained or unauthorized use of personal data. For any data privacy complaints, inquiries, concerns, and/or feedback regarding this Data Privacy Notice, compliance with Data Privacy Act, its IRR, and any other government-issued data privacy regulations and issuances, kindly contact us through our official email address: <b>records.ncr@denr.gov.ph</b>, via Telephone Numbers: <b>0920 959 4559</b>.
+                    <br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;By proceeding with your application and submitting your Personal Data to DENR-NCR signifies that you have read and understood this Data Privacy Notice and expressly consent to the collection and processing of your personal, sensitive personal, or privileged information in the manner and for the purpose of this Notice. Further, in continuing you understand and accept the terms and conditions provided herein with respect to your personal information pursuant to the Data Privacy Act. You also authorized DENR-NCR to record the whole procedure of processing your application. 
+                </p>
+            <div style="
+                text-align:center;
+                margin-top:30px;
+            ">
+                <button id="acceptPrivacyBtn" style="
+                    padding:12px 35px;
+                    background:#004a1f;
+                    border:none;
+                    color:#fff;
+                    font-size:15px;
+                    border-radius:6px;
+                    cursor:pointer;
+                    transition: background 0.3s;
+                " onmouseover="this.style.background='#00672a'" onmouseout="this.style.background='#004a1f'">
+                    Accept & Continue
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+
+
+<script>
+    const userType = document.getElementById('user_type').value;
+    if (userType === 'Employee') {
+        document.getElementById('privacyPopup').style.display = 'none';
+    }
+
+    document.getElementById('acceptPrivacyBtn').addEventListener('click', function(){
+        document.getElementById('privacyPopup').style.display = 'none';
+    });
+
+    const box = document.getElementById('magnifyBox');
+    const img = box.querySelector('img');
+    const lens = document.getElementById('lens');
+
+    box.addEventListener('mousemove', function (e) {
+        const rect = box.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const glassSize = lens.offsetWidth / 2;
+        const zoom = 2;
+
+        lens.style.left = (x - glassSize) + "px";
+        lens.style.top = (y - glassSize) + "px";
+        lens.style.backgroundSize = (rect.width * zoom) + "px " + (rect.height * zoom) + "px";
+        lens.style.backgroundPosition = `-${(x * zoom - glassSize)}px -${(y * zoom - glassSize)}px`;
+    });
+
+    box.addEventListener('mouseenter', () => {
+        lens.style.display = 'block';
+    });
+    box.addEventListener('mouseleave', () => {
+        lens.style.display = 'none';
+    });
+</script>
 {% endblock %}

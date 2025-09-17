@@ -58,6 +58,19 @@
 
 <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
 
+<!-- MUST load library first -->
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
+
+<!-- Then run your code -->
+<script defer>
+    window.onload = () => {
+        Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri('/static/models'),
+            faceapi.nets.faceLandmark68TinyNet.loadFromUri('/static/models')
+        ]).then(startCamera);
+    };
+</script>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const editor1 = document.querySelector('#inspection_report_text');
@@ -71,14 +84,18 @@
                 });
         }
 
-        if (editor2) {
+        if (editor2 && !inspectionEditorInstance) { // prevent double init
             ClassicEditor
                 .create(editor2)
+                .then(editor => {
+                    inspectionEditorInstance = editor;
+                })
                 .catch(error => {
                     console.error('Error initializing #inspection_report_text_e:', error);
                 });
         }
     });
+
 
     function getCookie(name) {
         let cookieValue = null;

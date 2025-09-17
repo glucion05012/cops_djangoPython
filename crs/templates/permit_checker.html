@@ -200,6 +200,13 @@
         <div class="section conditions">
             <div><span class="label">Name:</span><span class="content"><b><u>{{ estab_name }}</u></b></span></div>
             <div><span class="label">Office Address:</span><span class="content"><u>{{ estab_address }}</u></span></div>
+            <div>
+              <span class="label">Warehouse Address:</span><span class="content">
+                    {% for warehouse in warehouse_details %}
+                        {{ warehouse.address }} {{ warehouse.city }}<br>
+                    {% endfor %}
+              </span>
+            </div>
         </div>
 
         <div class="section conditions">

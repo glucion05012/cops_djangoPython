@@ -11,7 +11,8 @@ from .models import (
     CHImportModelDetail,
     CHImportAttachment,
     CHApplication,
-    ChainsawModel
+    ChainsawModel,
+    CHImportWarehouse
 )
 import traceback
 from django.utils import timezone
@@ -94,9 +95,8 @@ def submit_import(request):
                     status = 'pending',
                     arrival_date=request.POST.get('arrival_date'),
                     is_existing_permittee=request.POST.get('is_existing_permittee') == '1',
-                    warehouse_city = request.POST.get('warehouse_city'),
-                    warehouse_address = request.POST.get('warehouse_address'),
-                    evaluator_id = evaluator_id
+                    evaluator_id = evaluator_id,
+                    action_officer_id = evaluator_id
                 )
                 
                 # ✅ Generate and save reference number
@@ -113,7 +113,8 @@ def submit_import(request):
                     forwarded_to_id = evaluator_id,
                     action='For Evaluation',
                     notes='Created New Application',
-                    status='pending',
+                    remarks='New Application',
+                    status='pending for evaluation',
                     days_pending=0
                 )
                 
@@ -124,6 +125,18 @@ def submit_import(request):
                             application=application,
                             model=model.strip(),
                             quantity=int(quantity)
+                        )
+                        
+                # Save warehouse details
+                warehouse_cities = request.POST.getlist('warehouse_city[]')
+                warehouse_addresses = request.POST.getlist('warehouse_address[]')
+
+                for city, address in zip(warehouse_cities, warehouse_addresses):
+                    if city.strip() and address.strip():
+                        CHImportWarehouse.objects.create(
+                            application=application,
+                            city=city.strip(),
+                            address=address.strip()
                         )
 
                 # === File saving helper for multiple files ===
@@ -137,10 +150,10 @@ def submit_import(request):
                     for file in files:
                         formatted_filename = f"{application.id}-{file.name}"
                         filename = fs.save(formatted_filename, file)
-                        file_path = os.path.join('attachments', subfolder, filename)
+                        file_path = os.path.join('attachments', subfolder) + '/'
                         CHImportAttachment.objects.create(
                             application=application,
-                            name=file.name,
+                            name=formatted_filename,
                             file_location=file_path,
                             type=type_key,
                             date_uploaded=timezone.now()
@@ -151,12 +164,17 @@ def submit_import(request):
                 save_files(request.FILES.getlist('purchase_order'), 'purchase_order', 'purchase_orders')
                 save_files(request.FILES.getlist('affidavit'), 'affidavit', 'affidavits')
 
-                return JsonResponse({'success': True, 'message': 'Application submitted successfully.'})
+                return JsonResponse({
+                                        'success': True, 
+                                        'message': 'Application submitted successfully.',
+                                        'app_id': application.id    
+                                    })
 
         except Exception as e:
-            traceback.print_exc()
-            messages.error(request, f"An error occurred: {str(e)}")
-            return JsonResponse({'success': False, 'message': 'Error occurred during submission.'})
+            print("Exception occurred:")
+            traceback.print_exc()  # <-- This prints full stack trace to the console
+
+            return JsonResponse({'success': False, 'message': f"An error: {str(e)}"})
 
     return render(request, 'import/apply.html')
 
@@ -206,6 +224,21 @@ def edit_application(request, permitType, app_id):
                                 quantity=int(quantity)
                             )
                             
+                    # Warehouse Details
+                    CHImportWarehouse.objects.filter(application_id=decrypted_id).delete()
+
+                    # Save new ones from POST
+                    warehouse_cities = request.POST.getlist('warehouse_city[]')
+                    warehouse_addresses = request.POST.getlist('warehouse_address[]')
+
+                    for city, address in zip(warehouse_cities, warehouse_addresses):
+                        if city.strip() and address.strip():
+                            CHImportWarehouse.objects.create(
+                                application_id=decrypted_id,
+                                city=city.strip(),
+                                address=address.strip()
+                            )
+                            
                     # Attachments
                     # --- DELETE SELECTED ATTACHMENTS ---
                     delete_ids = request.POST.getlist('delete_attachments')
@@ -213,12 +246,16 @@ def edit_application(request, permitType, app_id):
                         for att_id in delete_ids:
                             try:
                                 att = CHImportAttachment.objects.get(id=att_id)
-                                if att.file_location:
-                                    if default_storage.exists(att.file_location):
-                                        default_storage.delete(att.file_location)
-                                att.delete()
+
+                                # full_path = os.path.join(settings.BASE_DIR, 'cps', 'media', att.file_location, att.name)
+                                # if os.path.exists(full_path):
+                                #     os.remove(full_path)
+                                    
+                                # att.delete()
+                                att.is_old = 1
+                                att.save()
                             except CHImportAttachment.DoesNotExist:
-                                pass
+                                continue
 
                     # --- ADD NEW ATTACHMENTS IF PROVIDED ---
                     def save_files(files, type_key, subfolder):
@@ -231,10 +268,10 @@ def edit_application(request, permitType, app_id):
                         for file in files:
                             formatted_filename = f"{decrypted_id}-{file.name}"
                             filename = fs.save(formatted_filename, file)
-                            file_path = os.path.join('attachments', subfolder, filename)
+                            file_path = os.path.join('attachments', subfolder) + '/'
                             CHImportAttachment.objects.create(
                                 application_id=decrypted_id,
-                                name=file.name,
+                                name=formatted_filename,
                                 file_location=file_path,
                                 type=type_key,
                                 date_uploaded=timezone.now()
@@ -257,7 +294,7 @@ def edit_application(request, permitType, app_id):
                     action="For Re-evaluation"
                     notes="Resubmit Application"
                     remarks =  request.POST.get('remarks', '').strip()
-                    status = 'pending'
+                    status = 'pending for re-evaluation'
                         
                         
                     # ✅ Create CHApplication record
@@ -340,11 +377,21 @@ def edit_application(request, permitType, app_id):
                 'Muntinlupa', 'Navotas', 'Parañaque', 'Pasay', 'Pasig', 'Pateros', 'Quezon City',
                 'San Juan', 'Taguig', 'Valenzuela'
             ]
+            
+            attachments = []
+            for att in app_attachments:
+                attachments.append({
+                    'id': att.id,
+                    'file_type': att.type,
+                    'file_name': att.name,
+                    'file_url': settings.MEDIA_URL + 'cps/media/' + att.file_location.replace('\\', '/') + att.name.replace('\\', '/'),
+                    'date_uploaded': att.date_uploaded,
+                })
    
             return render(request, 'import/edit.html', {
                 'application': ch_import,
                 'ch_details': app_ch_details,
-                'attachments': app_attachments,
+                'attachments': attachments,
                 'permit_type_short': 'PIC',
                 'permit_type': 'Permit to Import Chainsaw',
                 'applicant_type': business_type,

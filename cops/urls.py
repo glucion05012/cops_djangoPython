@@ -72,7 +72,9 @@ urlpatterns = [
     path('dashboard', views.process_application, name='processApplications'),
     path('list_emp', views.application_list_json_emp, name='application_list_json_emp'), 
     path('get-action-officer/', views.get_action_officer, name='get_action_officer'), 
-    path('assign-action-officer/', views.assign_action_officer, name='assign_action_officer'), 
+    path('for-payment/', views.for_payment, name='for_payment'), 
+    path('all', views.all_applications, name='allApplications'),
+    path('application_list_json_all/', views.application_list_json_all, name='application_list_json_all'),
     
     #INSPECTION REPORT
     path('submit_inspection_report/', views.submit_inspection_report, name='submit_inspection_report'),
@@ -81,7 +83,8 @@ urlpatterns = [
     
     
     path('permit/<str:app_id>/checker/', views.permit_checker, name='permit_checker'),
-
+    
+    path('upload-video/', views.upload_video, name='upload_video'),
 ]
 
 if settings.DEBUG:

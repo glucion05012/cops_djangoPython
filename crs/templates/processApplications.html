@@ -1,6 +1,7 @@
 {% extends "includes/base.html" %}
 
 {% block title %}DENR NCR Client Portal{% endblock title %}
+{% load static %}
 
 {% block content %}
     <div class="row">
@@ -43,13 +44,13 @@
                     <div class="hr-sect">Application Information</div>
                     <div class="row">
                         <div class="col-md-2">
-                            <label for="applicant_type" class="form-label">Applicant Type</label>
+                            <label for="application_type" class="form-label">Application Type</label>
                         </div>
                         <div class="col-md-1">
                             :
                         </div>
                         <div class="col-md-3">
-                            <div id="applicant_type"></div>
+                            <div id="application_type"></div>
                         </div>
 
                         <div class="col-md-2">
@@ -63,13 +64,13 @@
                         </div>
 
                         <div class="col-md-2">
-                            <label for="application_type" class="form-label">Application Type</label>
+                            <label for="applicant_type" class="form-label">Applicant Type</label>
                         </div>
                         <div class="col-md-1">
                             :
                         </div>
-                        <div class="col-md-9">
-                            <div id="application_type"></div>
+                        <div class="col-md-3">
+                            <div id="applicant_type"></div>
                         </div>
 
                         <div id="ownershsip_type"></div>
@@ -82,6 +83,16 @@
                         </div>
                         <div class="col-md-3">
                             <div id="client_cel_no"></div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="applicant_name" class="form-label">Applicant Name</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="client_name"></div>
                         </div>
 
                         <div class="col-md-2">
@@ -187,13 +198,13 @@
                     </div>
 
                     <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-sm btn-warning btnReturnToClient" >
+                        <button class="btn btn-sm btn-warning btnReturnToClient" data-type="return_application">
                             Return to Client
                         </button>
-                        &nbsp;&nbsp;
+                        {% comment %} &nbsp;&nbsp;
                         <button class="btn btn-sm btn-success btnCompletedRequirements" >
                             Completed Requirements
-                        </button>
+                        </button> {% endcomment %}
                     </div>
 
                 </div>
@@ -222,10 +233,15 @@
                         <input type="hidden" id="app_id_cp" name="app_id_cp">
                         <input type="hidden" id="crs_id_cp" name="crs_id_cp">
                         <input type="hidden" id="payment_id" name="payment_id">
+                        <input type="hidden" id="officer_id" name="officer_id">
                         <input type="text" class="form-control" id="lbp_ref_no_cp" name="lbp_ref_no_cp" placeholder="Enter LBP Reference No." >
                     </div>
 
                     <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-warning btnReturnToClient" data-type="return_proof">
+                            Return to Client
+                        </button>
+                        &nbsp;&nbsp;
                         <button class="btn btn-sm btn-success btnPaymentConfirmed" >
                             Payment Confirmed
                         </button>
@@ -236,11 +252,11 @@
         </div>
     </div>
 
-    <div class="modal fade" id="assignInspectorModal" tabindex="-1" aria-hidden="true">
+    {% comment %} <div class="modal fade" id="assignInspectorModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Assignment</h5>
+                    <h5 class="modal-title">Approval and Assignment</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="applicationModalBody">
@@ -254,6 +270,7 @@
                     <div class="mb-3" style="margin-top: 1rem;">
                         <input type="hidden" id="app_id_as" name="app_id_as">
                         <input type="hidden" id="crs_id_as" name="crs_id_as">
+                        <input type="hidden" id="evaluator_id_as" name="evaluator_id_as">
 
                         <label for="inspector" class="form-label">Evaluator: </label>
                         <label id="inspector_as" class="form-label fw-bold"></label>
@@ -264,16 +281,22 @@
                         </select>
                     </div>
 
+                    <textarea class="form-control" id="remarksTextarea_as" name="remarks" rows="4" placeholder="Enter your remarks here. The Action Officer can only save once the application is approved"></textarea>
+                    <br>
                     <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-sm btn-success btnAssign" >
-                            Assign Officer
+                        <button class="btn btn-sm btn-warning btnReturnEvaluator" >
+                            Return to Evaluator
+                        </button>
+                        &nbsp;&nbsp;
+                        <button class="btn btn-sm btn-success btnForPayment" >
+                            Approve and Assign Officer
                         </button>
                     </div>
 
                 </div>
             </div>
         </div>
-    </div>
+    </div> {% endcomment %}
 
     <div class="modal fade" id="inspectionReportModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -342,6 +365,7 @@
                         <div class="mb-3">
                             <label class="form-label">Inspection Report created by: &nbsp;</label><span id="inpector_name_vir"></span>
                             <div id="inspection_report_text_v"></div>
+                            <input type="hidden" id="inspector_id_vir" name="inspector_id_vir">
                         </div>
 
                         <!-- File Upload -->
@@ -406,6 +430,110 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="orderOfPaymentModal" tabindex="-1" aria-labelledby="orderOfPaymentLabel-{{ op_data.app_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content shadow">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderOfPaymentLabel-{{ op_data.app_id }}">Order of Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="container p-3 border border-dark rounded">
+
+                    <!-- Header -->
+                    <div class="text-center mb-4">
+                        <img src="{% static 'images/denr-logo.png' %}" alt="DENR Logo" width="50">
+                        <h4 class="mt-3"><strong>ORDER OF PAYMENT</strong></h4>
+                        <p>DEPARTMENT OF ENVIRONMENT AND NATURAL RESOURCES</p>
+                        <p>NATIONAL CAPITAL REGION</p>
+                        <p class="mb-0"><b><span id='permit_type_op'></span></b></p>
+                    </div>
+
+                    <!-- Info Rows -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <table class="table table-sm w-100 border border-dark">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold text-end pe-3" style="width: 50%;">Date Created:</td>
+                                        <td><span id="op_date_op"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-end pe-3">Reference No.:</td>
+                                        <td><span id="reference_no_op"></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm w-100 border border-dark">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold text-end pe-3" style="width: 50%;">Order of Payment No.:</td>
+                                        <td><span id="op_no_op"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-end pe-3">OR Number:</td>
+                                        <td><span id="or_no_op"></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <!-- Payee Info -->
+                    <div class="mb-4">
+                        <p><strong>Payor:</strong> <span id='estab_name_op'></span></p>
+                        <p><strong>Address:</strong> <span id='estab_address_op'></span></p>
+                    </div>
+
+                    <!-- Payment Table -->
+                    <table class="table table-bordered text-center align-middle">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Particulars</th>
+                            <th>Amount (₱)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td>
+                            Permit Fee
+                            </td>
+                            <td><span id='amount_op'></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Fund Cluster -->
+                    <p class="mt-3"><strong>Fund Cluster:</strong> {{ op_data.fund_cluster|default:"0110110" }}</p>
+
+                    <!-- Signature -->
+                    <div class="text-center mt-5">
+                        <img src="{% static 'images/sc-esig.png' %}" alt="Signature" width="100">
+                        <div><strong>EMELYN JOYCE E. NUGUID</strong></div>
+                        <div class="text-muted">Chief, Forest Utilization Section</div>
+                    </div>
+                    </div>
+
+                    <div id="attachment">
+                        <div class="hr-sect">Attachments</div>
+                        <div id="op_attachments"></div>
+                    </div>
+                </div>
+
+                
+                <div class="modal-footer d-print-none">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="printOrderOfPayment()">Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
                                     
     <script>
         $(document).ready(function() {
@@ -458,63 +586,49 @@
                     {
                         "data": null,
                         "render": function(data, type, row) {
-                            let viewBtn = `
-                                <button class="btn btn-sm btn-primary view-btn" title="View Application" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-info history-btn" title="View History" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                    <i class="fas fa-list"></i>
-                                </button>
-                            `;
-
-                            if (row.permit_type_short === "PIC" && row.inspection_exists) {
-                                viewBtn += `
-                                    <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report"
-                                            data-btntype="view_only" data-appid="${row.app_id}" data-crsid="${row.crs_id}"
-                                            data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                        <i class="fa-solid fa-file"></i>
-                                    </button>
-                                `;
-                            }
-
-                            if (row.permit_type_short === "PIC" && row.curr_assign === 'fus_evaluator') {
-                                viewBtn += `
-                                    <button class="btn btn-sm btn-warning process-btn" title="Process Application" 
-                                        data-appid="${row.app_id}" data-crsid="${row.crs_id}" 
-                                        data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                        <i class="fas fa-file-circle-check"></i>
-                                    </button>
-                                `;
-                            }
-
-                            if (row.permit_type_short === "PIC" && row.curr_assign === 'fus_sc') {
-                                viewBtn += `
-                                    <button class="btn btn-sm btn-warning assign-btn" title="Assign Evaluator" 
-                                        data-appid="${row.app_id}" data-paymentid="${row.payment_id}" 
-                                        data-crsid="${row.crs_id}" data-reference="${row.reference_no}" 
-                                        data-permit_type_short="${row.permit_type_short}">
-                                        <i class="fas fa-users"></i>
-                                    </button>
-                                `;
-                            }
-
-                        if (row.status === 'approved') {
-                            viewBtn += `
-                                <button class="btn btn-sm btn-warning view-css-btn" title="View Survey" 
-                                    data-appid="${row.app_id}" 
-                                    data-reference="${row.reference_no}""
-                                    data-permit_type_short="${row.permit_type_short}">
-                                    <i class="fa-solid fa-poll"></i>
-                                </button>
-                            `;
-                            }
-
+                            let viewBtn = '';
                             let processBtn = '';
-                            if(row.permit_type_short === 'PIC'){
-                                if (row.curr_assign === 'fus_evaluator') {
-                                    if(row.client_remarks === 'For Inspection') {
-                                        
-                                        if(row.inspection_exists === 0) {
+                            
+                            // CASHIER ACTIONS
+                            if (row.permit_type_short === "PIC" && row.user_type === 'cashier') {
+                               
+                                viewBtn = `
+                                    <button class="btn btn-sm btn-primary op-btn" title="Order of Payment" data-reference="${row.reference_no}" data-appid="${row.app_id}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-receipt"></i>
+                                    </button>
+                                `;
+
+                                if (row.curr_assign === 'cashier') {
+                                    processBtn = `
+                                        <button class="btn btn-sm btn-warning confirm-btn" title="Confirm Payment" data-officerid="${row.action_officer_id}" data-appid="${row.app_id}" data-paymentid="${row.payment_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <i class="fas fa-square-minus"></i>
+                                        </button>
+                                    `;
+                                }
+                            // ALL ACTIONS
+                            }else{
+                                viewBtn = `
+                                    <button class="btn btn-sm btn-primary view-btn" title="View Application" data-curr_action="${row.curr_action}" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-info history-btn" title="View History" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                `;
+                            }
+
+                            // EVALUATOR ACTIONS
+                            if (row.permit_type_short === "PIC" && row.curr_assign === 'fus_evaluator') {
+                                // if(!row.inspection_exists && row.client_remarks != 'For Inspection') {
+                                    viewBtn += `
+                                        <button class="btn btn-sm btn-warning process-btn" title="Process Application" 
+                                            data-appid="${row.app_id}" data-crsid="${row.crs_id}" 
+                                            data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <i class="fas fa-file-circle-check"></i>
+                                        </button>
+                                    `;
+                                    
+                                    if(row.inspection_exists === 0) {
                                         processBtn = `
                                             <button class="btn btn-sm btn-warning ir-btn" title="Create Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                                 <i class="fa-solid fa-file"></i>
@@ -522,42 +636,57 @@
                                         `;
                                         }else{
                                         processBtn = `
-                                            <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_creation" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                                <i class="fa-solid fa-file"></i>
-                                            </button>
                                             <button class="btn btn-sm btn-warning edit-ir-btn" title="Edit Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                                 <i class="fa-solid fa-pen"></i>
                                             </button>
-                                        `;
-                                        }
-                                    }
-                                    
-                                }
 
-                                if (row.user_type === 'cashier') {
-                                    processBtn = `
-                                        <button class="btn btn-sm btn-warning confirm-btn" title="Confirm Payment" data-appid="${row.app_id}" data-paymentid="${row.payment_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                            <i class="fas fa-square-minus"></i>
-                                        </button>
-                                    `;
-                                }
-
-                                if (row.curr_assign === 'fus_sc') {
-                                    if(row.curr_action === 'For Approval of Section Chief'){
-                                        processBtn = `
-                                            <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_approval" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                            <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_creation" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
                                                 <i class="fa-solid fa-file"></i>
                                             </button>
                                         `;
-                                    }else if(row.curr_action === 'For Assignment of Action Officer') {
-                                        processBtn = `
-                                            <button class="btn btn-sm btn-warning assign-btn" title="Assign Evaluator" data-appid="${row.app_id}" data-paymentid="${row.payment_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
-                                                <i class="fas fa-users"></i>
-                                            </button>
-                                        `;
                                     }
-                                    
-                                }
+                            }
+
+                            // SC ACTIONS
+                            if (row.permit_type_short === "PIC" && row.curr_assign === 'fus_sc') {
+                                processBtn = `
+                                    <button class="btn btn-sm btn-warning edit-ir-btn" title="Edit Inspection Report" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_review" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fa-solid fa-file"></i>
+                                    </button>
+                                `;
+                            }
+
+                            // DC ACTIONS
+                            if (row.permit_type_short === "PIC" && row.curr_assign === 'lpdd_dc') {
+                                processBtn = `
+                                    <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_dc_approval" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fa-solid fa-file"></i>
+                                    </button>
+                                `;
+                            }
+
+                            // ARD TS ACTIONS
+                            if (row.permit_type_short === "PIC" && row.curr_assign === 'ard_ts') {
+                                processBtn = `
+                                    <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_ts_approval" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fa-solid fa-file"></i>
+                                    </button>
+                                `;
+                            }
+
+                            // RED ACTIONS
+                            if (row.permit_type_short === "PIC" && row.curr_assign === 'red') {
+                                processBtn = `
+                                    <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_red_approval" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fa-solid fa-file"></i>
+                                    </button>
+                                `;
+                            }
+                            /*
 
                                 if (row.curr_assign === 'lpdd_dc') {
                                     processBtn = `
@@ -583,7 +712,7 @@
                                     `;
                                 }
                             }
-
+                            */
                             return `
                                 <div class="d-flex flex-row flex-nowrap align-items-center">
                                     <div class="me-2">${viewBtn}&nbsp${processBtn}</div>
@@ -620,6 +749,8 @@
             const appid = $(this).data('appid');
             const referenceNo = $(this).data('reference');
             const permit_type_short = $(this).data('permit_type_short');
+            const curr_action = $(this).data('curr_action');
+
             // Fetch data from the server using AJAX
             $.ajax({
                 url: '/get-application-details/', // Your Django view URL
@@ -690,6 +821,7 @@
                     $('#permit_address').html(response.estab_address);
                     $('#client_cel_no').html(response.client_cel_no);
                     $('#client_email').html(response.client_email);
+                    $('#client_name').html(response.client_name);
 
                     if (response.arrival_date) {
                         const parts = response.arrival_date.split('-');
@@ -714,27 +846,32 @@
                         $('#other_information').after(`
                             <div id="other_info_row" class="row mt-3">
                                 <div class="col-12">
-                                    <div class="hr-sect">Warehouse Information</div>
+                                    <div class="hr-sect">Office / Warehouse Information</div>
                                 </div>
 
-                                <div class="col-md-2">
-                                    <label class="form-label">City</label>
-                                </div>
-                                <div class="col-md-1">
-                                    :
-                                </div>
-                                <div class="col-md-3">
-                                    ${response.warehouse_city}
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label class="form-label">Address</label>
-                                </div>
-                                <div class="col-md-1">
-                                    :
-                                </div>
-                                <div class="col-md-3">
-                                    ${response.warehouse_address}
+                               <div class="col-12 mt-4" style="margin-bottom: 2rem;">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped table-hover align-middle mb-0">
+                                            <thead class="table-secondary">
+                                                <tr class="text-center">
+                                                    <th style="width: 40%;">City</th>
+                                                    <th style="width: 60%;">Address</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${
+                                                    response.warehouses && response.warehouses.length > 0 ?
+                                                    response.warehouses.map((w, index) => `
+                                                        <tr>
+                                                            <td class="ps-3">${w.city}</td>
+                                                            <td class="ps-3">${w.address}</td>
+                                                        </tr>
+                                                    `).join('') :
+                                                    `<tr><td colspan="3" class="text-center text-muted fst-italic">No warehouse records found</td></tr>`
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
 
                                 <div class="col-12">
@@ -864,18 +1001,19 @@
                             </table>
                         `);
 
+
                         //view remarks textarea
-                        $('#remarks_div').remove();
-                        {% if response.client_remarks == "lpdd_dc" %}
-                            $('#view_remarks').after(`
-                                <div id="remarks_div" class="mt-3">
-                                    <label for="viewRemarks" class="form-label">Remarks</label>
-                                    <textarea id="viewRemarks" class="form-control" placeholder="Enter your remarks here." rows="4"></textarea>
-                                    <br>
-                                    <button type="submit" class="btnApproveDC btn btn-success">For Recommendation of ARD - Technical Services</button>
-                                </div>
-                            `);
-                        {% endif %}
+                        // $('#remarks_div').remove();
+                        // if (response.client_remarks === "lpdd_dc") {
+                        //     $('#view_remarks').after(`
+                        //         <div id="remarks_div" class="mt-3">
+                        //             <label for="viewRemarks" class="form-label">Remarks</label>
+                        //             <textarea id="viewRemarks" class="form-control" placeholder="Enter your remarks here." rows="4"></textarea>
+                        //             <br>
+                        //             <button type="submit" class="btnApproveDC btn btn-success">For Recommendation of ARD - Technical Services</button>
+                        //         </div>
+                        //     `);
+                        // }
 
                     } else if (response.permit_type_short === 'TCP') {
                         // Always remove the previous section before adding
@@ -1078,7 +1216,6 @@
             $('#reference_no_p').html(referenceNo);
             $('#app_id_p').val(appid);
             $('#crs_id_p').val(crsid);
-            
 
             $('#processModal').modal('show');
         });
@@ -1089,6 +1226,7 @@
             const referenceNo = $(this).data('reference');
             const permit_type_short = $(this).data('permit_type_short');
             const payment_id = $(this).data('paymentid');
+            const officer_id = $(this).data('officerid');
             
             
             $('#application_for_cp').html(permit_type_short);
@@ -1096,15 +1234,17 @@
             $('#app_id_cp').val(appid);
             $('#crs_id_cp').val(crsid);
             $('#payment_id').val(payment_id);
+            $('#officer_id').val(officer_id);
             
 
             $('#confimPaymentModal').modal('show');
         });
 
-        $(document).on('click', '.assign-btn', function() {
+        {% comment %} $(document).on('click', '.assign-btn', function() {
             const permit_type_short = $(this).data('permit_type_short');
             const referenceNo = $(this).data('reference');
             const appid = $(this).data('appid');
+            const crsid = $(this).data('crsid');
 
             $.ajax({
                 url: '/get-action-officer/', // Your Django view URL
@@ -1117,6 +1257,7 @@
                     $('#application_for_as').html(permit_type_short);
                     $('#reference_no_as').html(referenceNo);
                     $('#app_id_as').val(appid);
+                    $('#crs_id_as').val(crsid);
 
                     // Clear and populate the dropdown
                     const $dropdown = $('#action_officer_list');
@@ -1130,11 +1271,12 @@
                     });
 
                     $('#inspector_as').html(response.current_handler);
+                    $('#evaluator_id_as').val(response.evaluator_id);
                         
                     $('#assignInspectorModal').modal('show');
                 }
             });
-        });
+        }); {% endcomment %}
 
         $(document).on('click', '.ir-btn', function() {
             const permit_type_short = $(this).data('permit_type_short');
@@ -1186,12 +1328,15 @@
                     $('#app_id_vir').val(appid);
                     document.getElementById('inspection_report_text_v').innerHTML = response.report_content;
                     $('#inpector_name_vir').html(response.inspector_name);
+                    $('#inspector_id_vir').val(response.inspector_id);
+                    $('#crs_id_vir').val(crsID);
                         
                     // Example for rendering attachments (if needed)
                     let attachmentsHTML = '';
                     if (response.attachments && response.attachments.length > 0) {
                         response.attachments.forEach(function(path) {
                             const filename = path.split('/').pop();
+                            path = 'media/' + path;
                             attachmentsHTML += `<li><a href="${path}" target="_blank">${filename}</a></li>`;
                         });
                     } else {
@@ -1203,15 +1348,21 @@
 
                     let buttonHTML = '';
                     if (btnType === 'ir_creation') {
-                        buttonHTML = '<button type="submit" class="btnForwardIR btn btn-success">Submit</button>';
-                    } else if (btnType === 'ir_approval') {
-                        buttonHTML = '<button type="submit" class="btnApproveIR btn btn-success">For Approval of Division Chief</button>';
-                    }else if (btnType === 'ir_dc_approval') {
-                        buttonHTML = '<button type="submit" class="btnApproveDCIR btn btn-success">For Recommendation of ARD - Technical Services</button>';
+                        buttonHTML = '<button type="submit" class="btnForwardIR btn btn-success">Submit Completed Requirements with Report</button>';
+                    }else if (btnType === 'ir_review') {
+                        buttonHTML = '<button type="submit" class="btnReturnEvaluator btn btn-warning">Return</button>&nbsp;&nbsp;';
+                        buttonHTML += '<button type="submit" class="btnForPayment btn btn-success">Approved</button>';
+                    }
+                    // else if (btnType === 'ir_approval') {
+                    //     buttonHTML = '<button type="submit" class="btnApproveIR btn btn-success">For Approval of Division Chief</button>';
+                    // }
+                    else if (btnType === 'ir_dc_approval') {
+                        buttonHTML = '<button type="submit" class="btnApproveDCIR btn btn-success">Endorsed</button>';
                     }else if (btnType === 'ir_ts_approval') {
-                        buttonHTML = '<button type="submit" class="btnApproveTSIR btn btn-success">For Approval of RED</button>';
+                        buttonHTML = '<button type="submit" class="btnApproveTSIR btn btn-success">Recommended</button>';
                     }else if (btnType === 'ir_red_approval') {
-                        buttonHTML = '<button type="submit" class="btnApproveREDIR btn btn-success">Approved</button>';
+                        buttonHTML = '<button type="submit" class="btnDisapproveREDIR btn btn-danger">Disapproved</button>&nbsp;&nbsp;';
+                        buttonHTML += '<button type="submit" class="btnApproveREDIR btn btn-success">Approved</button>';
                         $('#inspectionReportRemarks').prop('hidden', true);
                         $('#crs_id_vir').val(crsID);
                     }else if (btnType === 'view_only') {
@@ -1263,6 +1414,7 @@
                     if (response.attachments && response.attachments.length > 0) {
                     response.attachments.forEach(function(path, index) {
                         const filename = path.split('/').pop();
+                        path = 'media/' + path;
                         attachmentsHTML += `
                             <li data-index="${index}" data-path="${path}">
                                 <a href="${path}" target="_blank">${filename}</a>
@@ -1321,14 +1473,34 @@
         $(document).on('click', '.btnReturnToClient', function(e) {
             e.preventDefault();
 
-            const referenceNo = $('#reference_no_p').text().trim();
-            const appId = $('#app_id_p').val();
-            const crsId = $('#crs_id_p').val();
-            const remarks = $('#remarksTextarea').val().trim();
-            const permitType = $('#application_for_p').text().trim();
+            let referenceNo = '';
+            let appId = '';
+            let crsId = '';
+            let remarks = '';
+            let permitType = '';
+            const return_type = $(this).data('type');
 
-            
-            if (!remarks) {
+            if(return_type === 'return_application') {
+                appId = $('#app_id_p').val();
+                crsId = $('#crs_id_p').val();
+                action = 'For Client Completion';
+                notes = 'Returned to Client';
+                status = 'pending to client';
+                remarks = $('#remarksTextarea').val().trim();
+                referenceNo = referenceNo = $('#reference_no_p').text().trim();
+                permitType = $('#application_for_p').text().trim();
+            } else if(return_type === 'return_proof') {
+                appId = $('#app_id_cp').val();
+                crsId = $('#crs_id_cp').val();
+                action = 'For Payment';
+                notes = 'Returned to Client';
+                status = 'pending for proof';
+                remarks = 'Please check your provided OR Number and uploaded attachments.';
+                referenceNo = referenceNo = $('#reference_no_cp').text().trim();
+                permitType = $('#application_for_cp').text().trim();
+            }
+
+            if (!remarks && return_type === 'return_application') {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Remarks Required',
@@ -1336,6 +1508,7 @@
                 });
                 return;
             }
+           
             
             $.ajax({
                 type: 'POST', // or 'GET'
@@ -1343,11 +1516,11 @@
                 data: {
                         reference_no: referenceNo,
                         app_id: appId,
-                        crsid: crsId,
+                        forwarded_to: crsId,
                         remarks: remarks,
-                        action: 'For Client Completion',
-                        notes: 'Returned to Client',
-                        status: 'pending to client',
+                        action: action,
+                        notes: notes,
+                        status: status,
                         permit_type_short: permitType,
                         chi_remarks: 'client',
                         chi_status: 'pending',
@@ -1357,8 +1530,8 @@
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Returned to Client',
-                            text: 'The application has been successfully returned to the client.'
+                            title: response.title,
+                            text: response.message
                         }).then(() => {
                             location.reload(); // or DataTable refresh
                         });
@@ -1380,7 +1553,73 @@
             });
         });
 
-        {% comment %} EVALUATOR TO CASHIER {% endcomment %}
+        {% comment %} SC TO EVALUATOR {% endcomment %}
+        $(document).on('click', '.btnReturnEvaluator', function(e) {
+            e.preventDefault();
+            
+            const referenceNo = $('#reference_no_vir').html();
+            const appId = $('#app_id_vir').val();
+            const remarks = $('#inspectionReportRemarks').val().trim();
+            const action="For Re-evaluation";
+            const notes="Rechecking";
+            const status = 'pending for checking';
+            const permitType = $('#application_for_vir').text().trim();
+            const forwarded_to = $('#inspector_id_vir').val();
+
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before returning the application.'
+                });
+                return;
+            }
+
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: action,
+                        notes: notes,
+                        status: status,
+                        permit_type_short: permitType,
+                        chi_remarks: 'fus_evaluator',
+                        chi_status: 'pending',
+                        forwarded_to: forwarded_to,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: response.title,
+                            text: response.message
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+        
+
+        {% comment %} EVALUATOR TO SC {% endcomment %}
         $(document).on('click', '.btnCompletedRequirements', function(e) {
             e.preventDefault();
 
@@ -1395,7 +1634,7 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'Remarks Required',
-                    text: 'Please provide remarks before submitting the application as for payment.'
+                    text: 'Please provide remarks before submitting to FUS Section Chief for checking.'
                 });
                 return;
             }
@@ -1404,15 +1643,15 @@
                 type: 'POST', // or 'GET'
                 url: '/process_application_action/',
                 data: {
-                        reference_no: referenceNo,
                         app_id: appId,
-                        crsid: crsId,
-                        remarks: remarks,
-                        action: 'For Payment',
-                        notes: 'For Payment',
-                        status: 'pending for payment',
-                        chi_remarks: 'client',
+                        reference_no: referenceNo,
+                        forwarded_to: '{{ request.session.fus_sc_id }}',
+                        action: 'For Assignment of Action Officer',
+                        notes: 'Submitted to Forest Utilization Section Chief',
+                        remarks: 'For Checking of Application',
+                        status: 'for assignment of action officer',
                         chi_status: 'pending',
+                        chi_remarks: 'fus_sc',
                         permit_type_short: permitType,
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     },
@@ -1420,8 +1659,8 @@
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Application Processed',
-                            text: 'The application has been successfully returned to the client for payment.'
+                            title: 'Success',
+                            text: 'The application has been submitted to FUS Section Chief for checking.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
                         });
@@ -1453,7 +1692,7 @@
             const payment_id = $('#payment_id').val();
             const lbp_ref_no = $('#lbp_ref_no_cp').val().trim();
             const permitType = $('#application_for_cp').text().trim();
-
+            const forwarded_to = '{{ request.session.lpdd_dc_id }}';
             
             if (!lbp_ref_no) {
                 Swal.fire({
@@ -1463,6 +1702,7 @@
                 });
                 return;
             }
+            
             $.ajax({
                 type: 'POST', // or 'GET'
                 url: '/confirm_payment_action/',
@@ -1470,14 +1710,14 @@
                         payment_id: payment_id,
                         chi_lbp_ref_no: lbp_ref_no,
                         app_id: appId,
+                        forwarded_to: forwarded_to,
                         reference_no: referenceNo,
-                        forwarded_to: '{{ request.session.fus_sc_id }}',
-                        action: 'For Assignment of Action Officer',
-                        notes: 'Submitted to Forest Utilization Section Chief',
-                        remarks: 'Paid',
-                        status: 'for assignment of action officer',
+                        action: 'For Endorsement',
+                        notes: 'Endorsement of DC',
+                        remarks: 'For Endorsement to LPDD Division Chief',
+                        status: 'pending for endorsement',
                         chi_status: 'pending',
-                        chi_remarks: 'fus_sc',
+                        chi_remarks: 'lpdd_dc',
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     },
                 success: function(response) {
@@ -1485,7 +1725,7 @@
                         Swal.fire({
                             icon: 'success',
                             title: 'Payment Confirmed',
-                            text: 'The payment has been successfully confirmed.'
+                            text: 'The payment has been successfully confirmed. The application is now for endorsement to LPDD Division Chief.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
                         });
@@ -1507,42 +1747,46 @@
             });
         });
 
-        $(document).on('click', '.btnAssign', function(e) {
+        $(document).on('click', '.btnForPayment', function(e) {
             e.preventDefault();
 
-            const officerID = $('#action_officer_list').val();
-            const appId = $('#app_id_as').val();
-            const reference_no = $('#reference_no_as').html();
+            const appId = $('#app_id_vir').val();
+            const crsId = $('#crs_id_vir').val();
+            const reference_no = $('#reference_no_vir').html();
+            const remarks = $('#inspectionReportRemarks').val().trim();
+            const permitType = $('#application_for_vir').html();
 
-            if (!officerID) {
+            if (!remarks) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Action Officer Required',
-                    text: 'Please select Action Officer.'
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before processing the application.'
                 });
                 return;
             }
             
             $.ajax({
                 type: 'POST', // or 'GET'
-                url: '/assign-action-officer/',
+                url: '/for-payment/',
                 data: {
-                        app_id: appId,
-                        officer_id: officerID,
                         reference_no: reference_no,
-                        action: 'For Inspection',
-                        notes: 'Inspection Assigned',
-                        status: 'for inspection',
-                        chi_remarks: 'fus_evaluator',
+                        app_id: appId,
+                        forwarded_to: crsId,
+                        remarks: remarks,
+                        action: 'For Payment',
+                        notes: 'Payment',
+                        status: 'pending for payment',
+                        chi_remarks: 'client',
                         chi_status: 'pending',
+                        permit_type_short: permitType,
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     },
                 success: function(response) {
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Application Processed',
-                            text: 'The application has been successfully returned to the client for payment.'
+                            title: 'Success',
+                            text: 'The application has been approved. Client can now proceed to payment.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
                         });
@@ -1632,7 +1876,7 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'Remarks Required',
-                    text: 'Please provide remarks before submitting the application as for payment.'
+                    text: 'Please provide remarks before submitting the application with report.'
                 });
                 return;
             }
@@ -1644,9 +1888,9 @@
                         reference_no: referenceNo,
                         app_id: appId,
                         remarks: remarks,
-                        action: 'For Approval of Section Chief',
-                        notes: 'For Approval of Forest Utilization Section Chief',
-                        status: 'for approval of permit',
+                        action: 'For Review',
+                        notes: 'Review Report and Application',
+                        status: 'pending for review',
                         forwarded_to: '{{ request.session.fus_sc_id }}',
                         chi_remarks: 'fus_sc',
                         chi_status: 'pending',
@@ -1657,8 +1901,8 @@
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Application Processed',
-                            text: 'The application has been successfully forwarded to FUS Section Chief for approval.'
+                            title: 'Success',
+                            text: 'The application has been successfully forwarded to FUS Section Chief for review.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
                         });
@@ -1680,7 +1924,7 @@
             });
         });
 
-        $(document).on('click', '.btnApproveIR', function(e) {
+        {% comment %} $(document).on('click', '.btnApproveIR', function(e) {
             e.preventDefault();
 
             const referenceNo = $('#reference_no_vir').text().trim();
@@ -1717,7 +1961,7 @@
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Application Processed',
+                            title: 'Success',
                             text: 'The application has been successfully forwarded to FUS Section Chief for approval.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
@@ -1738,7 +1982,7 @@
                     });
                 }
             });
-        });
+        }); {% endcomment %}
 
         $(document).on('click', '.btnApproveDCIR', function(e) {
             e.preventDefault();
@@ -1777,7 +2021,7 @@
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Application Processed',
+                            title: 'Success',
                             text: 'The application has been successfully forwarded to ARD - Technical Services.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
@@ -1837,7 +2081,7 @@
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Application Processed',
+                            title: 'Success',
                             text: 'The application has been successfully forwarded to RED.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
@@ -1868,86 +2112,129 @@
             const remarks = $('#inspectionReportRemarks').val().trim();
             const permitType = $('#application_for_vir').text().trim();
             const crsId = $('#crs_id_vir').val();
-            
-            $.ajax({
-                type: 'POST', // or 'GET'
-                url: '/process_application_action_emp/',
-                data: {
-                        reference_no: referenceNo,
-                        app_id: appId,
-                        remarks: 'for release',
-                        action: 'Approved',
-                        notes: 'Please Complete Client Satisfaction Survey',
-                        status: 'approved',
-                        forwarded_to: crsId, // CRS ID for release
-                        chi_remarks: 'client',
-                        chi_status: 'approved',
-                        permit_type_short: permitType,
-                        csrfmiddlewaretoken: '{{ csrf_token }}'
-                    },
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Application Processed',
-                            text: 'The application has been successfully forwarded to RED.'
-                        }).then(() => {
-                            location.reload(); // or DataTable refresh
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Failed to Return',
-                            text: response.message || 'An unknown error occurred.'
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Request Failed',
-                        text: `An error occurred: ${error}`
+
+
+            Swal.fire({
+                title: 'Are you sure?',
+                html: `Do you want to approve application <b>${referenceNo}</b>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, approve it!',
+                confirmButtonColor: '#28a745',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/process_application_action_emp/',
+                        data: {
+                            reference_no: referenceNo,
+                            app_id: appId,
+                            remarks: 'for release',
+                            action: 'Approved',
+                            notes: 'Please Complete Client Satisfaction Survey',
+                            status: 'approved',
+                            forwarded_to: crsId,
+                            chi_remarks: 'client',
+                            chi_status: 'approved',
+                            permit_type_short: permitType,
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Permit approved.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Failed to Return',
+                                    text: response.message || 'An unknown error occurred.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Request Failed',
+                                text: `An error occurred: ${error}`
+                            });
+                        }
                     });
                 }
             });
         });
+
+        $(document).on('click', '.btnDisapproveREDIR', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const remarks = $('#inspectionReportRemarks').val().trim();
+            const permitType = $('#application_for_vir').text().trim();
+            const crsId = $('#crs_id_vir').val();
+
+
+            Swal.fire({
+                title: 'Are you sure?',
+                html: `Do you want to disapprove application <b>${referenceNo}</b>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, disapprove it!',
+                confirmButtonColor: '#dc3545',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/process_application_action_emp/',
+                        data: {
+                            reference_no: referenceNo,
+                            app_id: appId,
+                            remarks: 'Disapproved',
+                            action: 'Disapproved',
+                            notes: 'Application denied.',
+                            status: 'disapproved',
+                            forwarded_to: crsId,
+                            chi_remarks: 'client',
+                            chi_status: 'disapproved',
+                            permit_type_short: permitType,
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Permit disapproved.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Failed to Return',
+                                    text: response.message || 'An unknown error occurred.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Request Failed',
+                                text: `An error occurred: ${error}`
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
         
-
-        $(document).on('click', '.assign-btn', function() {
-            const permit_type_short = $(this).data('permit_type_short');
-            const referenceNo = $(this).data('reference');
-            const appid = $(this).data('appid');
-
-            $.ajax({
-                url: '/get-action-officer/', // Your Django view URL
-                method: 'GET',
-                data: { appid: appid,
-                        reference_no: referenceNo,
-                        permit_type_short: permit_type_short},
-                success: function (response) {
-
-                    $('#application_for_as').html(permit_type_short);
-                    $('#reference_no_as').html(referenceNo);
-                    $('#app_id_as').val(appid);
-
-                    // Clear and populate the dropdown
-                    const $dropdown = $('#action_officer_list');
-                    $dropdown.empty();  // Clear existing options
-
-                    $dropdown.append('<option value="">-- Select Officer --</option>');
-
-                    $.each(response.officers, function (index, officer) {
-                        const option = `<option value="${officer.userid}">${officer.fullname}</option>`;
-                        $dropdown.append(option);
-                    });
-
-                    $('#inspector_as').html(response.current_handler);
-                        
-                    $('#assignInspectorModal').modal('show');
-                }
-            });
-        });
-
 
         $(document).on('click', '.approve-dc-btn', function(e) {
             e.preventDefault();
@@ -1986,7 +2273,7 @@
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Application Processed',
+                            title: 'Success',
                             text: 'The application has been successfully forwarded to ARD - Technical Services.'
                         }).then(() => {
                             location.reload(); // or DataTable refresh
@@ -2018,5 +2305,160 @@
             
         });
 
+        $(document).on('click', '.op-btn', function () {
+            const appid = $(this).data('appid');
+            const referenceNo = $(this).data('reference');
+            const permit_type_short = $(this).data('permit_type_short');
+
+                $.ajax({
+                url: '/get-application-details/', // Your Django view URL
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
+                    if (response.op_date) {
+                        const parts = response.op_date.split('-');
+
+                        const months = [
+                            'January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'
+                        ];
+
+                        const year = parts[0];
+                        const month = months[parseInt(parts[1], 10) - 1];
+                        const day = parseInt(parts[2], 10);
+                        response.op_date = `${month} ${day}, ${year}`; // Format it in-place
+                    }
+
+                    $('#permit_type_op').html(response.permit_type);
+                    $('#op_date_op').html(response.op_date);
+                    $('#reference_no_op').html(response.reference_no);
+                    $('#op_no_op').html(response.op_id);
+                    $('#or_no_op').html(response.or_no);
+                    $('#estab_name_op').html(response.estab_name);
+                    $('#estab_address_op').html(response.estab_address);
+                    $('#amount_op').html(response.amount);
+
+                    //attachments
+                    $('#op_attachments_table').remove();
+                    $('#op_attachments').after(`
+                        <table id="op_attachments_table" class="table table-bordered table-striped table-hover align-middle mb-0 mt-3">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>File Type</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${
+                                    response.attachments && response.attachments.length > 0
+                                    ? response.attachments
+                                        .filter(att => att.file_type.substring(0, 16) === 'Proof of Payment')  // ✅ Filter here
+                                        .map(att => `
+                                            <tr>
+                                                <td>${att.file_type}</td>
+                                                <td>${att.file_name}</td>
+                                                <td class="text-center">
+                                                    <a href="${att.file_url}" target="_blank" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        `).join('')
+                                    : `<tr><td colspan="3" class="text-center text-muted fst-italic">No attachments found</td></tr>`
+                                }
+
+                            </tbody>
+                        </table>
+                    `);
+                }
+            });
+
+            $('#orderOfPaymentModal').modal('show');
+        });
+
+        function printOrderOfPayment() {
+            const modalContent = document.querySelector('#orderOfPaymentModal .modal-content').cloneNode(true);
+
+            // Create a new print window
+            const printWindow = window.open('', '', 'height=900,width=700');
+
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>DENR NCR ORDER OF PAYMENT</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 30px;
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            background-color: #fff;
+                            text-align: center;
+                        }
+
+                        .modal-content {
+                            width: 100%;
+                            max-width: 900px;
+                            margin: auto;
+                            box-shadow: none;
+                            border: none;
+                        }
+
+                        .modal-header, .modal-footer, .btn-close, .d-print-none {
+                            display: none !important;
+                        }
+
+                        table {
+                            border: 1px solid #dee2e6;
+                            border-collapse: collapse;
+                            width: 100%;
+                            margin-top: 20px;
+                        }
+
+                        th, td {
+                            border: 1px solid #dee2e6;
+                            padding: 10px;
+                            text-align: center;
+                        }
+
+                        img {
+                            margin-bottom: 10px;
+                        }
+
+                        .signature {
+                            margin-top: 60px;
+                            text-align: center;
+                        }
+
+                        .signature img {
+                            margin-bottom: 10px;
+                        }
+
+                        .signature div {
+                            line-height: 1.2;
+                        }
+
+                        #attachment{
+                            display: none;
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+
+            printWindow.document.body.appendChild(modalContent);
+            printWindow.document.write(`</body></html>`);
+            printWindow.document.close();
+            printWindow.focus();
+
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        }
     </script>
 {% endblock %}

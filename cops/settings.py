@@ -85,9 +85,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'denrncr_chainsaw',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': '$2y$10$K1hW8Cz/7q6P7T1LJZlUIOV5m3PjJThHyZJndcGziUURCgBzUpU2e',
         'HOST': 'localhost',
-        'PORT': '3307'
+        'PORT': '3306'
     },
     'dniis_db': {
         'ENGINE': 'django.db.backends.mysql',  # For MariaDB, use MySQL engine
@@ -157,3 +157,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

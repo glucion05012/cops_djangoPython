@@ -1,0 +1,2347 @@
+{% extends "includes/base.html" %}
+
+{% block title %}DENR NCR Client Portal{% endblock title %}
+{% load static %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-sm-12">
+            <table id="myApplicationListEmp" class="table table-responsive table-striped table-bordered table-sm" cellspacing="0" width="100%" >
+                <thead>
+                    <tr>
+                        <th>Permit</th>
+                        <th>Permittee Name</th>
+                        <th>Reference Number</th>
+                        <th>Date Applied</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+    <div class="modal fade" id="applicationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Application Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>APPLICATION FOR <span id="application_for" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no"></span>
+                    </div>
+
+                    <div class="hr-sect">Application Information</div>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label for="application_type" class="form-label">Application Type</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="application_type"></div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="date_applied" class="form-label">Date Applied</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="date_applied"></div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="applicant_type" class="form-label">Applicant Type</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="applicant_type"></div>
+                        </div>
+
+                        <div id="ownershsip_type"></div>
+
+                        <div class="col-md-2">
+                            <label for="client_cel_no" class="form-label">Contact No</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="client_cel_no"></div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="applicant_name" class="form-label">Applicant Name</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="client_name"></div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="client_email" class="form-label">Email</label>
+                        </div>
+                        <div class="col-md-1">
+                            :
+                        </div>
+                        <div class="col-md-3">
+                            <div id="client_email"></div>
+                        </div>
+
+                    </div>
+
+                    <!-- Placeholder for the additional label -->
+                
+                    <!-- Permittee Name -->
+                    <div class="hr-sect">General Information</div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h5 style="text-align: center;">
+                                <b id="permit_name"></b>
+                            </h5>
+                            <p style="text-align: center;" id="permit_address"></p>
+                        </div>
+
+                    </div>
+
+                    {% comment %} ------------- other information ------------- {% endcomment %}
+                    <div id="other_information"></div>
+
+                    
+                    <div class="hr-sect">Attachments</div>
+
+                    <div id="attachments"></div>
+
+                    <div id="view_remarks"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Transaction History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="historyModalBody">
+
+                    <div style="text-align: center;">
+                        <b>HISTORY FOR <span id="application_for_h" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_h"></span>
+                    </div>
+
+                    <div class="hr-sect">Transaction History</div>
+
+                    <table id="historyTable" class="table table-responsive table-striped table-bordered table-sm" cellspacing="0" width="100%" >
+                        <thead>
+                                <th>No of Days Processed</th>
+                                <th>Date Received</th>
+                                <th>Created By</th>
+                                <th>Forwarded To</th>
+                                <th>Notes</th>
+                                <th>Remarks</th>
+                                <th>Status</th>
+                        </thead>
+
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="processModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Process Application</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>APPLICATION FOR <span id="application_for_p" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_p"></span>
+                        <br><br>
+                        <p>Please provide your remarks in the text box below:</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="hidden" id="app_id_p" name="app_id_p">
+                        <input type="hidden" id="crs_id_p" name="crs_id_p">
+                        <textarea class="form-control" id="remarksTextarea" name="remarks" rows="4" placeholder="Enter your remarks here. If returning to the client, please indicate any incomplete requirements."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-warning btnReturnToClient" data-type="return_application">
+                            Return to Client
+                        </button>
+                        {% comment %} &nbsp;&nbsp;
+                        <button class="btn btn-sm btn-success btnCompletedRequirements" >
+                            Completed Requirements
+                        </button> {% endcomment %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confimPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>APPLICATION FOR <span id="application_for_cp" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_cp"></span>
+                        <br><br>
+                        <p>Please provide Landbank Reference No. below to confirm payment:</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="hidden" id="app_id_cp" name="app_id_cp">
+                        <input type="hidden" id="crs_id_cp" name="crs_id_cp">
+                        <input type="hidden" id="payment_id" name="payment_id">
+                        <input type="hidden" id="officer_id" name="officer_id">
+                        <input type="text" class="form-control" id="lbp_ref_no_cp" name="lbp_ref_no_cp" placeholder="Enter LBP Reference No." >
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-warning btnReturnToClient" data-type="return_proof">
+                            Return to Client
+                        </button>
+                        &nbsp;&nbsp;
+                        <button class="btn btn-sm btn-success btnPaymentConfirmed" >
+                            Payment Confirmed
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% comment %} <div class="modal fade" id="assignInspectorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Approval and Assignment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>Assignment of Action Officer for <span id="application_for_as" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_as"></span>
+                    </div>
+
+                    <div class="mb-3" style="margin-top: 1rem;">
+                        <input type="hidden" id="app_id_as" name="app_id_as">
+                        <input type="hidden" id="crs_id_as" name="crs_id_as">
+                        <input type="hidden" id="evaluator_id_as" name="evaluator_id_as">
+
+                        <label for="inspector" class="form-label">Evaluator: </label>
+                        <label id="inspector_as" class="form-label fw-bold"></label>
+                        <br><br>
+                        <label for="action_officer_list" class="form-label">Select Action Officer</label>
+                        <select id="action_officer_list" class="form-select">
+                            <option value="">-- Select Officer --</option>
+                        </select>
+                    </div>
+
+                    <textarea class="form-control" id="remarksTextarea_as" name="remarks" rows="4" placeholder="Enter your remarks here. The Action Officer can only save once the application is approved"></textarea>
+                    <br>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-warning btnReturnEvaluator" >
+                            Return to Evaluator
+                        </button>
+                        &nbsp;&nbsp;
+                        <button class="btn btn-sm btn-success btnForPayment" >
+                            Approve and Assign Officer
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div> {% endcomment %}
+
+    <div class="modal fade" id="inspectionReportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form id="inspectionReportForm" method="post" enctype="multipart/form-data" action="{% url 'submit_inspection_report' %}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Inspection Report</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="applicationModalBody">
+
+                        <div style="text-align: center;">
+                            <b>Inspection Report for <span id="application_for_ir" style="text-transform: uppercase;"></span></b>
+                            <br>
+                            Permit No. <span class="text-muted" id="reference_no_ir"></span>
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <input type="hidden" id="app_id_ir" name="app_id_ir">
+                        </div>
+
+                        <!-- Rich Text Area -->
+                        <div class="mb-3">
+                            <label for="inspection_report_text" class="form-label">Inspection Report</label>
+                            <textarea id="inspection_report_text" name="inspection_report_text" class="form-control" rows="10" placeholder="Type your report here."></textarea>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label for="ir_attachments" class="form-label">Attachments</label>
+                            <input type="file" id="ir_attachments" name="ir_attachments" class="form-control" multiple>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="btnSubmitIR btn btn-success">Submit</button>
+                        </div>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="viewInspectionReportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form id="viewInspectionReportForm" method="post" enctype="multipart/form-data" action="{% url 'submit_inspection_report' %}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">View Inspection Report</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="applicationModalBody">
+
+                        <div style="text-align: center;">
+                            <b>Inspection Report for <span id="application_for_vir" style="text-transform: uppercase;"></span></b>
+                            <br>
+                            Permit No. <span class="text-muted" id="reference_no_vir"></span>
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <input type="hidden" id="app_id_vir" name="app_id_vir">
+                            <input type="hidden" id="crs_id_vir" name="crs_id_vir">
+                        </div>
+
+                        <!-- Rich Text Area -->
+                        <div class="mb-3">
+                            <label class="form-label">Inspection Report created by: &nbsp;</label><span id="inpector_name_vir"></span>
+                            <div id="inspection_report_text_v"></div>
+                            <input type="hidden" id="inspector_id_vir" name="inspector_id_vir">
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label for="ir_attachments_v" class="form-label">Attachments</label>
+                            <ul id="inspection_attachments_list" class="list-unstyled"></ul>
+                        </div>
+
+                        <div class="modal-footer">
+                            <div id="buttonIRContainer"></div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editInspectionReportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Inspection Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applicationModalBody">
+
+                    <div style="text-align: center;">
+                        <b>Inspection Report for <span id="application_for_eir" style="text-transform: uppercase;"></span></b>
+                        <br>
+                        Permit No. <span class="text-muted" id="reference_no_eir"></span>
+                    </div>
+
+                    <div class="mb-3 mt-3">
+                        <input type="hidden" id="app_id_eir" name="app_id_eir">
+                    </div>
+
+                    <!-- Rich Text Area -->
+                    <div class="mb-3">
+                        <label class="form-label">Inspection Report created by: &nbsp;</label><span id="inpector_name_eir"></span>
+                        <textarea id="inspection_report_text_e" name="inspection_report_text_e" class="form-control" rows="10" placeholder="Type your report here."></textarea>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="mb-3">
+                        <label for="ir_attachments_e" class="form-label">Attachments</label>
+                        
+                        <!-- Existing Attachments -->
+                        <ul id="inspection_attachments_list_e" class="list-styled"></ul>
+
+                        <!-- New File Upload -->
+                        <input type="file" id="ir_attachments_e" name="ir_attachments_e[]" class="form-control mt-2" multiple>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" id="saveInspectionReportBtn" class="btnSubmitIR btn btn-success">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="orderOfPaymentModal" tabindex="-1" aria-labelledby="orderOfPaymentLabel-{{ op_data.app_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content shadow">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderOfPaymentLabel-{{ op_data.app_id }}">Order of Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="container p-3 border border-dark rounded">
+
+                    <!-- Header -->
+                    <div class="text-center mb-4">
+                        <img src="{% static 'images/denr-logo.png' %}" alt="DENR Logo" width="50">
+                        <h4 class="mt-3"><strong>ORDER OF PAYMENT</strong></h4>
+                        <p>DEPARTMENT OF ENVIRONMENT AND NATURAL RESOURCES</p>
+                        <p>NATIONAL CAPITAL REGION</p>
+                        <p class="mb-0"><b><span id='permit_type_op'></span></b></p>
+                    </div>
+
+                    <!-- Info Rows -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <table class="table table-sm w-100 border border-dark">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold text-end pe-3" style="width: 50%;">Date Created:</td>
+                                        <td><span id="op_date_op"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-end pe-3">Reference No.:</td>
+                                        <td><span id="reference_no_op"></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm w-100 border border-dark">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold text-end pe-3" style="width: 50%;">Order of Payment No.:</td>
+                                        <td><span id="op_no_op"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-end pe-3">OR Number:</td>
+                                        <td><span id="or_no_op"></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <!-- Payee Info -->
+                    <div class="mb-4">
+                        <p><strong>Payor:</strong> <span id='estab_name_op'></span></p>
+                        <p><strong>Address:</strong> <span id='estab_address_op'></span></p>
+                    </div>
+
+                    <!-- Payment Table -->
+                    <table class="table table-bordered text-center align-middle">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Particulars</th>
+                            <th>Amount (₱)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td>
+                            Permit Fee
+                            </td>
+                            <td><span id='amount_op'></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Fund Cluster -->
+                    <p class="mt-3"><strong>Fund Cluster:</strong> {{ op_data.fund_cluster|default:"0110110" }}</p>
+
+                    <!-- Signature -->
+                    <div class="text-center mt-5">
+                        <img src="{% static 'images/sc-esig.png' %}" alt="Signature" width="100">
+                        <div><strong>EMELYN JOYCE E. NUGUID</strong></div>
+                        <div class="text-muted">Chief, Forest Utilization Section</div>
+                    </div>
+                    </div>
+
+                    <div id="attachment">
+                        <div class="hr-sect">Attachments</div>
+                        <div id="op_attachments"></div>
+                    </div>
+                </div>
+
+                
+                <div class="modal-footer d-print-none">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="printOrderOfPayment()">Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+                                    
+    <script>
+        $(document).ready(function() {
+            $.fn.dataTable.ext.errMode = 'none';  // Prevent default DataTables alert
+
+            $('#myApplicationListEmp').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{% url 'application_list_json_all' %}",
+                    "type": "POST",
+                    "headers": { "X-CSRFToken": "{{ csrf_token }}" },
+                    "error": function(xhr, error, thrown) {
+                        let errorMessage = "An unexpected error occurred.";
+                        let shouldRedirect = false;
+
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.error) {
+                                errorMessage = response.error;
+                                if (errorMessage.toLowerCase().includes("do not have an access")) {
+                                    shouldRedirect = true;
+                                }
+                            }
+                        } catch (e) {
+                            errorMessage = "Invalid response from server.";
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Access Denied',
+                            text: errorMessage,
+                            confirmButtonText: 'Logout'
+                        }).then(() => {
+                            if (shouldRedirect) {
+                                window.location.href = "{% url 'index' %}";
+                            }
+                        });
+
+                        $('#myApplicationListEmp').DataTable().processing(false); // hide spinner
+                    }
+                },
+                "columns": [
+                    { "data": "permit_type" },
+                    { "data": "estab_name" },
+                    { "data": "reference_no" },
+                    { "data": "date_applied" },
+                    { "data": "status" },
+                    { "data": "client_remarks" },
+                    {
+                        "data": null,
+                        "render": function(data, type, row) {
+                            let viewBtn = '';
+                            let processBtn = '';
+                            
+                           viewBtn = `
+                                    <button class="btn btn-sm btn-primary view-btn" title="View Application" data-curr_action="${row.curr_action}" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-info history-btn" title="View History" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                `;
+
+                            if(row.inspection_exists === 1) {
+                                viewBtn += `
+                                    <button class="btn btn-sm btn-success view-ir-btn" title="View Inspection Report" data-btntype="ir_creation" data-appid="${row.app_id}" data-crsid="${row.crs_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fa-solid fa-file"></i>
+                                    </button>
+                                `;
+                            }
+
+                            if(row.payment_exists === 1) {
+                                viewBtn += `
+                                    <button class="btn btn-sm btn-warning op-btn" title="Order of Payment" data-reference="${row.reference_no}" data-appid="${row.app_id}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fas fa-receipt"></i>
+                                    </button>
+                                `;
+                            }
+
+                            if(row.survey_exists === 1) {
+                                viewBtn += `
+                                    <button class="btn btn-sm btn-primary view-css-btn" title="View Survey" data-appid="${row.app_id}" data-reference="${row.reference_no}" data-permit_type_short="${row.permit_type_short}">
+                                        <i class="fa-solid fa-square-poll-vertical"></i>
+                                    </button>
+                                `;
+
+                                const filename = `DENR-NCR-${row.reference_no}.pdf`;
+                                const filePath = `/media/chainsaw/pic/${filename}`;
+
+                                viewBtn += `
+                                <a href="${filePath}" 
+                                    download="${filename}" 
+                                    class="btn btn-sm btn-success css-btn" 
+                                    title="Download Permit"
+                                    onclick="event.stopPropagation();">
+                                        <i class="fa-solid fa-file-arrow-down"></i>
+                                </a>
+                                `;
+                            }
+
+                            return `
+                                <div class="d-flex flex-row flex-nowrap align-items-center">
+                                    <div class="me-2">${viewBtn}</div>
+                                </div>
+                            `;
+                        },
+                        "orderable": false,
+                        "searchable": false
+                    }
+                ]
+            });
+
+            // Initialize DataTable once
+            historyTable = $('#historyTable').DataTable({
+                paging: true,
+                ordering: true,
+                pageLength: 10,
+                order: [],
+                columns: [
+                    { data: 'days_processed' },
+                    { data: 'date_received' },
+                    { data: 'created_by' },
+                    { data: 'forwarded_to' },
+                    { data: 'notes' },
+                    { data: 'remarks' },
+                    { data: 'status' }
+                ]
+            });
+
+        });
+
+
+        $(document).on('click', '.view-btn', function () {
+            const appid = $(this).data('appid');
+            const referenceNo = $(this).data('reference');
+            const permit_type_short = $(this).data('permit_type_short');
+            const curr_action = $(this).data('curr_action');
+
+            // Fetch data from the server using AJAX
+            $.ajax({
+                url: '/get-application-details/', // Your Django view URL
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+                    // Populate the textboxes with data
+                    $('#application_for').html(response.permit_type);
+                    $('#reference_no').html(response.reference_no);
+                    if (response.app_type === '1') {
+                        $('#applicant_type').html('Individual');
+                    }else if (response.app_type === '2') {
+                        $('#applicant_type').html('Government');
+                    } else if (response.app_type === '3') {
+                        $('#applicant_type').html('Corporation');
+                    }
+                    
+                    if (response.permit_type_short === 'TCP') {
+                        $('#application_type').html('New Permittee');
+                    } else if (response.permit_type_short === 'PIC') {
+                        if (response.is_existing_permittee == '0') {
+                            $('#application_type').html('New Permittee');
+                        } else if (response.is_existing_permittee == '1') {
+                            $('#application_type').html('Existing Permittee');
+                        } else {
+                            $('#application_type').html('Unknown');
+                        }
+                    }
+
+                    if (response.permit_type_short === 'TCP') {
+                        if ($('#applicant_type_row').length === 0) {
+                            $('#ownershsip_type').closest('.row').after(`
+                                <div class="row" id="applicant_type_row">
+                                    <div class="col-md-2">
+                                        <label for="applicant_type" class="form-label">Ownership</label> 
+                                    </div>
+                                    <div class="col-md-1">
+                                        :
+                                    </div>
+                                    <div class="col-md-3">
+                                         ${response.owner}
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    } else {
+                        $('#applicant_type_row').remove(); // Remove it if not TCP
+                    }
+
+                    if (response.date_applied) {
+                        const parts = response.date_applied.split('-');
+
+                        const months = [
+                            'January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'
+                        ];
+
+                        const year = parts[0];
+                        const month = months[parseInt(parts[1], 10) - 1];
+                        const day = parseInt(parts[2], 10);
+                        response.date_applied = `${month} ${day}, ${year}`; // Format it in-place
+                    }
+                    $('#date_applied').html(response.date_applied);
+
+                    $('#permit_name').html(response.estab_name);
+                    $('#permit_address').html(response.estab_address);
+                    $('#client_cel_no').html(response.client_cel_no);
+                    $('#client_email').html(response.client_email);
+                    $('#client_name').html(response.client_name);
+
+                    if (response.arrival_date) {
+                        const parts = response.arrival_date.split('-');
+
+                        const months = [
+                            'January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'
+                        ];
+
+                        const year = parts[0];
+                        const month = months[parseInt(parts[1], 10) - 1];
+                        const day = parseInt(parts[2], 10);
+                        response.arrival_date = `${month} ${day}, ${year}`; // Format it in-place
+                    }
+                    
+
+                    //----------------- chainsaw fields -----------------
+                    if (response.permit_type_short === 'PIC') {
+                        // Always remove the previous section before adding
+                        $('#other_info_row').remove();
+
+                        $('#other_information').after(`
+                            <div id="other_info_row" class="row mt-3">
+                                <div class="col-12">
+                                    <div class="hr-sect">Office / Warehouse Information</div>
+                                </div>
+
+                               <div class="col-12 mt-4" style="margin-bottom: 2rem;">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped table-hover align-middle mb-0">
+                                            <thead class="table-secondary">
+                                                <tr class="text-center">
+                                                    <th style="width: 40%;">City</th>
+                                                    <th style="width: 60%;">Address</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${
+                                                    response.warehouses && response.warehouses.length > 0 ?
+                                                    response.warehouses.map((w, index) => `
+                                                        <tr>
+                                                            <td class="ps-3">${w.city}</td>
+                                                            <td class="ps-3">${w.address}</td>
+                                                        </tr>
+                                                    `).join('') :
+                                                    `<tr><td colspan="3" class="text-center text-muted fst-italic">No warehouse records found</td></tr>`
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="hr-sect">Chainsaw Details</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Brand</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.brand_name}
+                                </div>
+
+                                <div class="col-12 mt-4" style="margin-bottom: 2rem;">
+                                    <label class="form-label fw-bold">Models and Quantities</label>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped table-hover align-middle mb-0">
+                                            <thead class="table-secondary">
+                                                <tr class="text-center">
+                                                    <th style="width: 70%;">Model</th>
+                                                    <th style="width: 30%;">Quantity</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${
+                                                    response.models && response.models.length > 0 ?
+                                                    response.models.map(m => `
+                                                        <tr>
+                                                            <td class="ps-3">${m.model}</td>
+                                                            <td class="text-center">${m.quantity} unit/s</td>
+                                                        </tr>
+                                                    `).join('') :
+                                                    `<tr><td colspan="2" class="text-center text-muted fst-italic">No models found</td></tr>`
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Country of Origin/Supplier</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.origin}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Expected Time of Arrival</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.arrival_date}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Purpose</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.purpose}
+                                </div>
+
+                            </div>
+                        `);
+
+                        //attachments
+                        $('#attachments_table').remove();
+                        $('#attachments').after(`
+                            <table id="attachments_table" class="table table-bordered table-striped table-hover align-middle mb-0 mt-3">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>File Type</th>
+                                        <th>Files</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${
+                                        (() => {
+                                            if (!response.attachments || response.attachments.length === 0) {
+                                                return `<tr><td colspan="2" class="text-center text-muted fst-italic">No attachments found</td></tr>`;
+                                            }
+
+                                            // Group by file_type
+                                            const grouped = {};
+                                            response.attachments.forEach(att => {
+                                                if (!grouped[att.file_type]) {
+                                                    grouped[att.file_type] = [];
+                                                }
+                                                grouped[att.file_type].push(att);
+                                            });
+
+                                            // Generate table rows
+                                            return Object.entries(grouped).map(([type, files]) => `
+                                                <tr>
+                                                    <td>${type}</td>
+                                                    <td>
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                Download
+                                                            </button>
+                                                            <ul class="dropdown-menu" style="max-height: 300px; overflow-y: auto;">
+                                                                ${
+                                                                    files.map(file => `
+                                                                        <li>
+                                                                            <a class="dropdown-item d-flex justify-content-between align-items-center" href="${file.file_url}" target="_blank">
+                                                                                ${file.file_name} &nbsp;&nbsp;
+                                                                                <i class="fas fa-download text-primary"></i>
+                                                                            </a>
+                                                                        </li>
+                                                                    `).join('')
+                                                                }
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            `).join('');
+                                        })()
+                                    }
+                                </tbody>
+                            </table>
+                        `);
+
+
+                        //view remarks textarea
+                        // $('#remarks_div').remove();
+                        // if (response.client_remarks === "lpdd_dc") {
+                        //     $('#view_remarks').after(`
+                        //         <div id="remarks_div" class="mt-3">
+                        //             <label for="viewRemarks" class="form-label">Remarks</label>
+                        //             <textarea id="viewRemarks" class="form-control" placeholder="Enter your remarks here." rows="4"></textarea>
+                        //             <br>
+                        //             <button type="submit" class="btnApproveDC btn btn-success">For Recommendation of ARD - Technical Services</button>
+                        //         </div>
+                        //     `);
+                        // }
+
+                    } else if (response.permit_type_short === 'TCP') {
+                        // Always remove the previous section before adding
+                        $('#other_info_row').remove();
+
+                        $('#other_information').after(`
+                            <div id="other_info_row" class="row mt-3">
+                                <div class="col-12">
+                                    <div class="hr-sect">Permit Information</div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Purpose</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.purpose.charAt(0).toUpperCase() + response.purpose.slice(1) }
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Purpose Reason</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.purpose_reason}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Tree Address</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-9">
+                                    ${response.tree_location}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Private Property</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-9">
+                                    ${response.within_property === 'within' ? 'Yes' : 'No - '+response.within_property_others}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Subdivision</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.within_subdivision === 'within' ?  'Yes - '+response.within_subdivision_others : 'No'}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">School/Organization</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.within_school === 'within' ?  'Yes' : 'No'}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">Area Covered</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.area_covered} sq. m.
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">No. of Trees Affected</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.no_of_trees_affected}
+                                </div>
+
+                                <div class="col-md-9">
+                                    <label class="form-label">Can trees/shrubs/ornamental plants be planted in your are to replace the subject tree/s?</label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-2">
+                                    ${response.tree_replace}
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label">If No, </label>
+                                </div>
+                                <div class="col-md-1">
+                                    :
+                                </div>
+                                <div class="col-md-3">
+                                    ${response.tree_replace_reason}
+                                </div>
+                            </div> 
+                        `);
+                    
+                        //attachments
+                        $('#attachments_table').remove();
+                        $('#attachments').after(`
+                            <table id="attachments_table" class="table table-bordered table-striped table-hover align-middle mb-0 mt-3">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>File Type</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${
+                                        response.attachments && response.attachments.length > 0 ?
+                                        response.attachments.map(att => `
+                                            <tr>
+                                                <td>${att.file_type}</td>
+                                                <td>${att.file_name}</td>
+                                                <td class="text-center">
+                                                    <a href="${att.file_url}" target="_blank" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        `).join('') :
+                                        `<tr><td colspan="3" class="text-center text-muted fst-italic">No attachments found</td></tr>`
+                                    }
+                                </tbody>
+                            </table>
+                        `);
+
+                    }else {
+                        $('#other_info_row').remove();
+                    }
+
+                    // Populate other fields as needed
+
+                    // Show the modal after data is loaded
+                    $('#applicationModal').modal('show');
+                },
+                error: function () {
+                    alert('Failed to fetch application details.');
+                }
+            });
+        });
+
+        $(document).on('click', '.history-btn', function () {
+            const referenceNo = $(this).data('reference');
+            const permit_type_short = $(this).data('permit_type_short');
+
+            $('#application_for_h').html(permit_type_short);
+            $('#reference_no_h').html(referenceNo);
+
+            // AJAX call to get history data
+            $.ajax({
+                url: "/transaction-history/",
+                data: { reference_no: referenceNo },
+                method: "GET",
+                dataType: "json",
+                success: function(response) {
+                    historyTable.clear(); // Clear old data
+
+                    if (response.data.length > 0) {
+                        historyTable.rows.add(response.data).draw();
+                    } else {
+                        historyTable.rows.add([{
+                            days_processed: '',
+                            date_received: '',
+                            created_by: '',
+                            forwarded_to: '',
+                            notes: 'No history available',
+                            remarks: '',
+                            status: ''
+                        }]).draw();
+                    }
+
+                    $('#historyModal').modal('show');
+                }
+            });
+        });
+
+        $(document).on('click', '.process-btn', function () {
+            const appid = $(this).data('appid');
+            const crsid = $(this).data('crsid');
+            const referenceNo = $(this).data('reference');
+            const permit_type_short = $(this).data('permit_type_short');
+            
+            $('#application_for_p').html(permit_type_short);
+            $('#reference_no_p').html(referenceNo);
+            $('#app_id_p').val(appid);
+            $('#crs_id_p').val(crsid);
+
+            $('#processModal').modal('show');
+        });
+
+        $(document).on('click', '.confirm-btn', function () {
+            const appid = $(this).data('appid');
+            const crsid = $(this).data('crsid');
+            const referenceNo = $(this).data('reference');
+            const permit_type_short = $(this).data('permit_type_short');
+            const payment_id = $(this).data('paymentid');
+            const officer_id = $(this).data('officerid');
+            
+            
+            $('#application_for_cp').html(permit_type_short);
+            $('#reference_no_cp').html(referenceNo);
+            $('#app_id_cp').val(appid);
+            $('#crs_id_cp').val(crsid);
+            $('#payment_id').val(payment_id);
+            $('#officer_id').val(officer_id);
+            
+
+            $('#confimPaymentModal').modal('show');
+        });
+
+        {% comment %} $(document).on('click', '.assign-btn', function() {
+            const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            const appid = $(this).data('appid');
+            const crsid = $(this).data('crsid');
+
+            $.ajax({
+                url: '/get-action-officer/', // Your Django view URL
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
+                    $('#application_for_as').html(permit_type_short);
+                    $('#reference_no_as').html(referenceNo);
+                    $('#app_id_as').val(appid);
+                    $('#crs_id_as').val(crsid);
+
+                    // Clear and populate the dropdown
+                    const $dropdown = $('#action_officer_list');
+                    $dropdown.empty();  // Clear existing options
+
+                    $dropdown.append('<option value="">-- Select Officer --</option>');
+
+                    $.each(response.officers, function (index, officer) {
+                        const option = `<option value="${officer.userid}">${officer.fullname}</option>`;
+                        $dropdown.append(option);
+                    });
+
+                    $('#inspector_as').html(response.current_handler);
+                    $('#evaluator_id_as').val(response.evaluator_id);
+                        
+                    $('#assignInspectorModal').modal('show');
+                }
+            });
+        }); {% endcomment %}
+
+        $(document).on('click', '.ir-btn', function() {
+            const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            const appid = $(this).data('appid');
+
+            $.ajax({
+                url: '/get-application-details/',
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
+                    if (typeof $ !== 'undefined') {
+                        if ($('#content_ir').length) $('#content_ir').html(report_content);
+                        if ($('#created_ir').length) $('#created_ir').html(created_at);
+                        if ($('#inspector_name_ir').length) $('#inspector_name_ir').val(inspector_name);
+                    } else {
+                        console.error("jQuery is not loaded.");
+                    }
+
+                    $('#application_for_ir').html(permit_type_short);
+                    $('#reference_no_ir').html(referenceNo);
+                    $('#app_id_ir').val(appid);
+                    
+                    $('#inspectionReportModal').modal('show');
+                }
+            });
+        });
+        
+        $(document).on('click', '.view-ir-btn', function() {
+            const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            const appid = $(this).data('appid');
+            const btnType = $(this).data('btntype');
+            const crsID = $(this).data('crsid');
+
+            $.ajax({
+                url: '/get-ir-details/',
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
+                    $('#application_for_vir').html(permit_type_short);
+                    $('#reference_no_vir').html(referenceNo);
+                    $('#app_id_vir').val(appid);
+                    document.getElementById('inspection_report_text_v').innerHTML = response.report_content;
+                    $('#inpector_name_vir').html(response.inspector_name);
+                    $('#inspector_id_vir').val(response.inspector_id);
+                    $('#crs_id_vir').val(crsID);
+                        
+                    // Example for rendering attachments (if needed)
+                    let attachmentsHTML = '';
+                    if (response.attachments && response.attachments.length > 0) {
+                        response.attachments.forEach(function(path) {
+                            const filename = path.split('/').pop();
+                            path = 'media/' + path;
+                            attachmentsHTML += `<li><a href="${path}" target="_blank">${filename}</a></li>`;
+                        });
+                    } else {
+                        attachmentsHTML = '<li>No attachments</li>';
+                    }
+                    $('#inspection_attachments_list').html(attachmentsHTML);
+                    
+                    $('#viewInspectionReportModal').modal('show');
+                }
+            });
+        });
+
+        let inspectionEditorInstance;
+        let removedAttachments = [];
+
+        $(document).on('click', '.edit-ir-btn', function() {
+            const permit_type_short = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            const appid = $(this).data('appid');
+
+            $.ajax({
+                url: '/get-ir-details/',
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+                    $('#application_for_eir').html(permit_type_short);
+                    $('#reference_no_eir').html(referenceNo);
+                    $('#app_id_eir').val(appid);
+                    $('#inpector_name_eir').html(response.inspector_name);
+                    
+                    if (inspectionEditorInstance) {
+                        inspectionEditorInstance.setData(response.report_content);
+                    } else {
+                        ClassicEditor
+                            .create(document.querySelector('#inspection_report_text_e'))
+                            .then(editor => {
+                                inspectionEditorInstance = editor;
+                                editor.setData(response.report_content);
+                            })
+                            .catch(error => {
+                                console.error(error);
+                            });
+                    }
+
+                    // Example for rendering attachments (if needed)
+                    let attachmentsHTML = '';
+                    if (response.attachments && response.attachments.length > 0) {
+                    response.attachments.forEach(function(path, index) {
+                        const filename = path.split('/').pop();
+                        path = 'media/' + path;
+                        attachmentsHTML += `
+                            <li data-index="${index}" data-path="${path}">
+                                <a href="${path}" target="_blank">${filename}</a>
+                                <button type="button" class="btn btn-sm btn-danger ms-2 remove-attachment-btn">Remove</button>
+                            </li>`;
+                    });
+                    } else {
+                    attachmentsHTML = '<li>No attachments</li>';
+                    }
+                    $('#inspection_attachments_list_e').html(attachmentsHTML);
+                    
+                    $('#editInspectionReportModal').modal('show');
+                }
+            });
+        });
+
+        $('#saveInspectionReportBtn').on('click', function () {
+            const formData = new FormData();
+            formData.append('app_id', $('#app_id_eir').val());
+            formData.append('report_content', inspectionEditorInstance.getData());
+
+            // Append new uploaded files
+            const files = $('#ir_attachments_e')[0].files;
+            for (let i = 0; i < files.length; i++) {
+                formData.append('new_attachments[]', files[i]);
+            }
+
+            // Append removed file paths
+            removedAttachments.forEach(path => {
+                formData.append('removed_attachments[]', path);
+            });
+
+            $.ajax({
+                url: '/save-ir/',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    Swal.fire('Success', 'Inspection report saved.', 'success');
+                    $('#editInspectionReportModal').modal('hide');
+                },
+                error: function () {
+                    Swal.fire('Error', 'Could not save the report.', 'error');
+                }
+            });
+        });
+
+        $(document).on('click', '.remove-attachment-btn', function() {
+            const path = $(this).closest('li').data('path');
+            removedAttachments.push(path);  // Add to removal list
+            $(this).closest('li').remove(); // Remove from UI
+        });
+
+        {% comment %} EVALUATOR TO CLIENT {% endcomment %}
+        $(document).on('click', '.btnReturnToClient', function(e) {
+            e.preventDefault();
+
+            let referenceNo = '';
+            let appId = '';
+            let crsId = '';
+            let remarks = '';
+            let permitType = '';
+            const return_type = $(this).data('type');
+
+            if(return_type === 'return_application') {
+                appId = $('#app_id_p').val();
+                crsId = $('#crs_id_p').val();
+                action = 'For Client Completion';
+                notes = 'Returned to Client';
+                status = 'pending to client';
+                remarks = $('#remarksTextarea').val().trim();
+                referenceNo = referenceNo = $('#reference_no_p').text().trim();
+                permitType = $('#application_for_p').text().trim();
+            } else if(return_type === 'return_proof') {
+                appId = $('#app_id_cp').val();
+                crsId = $('#crs_id_cp').val();
+                action = 'For Payment';
+                notes = 'Returned to Client';
+                status = 'pending for proof';
+                remarks = 'Please check your provided OR Number and uploaded attachments.';
+                referenceNo = referenceNo = $('#reference_no_cp').text().trim();
+                permitType = $('#application_for_cp').text().trim();
+            }
+
+            if (!remarks && return_type === 'return_application') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before returning the application to the client.'
+                });
+                return;
+            }
+           
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        forwarded_to: crsId,
+                        remarks: remarks,
+                        action: action,
+                        notes: notes,
+                        status: status,
+                        permit_type_short: permitType,
+                        chi_remarks: 'client',
+                        chi_status: 'pending',
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: response.title,
+                            text: response.message
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        {% comment %} SC TO EVALUATOR {% endcomment %}
+        $(document).on('click', '.btnReturnEvaluator', function(e) {
+            e.preventDefault();
+            
+            const referenceNo = $('#reference_no_vir').html();
+            const appId = $('#app_id_vir').val();
+            const action="For Re-evaluation";
+            const notes="Rechecking";
+            const status = 'pending for checking';
+            const permitType = $('#application_for_vir').text().trim();
+            const forwarded_to = $('#inspector_id_vir').val();
+
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before returning the application.'
+                });
+                return;
+            }
+
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: action,
+                        notes: notes,
+                        status: status,
+                        permit_type_short: permitType,
+                        chi_remarks: 'fus_evaluator',
+                        chi_status: 'pending',
+                        forwarded_to: forwarded_to,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: response.title,
+                            text: response.message
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+        
+
+        {% comment %} EVALUATOR TO SC {% endcomment %}
+        $(document).on('click', '.btnCompletedRequirements', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_p').text().trim();
+            const appId = $('#app_id_p').val();
+            const crsId = $('#crs_id_p').val();
+            const remarks = $('#remarksTextarea').val().trim();
+            const permitType = $('#application_for_p').text().trim();
+
+            
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting to FUS Section Chief for checking.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action/',
+                data: {
+                        app_id: appId,
+                        reference_no: referenceNo,
+                        forwarded_to: '{{ request.session.fus_sc_id }}',
+                        action: 'For Assignment of Action Officer',
+                        notes: 'Submitted to Forest Utilization Section Chief',
+                        remarks: 'For Checking of Application',
+                        status: 'for assignment of action officer',
+                        chi_status: 'pending',
+                        chi_remarks: 'fus_sc',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'The application has been submitted to FUS Section Chief for checking.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+        
+
+        $(document).on('click', '.btnPaymentConfirmed', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_cp').text().trim();
+            const appId = $('#app_id_cp').val();
+            const crsId = $('#crs_id_cp').val();
+            const payment_id = $('#payment_id').val();
+            const lbp_ref_no = $('#lbp_ref_no_cp').val().trim();
+            const permitType = $('#application_for_cp').text().trim();
+            const forwarded_to = '{{ request.session.lpdd_dc_id }}';
+            
+            if (!lbp_ref_no) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Required',
+                    text: 'Please provide Landbank Reference No.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/confirm_payment_action/',
+                data: {
+                        payment_id: payment_id,
+                        chi_lbp_ref_no: lbp_ref_no,
+                        app_id: appId,
+                        forwarded_to: forwarded_to,
+                        reference_no: referenceNo,
+                        action: 'For Endorsement',
+                        notes: 'Endorsement of DC',
+                        remarks: 'For Endorsement to LPDD Division Chief',
+                        status: 'pending for endorsement',
+                        chi_status: 'pending',
+                        chi_remarks: 'lpdd_dc',
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Payment Confirmed',
+                            text: 'The payment has been successfully confirmed. The application is now for endorsement to LPDD Division Chief.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '.btnForPayment', function(e) {
+            e.preventDefault();
+
+            const appId = $('#app_id_vir').val();
+            const crsId = $('#crs_id_vir').val();
+            const reference_no = $('#reference_no_vir').html();
+            const permitType = $('#application_for_vir').html();
+
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before processing the application.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/for-payment/',
+                data: {
+                        reference_no: reference_no,
+                        app_id: appId,
+                        forwarded_to: crsId,
+                        remarks: remarks,
+                        action: 'For Payment',
+                        notes: 'Payment',
+                        status: 'pending for payment',
+                        chi_remarks: 'client',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'The application has been approved. Client can now proceed to payment.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('submit', '#inspectionReportForm', function(e) {
+            e.preventDefault();
+
+            const appId = $('#app_id_ir').val();
+            const reference_no = $('#reference_no_ir').html();
+            const inspectionReportText = $('#inspection_report_text').val().trim();
+
+            if (!inspectionReportText) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Inspection Report Required',
+                    text: 'Please provide the inspection report.'
+                });
+                return;
+            }
+
+            const formData = new FormData(this); // Automatically includes files via input[name="ir_attachments"]
+
+            formData.append('app_id_ir', appId);
+            formData.append('reference_no_ir', reference_no);
+            formData.set('inspection_report_text', inspectionReportText); // Use `set` to avoid duplicates
+
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'submit_inspection_report' %}",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Inspection Report Submitted',
+                            text: 'The inspection report has been successfully submitted.'
+                        }).then(() => {
+                            location.reload(); // or refresh DataTable
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Submission Failed',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '.btnForwardIR', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const permitType = $('#application_for_vir').text().trim();
+
+            
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting the application with report.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action_emp/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: 'For Review',
+                        notes: 'Review Report and Application',
+                        status: 'pending for review',
+                        forwarded_to: '{{ request.session.fus_sc_id }}',
+                        chi_remarks: 'fus_sc',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'The application has been successfully forwarded to FUS Section Chief for review.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        {% comment %} $(document).on('click', '.btnApproveIR', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const permitType = $('#application_for_vir').text().trim();
+
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting for approval of Division Chief.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action_emp/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: 'For Approval of Division Chief',
+                        notes: 'For Approval of LPDD Division Chief',
+                        status: 'for approval of permit',
+                        forwarded_to: '{{ request.session.lpdd_dc_id }}', // Division Chief ID
+                        chi_remarks: 'lpdd_dc',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'The application has been successfully forwarded to FUS Section Chief for approval.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        }); {% endcomment %}
+
+        $(document).on('click', '.btnApproveDCIR', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const permitType = $('#application_for_vir').text().trim();
+
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting for recommendation of ARD - Technical Services.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action_emp/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: 'For Recommendation of ARD TS',
+                        notes: 'For Recommendation of  ARD TS',
+                        status: 'for approval of permit',
+                        forwarded_to: '{{ request.session.ts_id }}',
+                        chi_remarks: 'ard_ts',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'The application has been successfully forwarded to ARD - Technical Services.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '.btnApproveTSIR', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const permitType = $('#application_for_vir').text().trim();
+
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting for approval of RED.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action_emp/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: 'For Approval of RED',
+                        notes: 'For Approval of RED',
+                        status: 'for approval of permit',
+                        forwarded_to: '{{ request.session.red_id }}',
+                        chi_remarks: 'red',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'The application has been successfully forwarded to RED.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '.btnApproveREDIR', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const permitType = $('#application_for_vir').text().trim();
+            const crsId = $('#crs_id_vir').val();
+
+
+            Swal.fire({
+                title: 'Are you sure?',
+                html: `Do you want to approve application <b>${referenceNo}</b>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, approve it!',
+                confirmButtonColor: '#28a745',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/process_application_action_emp/',
+                        data: {
+                            reference_no: referenceNo,
+                            app_id: appId,
+                            remarks: 'for release',
+                            action: 'Approved',
+                            notes: 'Please Complete Client Satisfaction Survey',
+                            status: 'approved',
+                            forwarded_to: crsId,
+                            chi_remarks: 'client',
+                            chi_status: 'approved',
+                            permit_type_short: permitType,
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Permit approved.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Failed to Return',
+                                    text: response.message || 'An unknown error occurred.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Request Failed',
+                                text: `An error occurred: ${error}`
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '.btnDisapproveREDIR', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const permitType = $('#application_for_vir').text().trim();
+            const crsId = $('#crs_id_vir').val();
+
+
+            Swal.fire({
+                title: 'Are you sure?',
+                html: `Do you want to disapprove application <b>${referenceNo}</b>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, disapprove it!',
+                confirmButtonColor: '#dc3545',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/process_application_action_emp/',
+                        data: {
+                            reference_no: referenceNo,
+                            app_id: appId,
+                            remarks: 'Disapproved',
+                            action: 'Disapproved',
+                            notes: 'Application denied.',
+                            status: 'disapproved',
+                            forwarded_to: crsId,
+                            chi_remarks: 'client',
+                            chi_status: 'disapproved',
+                            permit_type_short: permitType,
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: 'Permit disapproved.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Failed to Return',
+                                    text: response.message || 'An unknown error occurred.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Request Failed',
+                                text: `An error occurred: ${error}`
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        
+
+        $(document).on('click', '.approve-dc-btn', function(e) {
+            e.preventDefault();
+
+            const referenceNo = $('#reference_no_vir').text().trim();
+            const appId = $('#app_id_vir').val();
+            const permitType = $('#application_for_vir').text().trim();
+
+            if (!remarks) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Remarks Required',
+                    text: 'Please provide remarks before submitting for recommendation of ARD - Technical Services.'
+                });
+                return;
+            }
+            
+            $.ajax({
+                type: 'POST', // or 'GET'
+                url: '/process_application_action_emp/',
+                data: {
+                        reference_no: referenceNo,
+                        app_id: appId,
+                        remarks: remarks,
+                        action: 'For Recommendation of ARD TS',
+                        notes: 'For Recommendation of  ARD TS',
+                        status: 'for approval of permit',
+                        forwarded_to: '{{ request.session.ts_id }}', // Division Chief ID
+                        chi_remarks: 'ard_ts',
+                        chi_status: 'pending',
+                        permit_type_short: permitType,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'The application has been successfully forwarded to ARD - Technical Services.'
+                        }).then(() => {
+                            location.reload(); // or DataTable refresh
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Failed to Return',
+                            text: response.message || 'An unknown error occurred.'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Request Failed',
+                        text: `An error occurred: ${error}`
+                    });
+                }
+            });
+        });
+
+        $(document).on('click', '.view-css-btn', function () {
+            const app_id = $(this).data('appid');
+            const permitType = $(this).data('permit_type_short');
+            const referenceNo = $(this).data('reference');
+            
+            window.location.href = `/view_css/${permitType}/${app_id}/`;
+            
+        });
+
+        $(document).on('click', '.op-btn', function () {
+            const appid = $(this).data('appid');
+            const referenceNo = $(this).data('reference');
+            const permit_type_short = $(this).data('permit_type_short');
+
+                $.ajax({
+                url: '/get-application-details/', // Your Django view URL
+                method: 'GET',
+                data: { appid: appid,
+                        reference_no: referenceNo,
+                        permit_type_short: permit_type_short},
+                success: function (response) {
+
+                    if (response.op_date) {
+                        const parts = response.op_date.split('-');
+
+                        const months = [
+                            'January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'
+                        ];
+
+                        const year = parts[0];
+                        const month = months[parseInt(parts[1], 10) - 1];
+                        const day = parseInt(parts[2], 10);
+                        response.op_date = `${month} ${day}, ${year}`; // Format it in-place
+                    }
+
+                    $('#permit_type_op').html(response.permit_type);
+                    $('#op_date_op').html(response.op_date);
+                    $('#reference_no_op').html(response.reference_no);
+                    $('#op_no_op').html(response.op_id);
+                    $('#or_no_op').html(response.or_no);
+                    $('#estab_name_op').html(response.estab_name);
+                    $('#estab_address_op').html(response.estab_address);
+                    $('#amount_op').html(response.amount);
+
+                    //attachments
+                    $('#op_attachments_table').remove();
+                    $('#op_attachments').after(`
+                        <table id="op_attachments_table" class="table table-bordered table-striped table-hover align-middle mb-0 mt-3">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>File Type</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${
+                                    response.attachments && response.attachments.length > 0
+                                    ? response.attachments
+                                        .filter(att => att.file_type.substring(0, 16) === 'Proof of Payment')  // ✅ Filter here
+                                        .map(att => `
+                                            <tr>
+                                                <td>${att.file_type}</td>
+                                                <td>${att.file_name}</td>
+                                                <td class="text-center">
+                                                    <a href="${att.file_url}" target="_blank" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        `).join('')
+                                    : `<tr><td colspan="3" class="text-center text-muted fst-italic">No attachments found</td></tr>`
+                                }
+
+                            </tbody>
+                        </table>
+                    `);
+                }
+            });
+
+            $('#orderOfPaymentModal').modal('show');
+        });
+
+        function printOrderOfPayment() {
+            const modalContent = document.querySelector('#orderOfPaymentModal .modal-content').cloneNode(true);
+
+            // Create a new print window
+            const printWindow = window.open('', '', 'height=900,width=700');
+
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>DENR NCR ORDER OF PAYMENT</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 30px;
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            background-color: #fff;
+                            text-align: center;
+                        }
+
+                        .modal-content {
+                            width: 100%;
+                            max-width: 900px;
+                            margin: auto;
+                            box-shadow: none;
+                            border: none;
+                        }
+
+                        .modal-header, .modal-footer, .btn-close, .d-print-none {
+                            display: none !important;
+                        }
+
+                        table {
+                            border: 1px solid #dee2e6;
+                            border-collapse: collapse;
+                            width: 100%;
+                            margin-top: 20px;
+                        }
+
+                        th, td {
+                            border: 1px solid #dee2e6;
+                            padding: 10px;
+                            text-align: center;
+                        }
+
+                        img {
+                            margin-bottom: 10px;
+                        }
+
+                        .signature {
+                            margin-top: 60px;
+                            text-align: center;
+                        }
+
+                        .signature img {
+                            margin-bottom: 10px;
+                        }
+
+                        .signature div {
+                            line-height: 1.2;
+                        }
+
+                        #attachment{
+                            display: none;
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+
+            printWindow.document.body.appendChild(modalContent);
+            printWindow.document.write(`</body></html>`);
+            printWindow.document.close();
+            printWindow.focus();
+
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        }
+    </script>
+{% endblock %}
