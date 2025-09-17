@@ -246,8 +246,18 @@
 
                         <!-- Origin/Supplier -->
                         <div class="mb-4">
-                            <label for="origin" class="form-label">Country of Origin / Supplier and Address<span class="text-danger">*</span></label>
-                            <input type="text" id="origin" name="origin" class="form-control" placeholder="e.g., Japan / ABC Tools Ltd. / 123 Main St., Tokyo, Japan">
+                            <label for="origin" class="form-label">Country of Origin<span class="text-danger">*</span></label>
+                            <input type="text" id="origin" name="origin" class="form-control" placeholder="e.g., Japan">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="supplier" class="form-label">Supplier<span class="text-danger">*</span></label>
+                            <input type="text" id="supplier" name="supplier" class="form-control" placeholder="e.g., ABC Tools Ltd.">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="address" class="form-label">Supplier Address<span class="text-danger">*</span></label>
+                            <input type="text" id="address" name="address" class="form-control" placeholder="e.g., 123 Main St., Tokyo, Japan">
                         </div>
 
                         <div class="mb-4">
@@ -456,6 +466,23 @@
         const origin = $('#origin');
         if (!origin.val().trim()) {
             origin.addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        // Added Supplier & Address Validations
+        // Validate Supplier
+        const supplier = $('#supplier');
+        if (!supplier.val().trim()) {
+            supplier.addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        // Validate Address
+        const address = $('#address');
+        if (!address.val().trim()) {
+            address.addClass('is-invalid');
             hasError = true;
             firstErrorTab = 'form-section';
         }

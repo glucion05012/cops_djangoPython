@@ -33,6 +33,8 @@ class CHImport(models.Model):
 
     brand = models.ForeignKey(ChainsawBrand, on_delete=models.CASCADE, related_name='imports')
     origin = models.CharField(max_length=255)
+    supplier = models.CharField(max_length=255, blank=True, null=True)      # Supplier
+    address = models.CharField(max_length=255, blank=True, null=True)       # Address
     purpose = models.CharField(max_length=50, choices=PURPOSE_CHOICES)
     submitted_at = models.DateTimeField(auto_now_add=True)
     date_applied = models.DateField(auto_now_add=True)

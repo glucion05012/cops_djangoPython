@@ -230,8 +230,18 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="origin" class="form-label">Country of Origin / Supplier and Address<span class="text-danger">*</span></label>
+                            <label for="origin" class="form-label">Country of Origin<span class="text-danger">*</span></label>
                             <input type="text" id="origin" name="origin" class="form-control" value="{{ application.origin }}">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="supplier" class="form-label">Supplier<span class="text-danger">*</span></label>
+                            <input type="text" id="supplier" name="supplier" class="form-control" value="{{ application.supplier }}">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="address" class="form-label">Supplier Address<span class="text-danger">*</span></label>
+                            <input type="text" id="address" name="address" class="form-control" value="{{ application.address }}">
                         </div>
 
                         <div class="mb-4">
@@ -552,6 +562,23 @@
             hasError = true;
             firstErrorTab = 'form-section';
         }
+
+        // Added Supplier & Address Validations
+        // Validate Supplier
+        const supplier = $('#supplier');
+        if (!supplier.val().trim()) {
+            supplier.addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }
+
+        // Validate Address
+        const address = $('#address');
+        if (!address.val().trim()) {
+            address.addClass('is-invalid');
+            hasError = true;
+            firstErrorTab = 'form-section';
+        }        
 
         const arrival_date = $('#arrival_date');
         if (!arrival_date.val().trim()) {

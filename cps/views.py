@@ -84,6 +84,8 @@ def submit_import(request):
                 application = CHImport.objects.create(
                     brand=brand,
                     origin=request.POST.get('origin'),
+                    supplier=request.POST.get('supplier'),      # Supplier Name
+                    addresss=request.POST.get('address'),       # Supplier Address
                     purpose=request.POST.get('purpose'),
                     crs_id=request.session.get('user_id'),
                     estab_address = request.POST.get('estab_address'),
@@ -199,6 +201,8 @@ def edit_application(request, permitType, app_id):
                 
                     chimport.brand = brand
                     chimport.origin = request.POST.get('origin')
+                    chimport.supplier=request.POST.get('supplier')      # Supplier Name
+                    chimport.address=request.POST.get('address')       # Supplier Address
                     chimport.purpose = request.POST.get('purpose')
                     chimport.estab_id_dniis = request.POST.get('estab_id_dniis')
                     chimport.estab_name = request.POST.get('estab_name')

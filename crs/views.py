@@ -2976,7 +2976,7 @@ def save_survey(request, app_id):
                     'brand_name': brand_name,
                     'model_details': model_details,
                     'warehouse_details': warehouse_details,
-                    'source': chimport.origin,
+                    'source': chimport.origin + ' / ' + chimport.supplier + ' / ' + chimport.address, # Origin/Supplier/Address
                     'purpose': chimport.purpose,
                     'date_approved': date_approved,
                     'date_expired': date_expired,
