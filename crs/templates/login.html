@@ -10,8 +10,39 @@
    #bg {
       background-image: url("{% static 'images/background.jpg' %}");
    }
+   
+   .captcha-container {
+      margin-top: 10px;
+   }
+   
+   .captcha-container img {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 10px;
+   }
+   
+   .captcha-container input[type="text"] {
+      width: 200px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+   }
+   
+   .refresh-captcha-btn {
+      margin-left: 10px;
+      margin-top: 5px;
+      padding: 5px 10px;
+      font-size: 12px;
+   }
+   
+   .refresh-captcha-btn:hover {
+      background-color: #f8f9fa;
+      border-color: #6c757d;
+   }
 </style>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <link rel = "stylesheet" type = "text/css" href = "https://cdn.datatables.net/1.12.0/css/jquery.dataTables.min.css"/>
 <!-- SweetAlert2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
@@ -194,6 +225,19 @@
                                  <div class="preview-container" id="idBackPreview"></div>
                               </div>
                            </div>
+
+                           <!-- Captcha -->
+                           <div class="form-row">
+                              <div class="form-group col-md-12">
+                                 <label>Security Verification</label><span style="color:red">*</span>
+                                 <div class="captcha-container">
+                                    {{ captcha_form.captcha }}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary refresh-captcha-btn" onclick="refreshCaptcha()">
+                                       <i class="fa fa-refresh" aria-hidden="true"></i> Refresh
+                                    </button>
+                                 </div>
+                              </div>
+                           </div>
                      </div>
 
                      <!-- Modal Footer -->
@@ -236,6 +280,32 @@
          } else {
             passwordField.type = 'password'; // Change input type back to 'password' to hide the password
          }
+   }
+
+   function refreshCaptcha() {
+         $.ajax({
+            url: '/captcha/refresh/',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+               // Update the captcha image
+               $('.captcha-container img').attr('src', data.image_url);
+               
+               // Update the hidden captcha key field
+               $('input[name="captcha_0"]').val(data.key);
+               
+               // Clear the captcha input field
+               $('input[name="captcha_1"]').val('');
+            },
+            error: function() {
+               Swal.fire({
+                  title: "Error",
+                  text: "Failed to refresh captcha. Please try again.",
+                  icon: "error",
+                  confirmButtonColor: "#d33",
+               });
+            }
+         });
    }
 
    // Function to preview image and add remove button
@@ -286,9 +356,10 @@
          var idNumber = $('#idNumber').val();
          var idFront = $('#idFront').val();
          var idBack = $('#idBack').val();
+         var captchaInput = $('input[name="captcha_0"]').val();
 
          // Check if any field is empty
-         if (!applicantType || !firstName || !middleName || !lastName || !birthdate || !gender || !nationality || !email || !contactNo || !address || !usernameCreate || !passwordCreate || !idType || !idNumber || !idFront || !idBack) {
+         if (!applicantType || !firstName || !middleName || !lastName || !birthdate || !gender || !nationality || !email || !contactNo || !address || !usernameCreate || !passwordCreate || !idType || !idNumber || !idFront || !idBack || !captchaInput) {
             if (!applicantType) { $("#applicantType").css({'border-color': 'red', 'border-width': '2px'}) }
             if (!firstName) { $("#firstName").css({'border-color': 'red', 'border-width': '2px'}) }
             if (!middleName) { $("#middleName").css({'border-color': 'red', 'border-width': '2px'}) }
@@ -305,6 +376,7 @@
             if (!idNumber) { $("#idNumber").css({'border-color': 'red', 'border-width': '2px'}) }
             if (!idFront) { $("#idFront").css({'border-color': 'red', 'border-width': '2px',  'border-style': 'solid'}) }
             if (!idBack) { $("#idBack").css({'border-color': 'red', 'border-width': '2px',  'border-style': 'solid'}) }
+            if (!captchaInput) { $('input[name="captcha_0"]').css({'border-color': 'red', 'border-width': '2px'}) }
 
             return { success: false, message: "Please fill in all required fields." };
          }
@@ -414,6 +486,7 @@
    $(document).on('click', '#createAccountBtn', function() {
          // Reset the border color
          $("#applicantType, #firstName, #middleName, #lastName, #birthdate, #gender, #nationality, #email, #contactNo, #address, #usernameCreate, #passwordCreate, #idType, #idNumber, #idFront, #idBack").css({'border-color': '', 'border-width': ''});
+         $('input[name="captcha_0"]').css({'border-color': '', 'border-width': ''});
 
          var validation = validateForm();
 

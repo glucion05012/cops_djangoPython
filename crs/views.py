@@ -18,7 +18,13 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.csrf import ensure_csrf_cookie
 from operator import itemgetter
+from captcha.fields import CaptchaField
+from captcha.models import CaptchaStore
+from django import forms
 from django.db import transaction
+
+class CaptchaForm(forms.Form):
+    captcha = CaptchaField()
 import traceback
 from datetime import datetime
 from django.db.models import Sum
@@ -67,9 +73,13 @@ def index(request):
     # Clear all session data
     request.session.flush()
     
+    # Create captcha form
+    captcha_form = CaptchaForm()
+    
     return render(request, 'login.html', {
         'rows_nationality': rows_nationality,
         'rows_id_type': rows_id_type,
+        'captcha_form': captcha_form,
     })
 
 def check_existing(request):
@@ -116,6 +126,14 @@ def generate_random_digits(length=4):
     return ''.join(random.choices(string.digits, k=length))
 
 def create_account(request):
+    # Validate captcha first
+    captcha_form = CaptchaForm(request.POST)
+    if not captcha_form.is_valid():
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid captcha. Please try again.'
+        })
+    
     applicantType = request.POST.get('applicantType')
     firstName = request.POST.get('firstName')
     middleName = request.POST.get('middleName')
