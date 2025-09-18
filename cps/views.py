@@ -68,6 +68,23 @@ def submit_import(request):
                 # get brand
                 brand = ChainsawBrand.objects.get(id=brand_id)
 
+                # Patch: Prevent Duplicate Entries
+                duplicate_exists = CHImport.objects.filter(
+                    brand=brand,
+                    origin=request.POST.get('origin'),
+                    supplier=request.POST.get('supplier'),
+                    address=request.POST.get('address'),
+                    arrival_date=request.POST.get('arrival_date'),
+                    crs_id=request.session.get('user_id'),
+                    status='pending'
+                ).exists()
+
+                if duplicate_exists:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Already Submitted. Please Reload the Page'
+                    })
+
                 # Create CHImport record
                 with connections['default'].cursor() as cursor:
                     cursor.execute("""
@@ -85,7 +102,7 @@ def submit_import(request):
                     brand=brand,
                     origin=request.POST.get('origin'),
                     supplier=request.POST.get('supplier'),      # Supplier Name
-                    addresss=request.POST.get('address'),       # Supplier Address
+                    address=request.POST.get('address'),       # Supplier Address
                     purpose=request.POST.get('purpose'),
                     crs_id=request.session.get('user_id'),
                     estab_address = request.POST.get('estab_address'),
@@ -199,6 +216,23 @@ def edit_application(request, permitType, app_id):
                     chimport = get_object_or_404(CHImport, id=decrypted_id)
                     brand = ChainsawBrand.objects.get(id=brand_id)
                 
+                    # Patch: Prevent Duplicate Entries
+                    duplicate_exists = CHImport.objects.filter(
+                        brand=brand,
+                        origin=request.POST.get('origin'),
+                        supplier=request.POST.get('supplier'),
+                        address=request.POST.get('address'),
+                        arrival_date=request.POST.get('arrival_date'),
+                        crs_id=request.session.get('user_id'),
+                        status='pending'
+                    ).exclude(id=decrypt_id).exists()
+
+                    if duplicate_exists:
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'Already Edited. Please Reload the Page'
+                        })
+
                     chimport.brand = brand
                     chimport.origin = request.POST.get('origin')
                     chimport.supplier=request.POST.get('supplier')      # Supplier Name
