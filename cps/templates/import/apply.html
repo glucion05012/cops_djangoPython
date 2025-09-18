@@ -632,6 +632,10 @@
                                 icon: "error",
                                 title: "Submission Failed",
                                 text: response.message || "Something went wrong.",
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = "/myapplications/"; // Redirect on Application List
+                                }
                             });
                         }
                     },
